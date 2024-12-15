@@ -1,82 +1,62 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('content')
 <div class="container">
     <div class="row justify-content-center min-vh-100 align-items-center">
         <div class="col-md-5">
             <div class="text-center mb-4">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" height="100">
-                <h4 class="mt-3 text-success">Sistem Pembayaran SPP</h4>
-                <p class="text-muted">Pesantren Jabal Nur Jadid</p>
+                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="img-fluid mb-3" style="height: 80px;">
+                <h4 class="text-dark mb-4">Selamat Datang di<br>Sistem Pembayaran SPP</h4>
             </div>
 
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
-                    <h5 class="text-center mb-4 text-success">Login</h5>
-
-                    <form method="POST" action="{{ route('login') }}">
+                    <form method="POST" action="{{ route('login') }}" class="needs-validation" novalidate>
                         @csrf
 
-                        <div class="mb-3">
-                            <label for="email" class="form-label text-muted">Email</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-envelope text-success"></i>
-                                </span>
-                                <input id="email" type="email"
-                                    class="form-control border-start-0 @error('email') is-invalid @enderror"
-                                    name="email" value="{{ old('email') }}"
-                                    required autocomplete="email" autofocus>
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control @error('email') is-invalid @enderror"
+                                id="email" name="email" value="{{ old('email') }}"
+                                placeholder="nama@contoh.com" required autofocus>
+                            <label for="email">Email</label>
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
-                        <div class="mb-4">
-                            <label for="password" class="form-label text-muted">Password</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-lock text-success"></i>
-                                </span>
-                                <input id="password" type="password"
-                                    class="form-control border-start-0 @error('password') is-invalid @enderror"
-                                    name="password" required>
-                                @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control @error('password') is-invalid @enderror"
+                                id="password" name="password" placeholder="Password" required>
+                            <label for="password">Password</label>
+                            <div class="position-absolute end-0 top-50 translate-middle-y pe-3">
+                                <i class="far fa-eye-slash toggle-password" style="cursor: pointer;"></i>
                             </div>
+                            @error('password')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
-                        <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="remember"
-                                    id="remember" {{ old('remember') ? 'checked' : '' }}>
-                                <label class="form-check-label text-muted" for="remember">
-                                    Ingat Saya
-                                </label>
+                                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                                <label class="form-check-label" for="remember">Ingat Saya</label>
                             </div>
+                            @if (Route::has('password.request'))
+                                <a href="{{ route('password.request') }}" class="text-decoration-none small">
+                                    Lupa Password?
+                                </a>
+                            @endif
                         </div>
 
-                        <button type="submit" class="btn btn-success w-100 mb-3">
-                            <i class="fas fa-sign-in-alt me-2"></i> Login
+                        <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i> Masuk
                         </button>
-
-                        <div class="text-center">
-                            <a href="{{ url('/') }}" class="text-muted text-decoration-none">
-                                <i class="fas fa-arrow-left me-2"></i>Kembali ke Beranda
-                            </a>
-                        </div>
                     </form>
                 </div>
             </div>
 
             <div class="text-center mt-4">
-                <p class="text-muted small">
+                <p class="text-muted">
                     &copy; {{ date('Y') }} Pesantren Jabal Nur Jadid.<br>
                     All rights reserved.
                 </p>
@@ -85,32 +65,99 @@
     </div>
 </div>
 
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Toggle password visibility
+    $('.toggle-password').click(function() {
+        const input = $('#password');
+        const icon = $(this);
+
+        if (input.attr('type') === 'password') {
+            input.attr('type', 'text');
+            icon.removeClass('fa-eye-slash').addClass('fa-eye');
+        } else {
+            input.attr('type', 'password');
+            icon.removeClass('fa-eye').addClass('fa-eye-slash');
+        }
+    });
+
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+
+    // Animation on load
+    $('.card').hide().fadeIn(1000);
+
+    // Input focus animation
+    $('.form-control').focus(function() {
+        $(this).parent().addClass('focused');
+    }).blur(function() {
+        if (!$(this).val()) {
+            $(this).parent().removeClass('focused');
+        }
+    });
+});
+</script>
+@endpush
+
+@push('styles')
 <style>
-.btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
+.form-floating > .form-control:focus,
+.form-floating > .form-control:not(:placeholder-shown) {
+    padding-top: 1.625rem;
+    padding-bottom: 0.625rem;
 }
-.btn-success:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    opacity: .65;
+    transform: scale(.85) translateY(-0.5rem) translateX(0.15rem);
 }
-.text-success {
-    color: #28a745 !important;
-}
+
 .form-control:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
-.input-group-text {
-    background-color: #f8f9fa;
-    border-right: none;
+
+.toggle-password:hover {
+    color: #0d6efd;
 }
-.form-control {
-    border-left: none;
+
+.btn-primary {
+    transition: all 0.3s ease;
 }
-.form-check-input:checked {
-    background-color: #28a745;
-    border-color: #28a745;
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.card {
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.form-floating {
+    position: relative;
+}
+
+.focused label {
+    color: #0d6efd;
 }
 </style>
+@endpush
 @endsection

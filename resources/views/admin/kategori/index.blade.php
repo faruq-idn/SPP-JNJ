@@ -56,21 +56,17 @@
                                             class="btn btn-sm btn-warning">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
-                                        @if(strtolower($k->nama) !== 'reguler')
-                                            <button type="button" class="btn btn-sm btn-danger"
-                                                onclick="konfirmasiHapus('{{ $k->id }}', '{{ $k->nama }}')">
-                                                <i class="fas fa-trash"></i> Hapus
+                                        <form action="{{ route('admin.kategori.destroy', $k) }}"
+                                            method="POST"
+                                            class="d-inline"
+                                            onsubmit="return {{ $k->nama === 'Reguler' ? 'confirmDeleteReguler(event)' : 'confirmDelete(event)' }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
                                             </button>
-                                        @endif
+                                        </form>
                                     </div>
-
-                                    <!-- Form untuk hapus (tersembunyi) -->
-                                    <form id="formHapus{{ $k->id }}"
-                                        action="{{ route('admin.kategori.destroy', $k) }}"
-                                        method="POST" style="display: none;">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
                                 </td>
                             </tr>
                         @empty
@@ -87,54 +83,103 @@
 
 @push('scripts')
 <script>
-function konfirmasiHapus(id, nama) {
+// Untuk kategori reguler (3x konfirmasi)
+function confirmDeleteReguler(event) {
+    event.preventDefault();
+    const form = event.target;
+
+    // Konfirmasi pertama
     Swal.fire({
-        title: 'Hapus Kategori?',
-        text: `Anda akan menghapus kategori "${nama}"`,
+        title: 'Konfirmasi Pertama',
+        text: "Apakah Anda yakin ingin menghapus kategori Reguler?",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, Hapus!',
+        confirmButtonText: 'Ya, lanjutkan',
         cancelButtonText: 'Batal'
     }).then((result) => {
         if (result.isConfirmed) {
+            // Konfirmasi kedua
             Swal.fire({
-                title: 'Konfirmasi Terakhir',
-                text: "Tindakan ini tidak dapat dibatalkan!",
+                title: 'Konfirmasi Kedua',
+                text: "Menghapus kategori akan menghapus semua data terkait!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Ya, Saya Yakin!',
+                confirmButtonText: 'Ya, saya mengerti',
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    document.getElementById('formHapus' + id).submit();
+                    // Konfirmasi ketiga
+                    Swal.fire({
+                        title: 'Konfirmasi Terakhir',
+                        text: "Tindakan ini tidak dapat dibatalkan!",
+                        icon: 'warning',
+                        input: 'text',
+                        inputPlaceholder: 'Ketik "HAPUS" untuk konfirmasi',
+                        inputValidator: (value) => {
+                            if (value !== 'HAPUS') {
+                                return 'Anda harus mengetik "HAPUS"';
+                            }
+                        },
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Ya, hapus sekarang!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
                 }
             });
         }
     });
+
+    return false;
 }
 
-// Tampilkan pesan sukses/error
-@if(session('success'))
-    Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: '{{ session('success') }}',
-        timer: 1500,
-        showConfirmButton: false
-    });
-@endif
+// Untuk kategori lainnya (2x konfirmasi)
+function confirmDelete(event) {
+    event.preventDefault();
+    const form = event.target;
+    const kategoriNama = form.closest('tr').querySelector('td:first-child').textContent;
 
-@if(session('error'))
+    // Konfirmasi pertama
     Swal.fire({
-        icon: 'error',
-        title: 'Gagal!',
-        text: '{{ session('error') }}'
+        title: 'Konfirmasi Hapus',
+        text: `Apakah Anda yakin ingin menghapus kategori "${kategoriNama}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, lanjutkan',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Konfirmasi kedua
+            Swal.fire({
+                title: 'Konfirmasi Terakhir',
+                text: "Menghapus kategori akan menghapus semua data terkait dan tidak dapat dibatalkan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus Sekarang!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
     });
-@endif
+
+    return false;
+}
 </script>
 @endpush
 @endsection

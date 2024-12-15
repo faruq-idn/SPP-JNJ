@@ -32,9 +32,17 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('kategori', KategoriSantriController::class);
         Route::post('kategori/{kategori}/tarif', [KategoriSantriController::class, 'updateTarif'])
             ->name('kategori.updateTarif');
+        Route::delete('/kategori/{kategori}', [KategoriSantriController::class, 'destroy'])
+            ->name('kategori.destroy');
 
-        // Menu lain
-        Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
+        // Pembayaran routes
+        Route::controller(PembayaranController::class)->prefix('pembayaran')->name('pembayaran.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+        });
+
+        // Laporan
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
     });
@@ -47,10 +55,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/santri', [SantriController::class, 'index'])->name('santri.index');
         Route::get('/santri/{santri}', [SantriController::class, 'show'])->name('santri.show');
 
-        // Pembayaran
-        Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
-        Route::get('/pembayaran/create', [PembayaranController::class, 'create'])->name('pembayaran.create');
-        Route::post('/pembayaran', [PembayaranController::class, 'store'])->name('pembayaran.store');
+        // Pembayaran routes untuk petugas
+        Route::controller(PembayaranController::class)->group(function () {
+            Route::get('/pembayaran', 'index')->name('pembayaran.index');
+            Route::get('/pembayaran/create', 'create')->name('pembayaran.create');
+            Route::post('/pembayaran', 'store')->name('pembayaran.store');
+        });
 
         // Laporan
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');

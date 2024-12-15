@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             RoleAndPermissionSeeder::class,
             SantriSeeder::class,
             PembayaranSppSeeder::class,
+            KategoriSantriSeeder::class,
         ]);
     }
 }

@@ -25,4 +25,9 @@ class KategoriSantri extends Model
             ->whereNull('berlaku_sampai')
             ->latest('berlaku_mulai');
     }
+
+    public function santri(): HasMany
+    {
+        return $this->hasMany(Santri::class, 'kategori_id');
+    }
 }

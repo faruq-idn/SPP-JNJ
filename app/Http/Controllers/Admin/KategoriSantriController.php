@@ -88,25 +88,16 @@ class KategoriSantriController extends Controller
 
     public function destroy(KategoriSantri $kategori)
     {
-        // Cek jika kategori adalah Reguler
-        if (strtolower($kategori->nama) === 'reguler') {
-            return redirect()->route('admin.kategori.index')
-                ->with('error', 'Kategori Reguler tidak dapat dihapus!');
-        }
-
-        // Cek jika kategori masih digunakan oleh santri
+        // Cek apakah ada santri yang menggunakan kategori ini
         if ($kategori->santri()->exists()) {
-            return redirect()->route('admin.kategori.index')
-                ->with('error', 'Kategori tidak dapat dihapus karena masih digunakan oleh santri!');
+            return back()->with('error', 'Tidak dapat menghapus kategori yang masih digunakan oleh santri');
         }
 
+        // Untuk kategori Reguler, perlu 3x konfirmasi (sudah dihandle di frontend)
         // Hapus riwayat tarif terlebih dahulu
         $kategori->riwayatTarif()->delete();
-
-        // Hapus kategori
         $kategori->delete();
 
-        return redirect()->route('admin.kategori.index')
-            ->with('success', 'Kategori berhasil dihapus');
+        return back()->with('success', 'Kategori berhasil dihapus');
     }
 }

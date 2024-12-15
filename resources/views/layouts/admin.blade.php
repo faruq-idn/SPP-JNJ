@@ -9,6 +9,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
     <style>
         /* Fixed sidebar */
@@ -160,8 +167,50 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Default DataTables configuration -->
+    <script>
+    $(document).ready(function() {
+        // Konfigurasi default untuk DataTables
+        $.extend(true, $.fn.dataTable.defaults, {
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
+            },
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
+            responsive: true
+        });
+
+        // Konfigurasi default untuk Select2
+        $.fn.select2.defaults.set("theme", "bootstrap-5");
+        $.fn.select2.defaults.set("language", "id");
+
+        // Konfigurasi default untuk SweetAlert2
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+
+        // Tampilkan toast jika ada pesan sukses
+        @if(session('success'))
+            Toast.fire({
+                icon: 'success',
+                title: '{{ session('success') }}'
+            });
+        @endif
+    });
+    </script>
+
     @stack('scripts')
     <script>
     // Toggle sidebar on mobile

@@ -5,7 +5,11 @@
     <a href="{{ route('wali.tagihan') }}" class="nav-link {{ request()->routeIs('wali.tagihan') ? 'active' : '' }}">
         <i class="fas fa-file-invoice-dollar"></i> Tagihan SPP
     </a>
-    <a href="{{ route('wali.pembayaran') }}" class="nav-link {{ request()->routeIs('wali.pembayaran') ? 'active' : '' }}">
-        <i class="fas fa-history"></i> Riwayat Pembayaran
-    </a>
+    <li class="nav-item">
+        <a class="nav-link {{ Request::routeIs('wali.pembayaran') ? 'active' : '' }}"
+            href="{{ route('wali.pembayaran') }}">
+            <i class="fas fa-history"></i>
+            <span>Riwayat Pembayaran</span>
+        </a>
+    </li>
 </nav>

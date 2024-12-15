@@ -5,9 +5,13 @@
     <a href="{{ route('petugas.santri.index') }}" class="nav-link {{ request()->routeIs('petugas.santri.*') ? 'active' : '' }}">
         <i class="fas fa-user-graduate"></i> Data Santri
     </a>
-    <a href="{{ route('petugas.pembayaran.index') }}" class="nav-link {{ request()->routeIs('petugas.pembayaran.*') ? 'active' : '' }}">
-        <i class="fas fa-money-bill-wave"></i> Pembayaran SPP
-    </a>
+    <li class="nav-item">
+        <a class="nav-link {{ Request::routeIs('petugas.pembayaran.*') ? 'active' : '' }}"
+            href="{{ route('petugas.pembayaran.index') }}">
+            <i class="fas fa-money-bill"></i>
+            <span>Pembayaran SPP</span>
+        </a>
+    </li>
     <a href="{{ route('petugas.laporan.index') }}" class="nav-link {{ request()->routeIs('petugas.laporan.*') ? 'active' : '' }}">
         <i class="fas fa-file-alt"></i> Laporan
     </a>

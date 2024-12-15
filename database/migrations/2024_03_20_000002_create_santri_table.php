@@ -17,9 +17,9 @@ return new class extends Migration
             $table->text('alamat');
             $table->foreignId('wali_id')->constrained('users');
             $table->date('tanggal_masuk');
-            $table->string('jenjang');
+            $table->enum('jenjang', ['SMP', 'SMA']);
             $table->string('kelas');
-            $table->enum('status', ['aktif', 'alumni', 'keluar'])->default('aktif');
+            $table->enum('status', ['aktif', 'non-aktif'])->default('aktif');
             $table->foreignId('kategori_id')->constrained('kategori_santri');
             $table->timestamps();
         });

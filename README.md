@@ -1,7 +1,69 @@
 -- Active: 1718202689828@@127.0.0.1@3306
-# Sistem Informasi Manajemen Keuangan SPP Pesantren Jabal Nur Jadid
+# Sistem Pembayaran SPP Pesantren
 
-Sistem informasi berbasis website untuk memudahkan pengelolaan keuangan SPP di Pesantren Jabal Nur Jadid.
+Sistem informasi untuk mengelola pembayaran SPP di Pesantren Jabal Nur Jadid.
+
+## Status Progres
+
+### Autentikasi & Otorisasi ✅
+- [x] Login multi user (admin, petugas, wali santri)
+- [x] Middleware role & permission
+- [x] Redirect sesuai role setelah login
+- [x] Logout
+
+### Dashboard Admin ✅
+- [x] Statistik total santri
+- [x] Statistik total penerimaan
+- [x] Statistik tunggakan
+- [x] Statistik pembayaran hari ini
+- [x] Daftar pembayaran terbaru
+- [x] Notifikasi
+
+### Manajemen Data Master ⚠️
+- [x] CRUD Kategori Santri
+- [x] Manajemen Tarif SPP
+- [x] Riwayat perubahan tarif
+- [ ] CRUD Data Santri
+- [ ] CRUD Data Wali Santri
+- [ ] CRUD Data Petugas
+- [ ] Import Data Santri (Excel)
+
+### Transaksi Pembayaran 🚫
+- [ ] Input pembayaran SPP
+- [ ] Cetak bukti pembayaran
+- [ ] Riwayat pembayaran
+- [ ] Pembayaran via payment gateway
+- [ ] Notifikasi pembayaran
+
+### Laporan 🚫
+- [ ] Laporan penerimaan harian
+- [ ] Laporan penerimaan bulanan
+- [ ] Laporan tunggakan
+- [ ] Export laporan (PDF/Excel)
+
+### Fitur Wali Santri 🚫
+- [ ] Lihat tagihan SPP
+- [ ] Riwayat pembayaran
+- [ ] Pembayaran online
+- [ ] Cetak bukti pembayaran
+
+### Lainnya 🚫
+- [ ] Backup database
+- [ ] Pengaturan aplikasi
+- [ ] Logs aktivitas
+- [ ] API untuk mobile app
+
+Keterangan:
+- ✅ Selesai
+- ⚠️ Sedang dikerjakan
+- 🚫 Belum dikerjakan
+
+## Tech Stack
+- Laravel 11
+- MySQL
+- Bootstrap 5
+- SweetAlert2
+- Font Awesome 6
 
 ## Fitur Utama
 

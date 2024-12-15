@@ -82,7 +82,31 @@ class KategoriSantriController extends Controller
             'keterangan' => $validated['keterangan']
         ]);
 
-        return redirect()->route('admin.kategori.edit', $kategori)
+        return redirect()->route('admin.kategori.index')
             ->with('success', 'Tarif SPP berhasil diperbarui');
+    }
+
+    public function destroy(KategoriSantri $kategori)
+    {
+        // Cek jika kategori adalah Reguler
+        if (strtolower($kategori->nama) === 'reguler') {
+            return redirect()->route('admin.kategori.index')
+                ->with('error', 'Kategori Reguler tidak dapat dihapus!');
+        }
+
+        // Cek jika kategori masih digunakan oleh santri
+        if ($kategori->santri()->exists()) {
+            return redirect()->route('admin.kategori.index')
+                ->with('error', 'Kategori tidak dapat dihapus karena masih digunakan oleh santri!');
+        }
+
+        // Hapus riwayat tarif terlebih dahulu
+        $kategori->riwayatTarif()->delete();
+
+        // Hapus kategori
+        $kategori->delete();
+
+        return redirect()->route('admin.kategori.index')
+            ->with('success', 'Kategori berhasil dihapus');
     }
 }

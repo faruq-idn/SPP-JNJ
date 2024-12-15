@@ -11,12 +11,53 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
+        /* Fixed sidebar */
         .sidebar {
-            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 250px; /* Sesuaikan dengan lebar sidebar */
+            z-index: 100;
+            overflow-y: auto;
             background-color: #343a40;
             color: white;
         }
 
+        /* Fixed navbar */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 250px; /* Sesuaikan dengan lebar sidebar */
+            z-index: 99;
+            background: white;
+        }
+
+        /* Main content padding */
+        .main-content {
+            margin-left: 250px; /* Sesuaikan dengan lebar sidebar */
+            padding-top: 70px; /* Sesuaikan dengan tinggi navbar */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                left: -250px;
+                transition: 0.3s;
+            }
+            .sidebar.show {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .top-navbar {
+                left: 0;
+            }
+        }
+
+        /* Existing styles */
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8);
             padding: 0.8rem 1rem;
@@ -34,11 +75,6 @@
             margin-right: 0.5rem;
             width: 1.5rem;
             text-align: center;
-        }
-
-        .main-content {
-            min-height: 100vh;
-            background-color: #f8f9fa;
         }
 
         .widget-card {
@@ -62,82 +98,87 @@
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 px-0 sidebar">
-                <div class="p-3">
-                    <h5 class="text-center mb-4">
-                        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="img-fluid" style="height: 40px;">
-                        <span class="ms-2">Admin Panel</span>
-                    </h5>
-                    <nav class="nav flex-column">
-                        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
-                        </a>
-                        <a href="{{ route('admin.santri.index') }}" class="nav-link {{ request()->routeIs('admin.santri.*') ? 'active' : '' }}">
-                            <i class="fas fa-user-graduate"></i> Data Santri
-                        </a>
-                        <a href="{{ route('admin.pembayaran.index') }}" class="nav-link {{ request()->routeIs('admin.pembayaran.*') ? 'active' : '' }}">
-                            <i class="fas fa-money-bill-wave"></i> Pembayaran SPP
-                        </a>
-                        <a href="{{ route('admin.laporan.index') }}" class="nav-link {{ request()->routeIs('admin.laporan.*') ? 'active' : '' }}">
-                            <i class="fas fa-file-alt"></i> Laporan
-                        </a>
-                        <a href="{{ route('admin.kategori.index') }}" class="nav-link {{ request()->routeIs('admin.kategori.*') ? 'active' : '' }}">
-                            <i class="fas fa-tags"></i> Kategori Santri
-                        </a>
-                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                            <i class="fas fa-users"></i> Pengguna
-                        </a>
-                    </nav>
-                </div>
+    <div class="container-fluid p-0">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="p-3">
+                <h5 class="text-center mb-4">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="img-fluid" style="height: 40px;">
+                    <span class="ms-2">{{ ucfirst(Auth::user()->role) }} Panel</span>
+                </h5>
+                @if(Auth::user()->role === 'admin')
+                    @include('layouts.partials.sidebar-admin')
+                @elseif(Auth::user()->role === 'petugas')
+                    @include('layouts.partials.sidebar-petugas')
+                @else
+                    @include('layouts.partials.sidebar-wali')
+                @endif
             </div>
+        </div>
 
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 main-content">
-                <!-- Top Navbar -->
-                <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-                    <div class="container-fluid">
-                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
-                        <div class="collapse navbar-collapse" id="navbarNav">
-                            <ul class="navbar-nav ms-auto">
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                        <i class="fas fa-user-circle"></i> {{ Auth::user()->name }}
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog"></i> Profil</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <form action="{{ route('logout') }}" method="POST">
-                                                @csrf
-                                                <button type="submit" class="dropdown-item text-danger">
-                                                    <i class="fas fa-sign-out-alt"></i> Logout
-                                                </button>
-                                            </form>
-                                        </li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm top-navbar">
+                <div class="container-fluid">
+                    <button class="navbar-toggler" type="button" id="sidebarToggle">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle"></i> {{ Auth::user()->name }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog"></i> Profil</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form action="{{ route('logout') }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-sign-out-alt"></i> Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
                     </div>
-                </nav>
-
-                <!-- Page Content -->
-                <div class="p-4">
-                    @yield('content')
                 </div>
+            </nav>
+
+            <!-- Page Content -->
+            <div class="p-4">
+                @yield('content')
             </div>
         </div>
     </div>
 
+    <!-- Scripts -->
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('scripts')
+    <script>
+    // Toggle sidebar on mobile
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.querySelector('.sidebar').classList.toggle('show');
+    });
+
+    // Hide sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+            const sidebar = document.querySelector('.sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
+                sidebar.classList.remove('show');
+            }
+        }
+    });
+    </script>
 </body>
 </html>

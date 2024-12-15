@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Santri extends Model
 {
@@ -19,8 +20,14 @@ class Santri extends Model
         'tanggal_masuk',
         'jenjang',
         'kelas',
-        'status',
-        'kategori_id'
+        'kategori_id',
+        'status'
+    ];
+
+    protected $casts = [
+        'tanggal_lahir' => 'date',
+        'tanggal_masuk' => 'date',
+        'status' => 'string'
     ];
 
     public function wali(): BelongsTo
@@ -31,5 +38,10 @@ class Santri extends Model
     public function kategori(): BelongsTo
     {
         return $this->belongsTo(KategoriSantri::class, 'kategori_id');
+    }
+
+    public function pembayaran(): HasMany
+    {
+        return $this->hasMany(PembayaranSpp::class, 'santri_id');
     }
 }

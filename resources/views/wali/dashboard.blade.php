@@ -1,111 +1,149 @@
-@extends('layouts.admin')
+@extends('layouts.wali')
 
 @section('title', 'Dashboard Wali Santri')
 
 @section('content')
-<div class="container-fluid">
-    <!-- Data Santri -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Data Santri</h6>
-                </div>
-                <div class="card-body">
-                    @if($santri)
-                        <table class="table">
-                            <tr>
-                                <th width="30%">NISN</th>
-                                <td>{{ $santri->nisn }}</td>
-                            </tr>
-                            <tr>
-                                <th>Nama</th>
-                                <td>{{ $santri->nama }}</td>
-                            </tr>
-                            <tr>
-                                <th>Kelas</th>
-                                <td>{{ $santri->jenjang }} - {{ $santri->kelas }}</td>
-                            </tr>
-                            <tr>
-                                <th>Status</th>
-                                <td>
-                                    <span class="badge bg-{{ $santri->status === 'aktif' ? 'success' : 'secondary' }}">
-                                        {{ ucfirst($santri->status) }}
-                                    </span>
-                                </td>
-                            </tr>
-                        </table>
-                    @else
-                        <p class="text-center text-muted">Data santri tidak ditemukan</p>
-                    @endif
-                </div>
-            </div>
-        </div>
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-home me-2"></i>Dashboard
+            </h2>
 
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Tagihan SPP</h6>
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-                <div class="card-body">
-                    @if($santri)
-                        <div class="text-center mb-4">
-                            <h3 class="text-danger mb-1">Rp {{ number_format(500000, 0, ',', '.') }}</h3>
-                            <p class="text-muted">Tagihan Bulan {{ now()->format('F Y') }}</p>
-                            <a href="#" class="btn btn-primary">
-                                <i class="fas fa-credit-card"></i> Bayar Sekarang
+            @endif
+
+            @if($santri)
+                <!-- Info Cards -->
+                <div class="row g-3 mb-4">
+                    <!-- Status SPP Card -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="flex-shrink-0 bg-primary bg-opacity-10 p-3 rounded">
+                                        <i class="fas fa-file-invoice-dollar text-primary fa-2x"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="card-subtitle text-muted mb-1">Status SPP</h6>
+                                        <h4 class="card-title mb-0">
+                                            <span class="badge bg-{{ $santri->status_spp == 'Lunas' ? 'success' : 'warning' }}">
+                                                {{ $santri->status_spp ?? 'Belum ada data' }}
+                                            </span>
+                                        </h4>
+                                    </div>
+                                </div>
+                                <a href="{{ route('wali.tagihan') }}" class="btn btn-light btn-sm w-100">
+                                    <i class="fas fa-arrow-right me-1"></i>Lihat Tagihan
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Santri Card -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="flex-shrink-0 bg-success bg-opacity-10 p-3 rounded">
+                                        <i class="fas fa-user-graduate text-success fa-2x"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="card-subtitle text-muted mb-1">Nama Santri</h6>
+                                        <h4 class="card-title mb-0">{{ $santri->nama }}</h4>
+                                    </div>
+                                </div>
+                                <div class="small">
+                                    <p class="mb-1"><strong>NIS:</strong> {{ $santri->nis }}</p>
+                                    <p class="mb-1"><strong>Kelas:</strong> {{ $santri->kelas }}</p>
+                                    <p class="mb-0"><strong>Kategori:</strong> {{ $santri->kategori->nama ?? '-' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Riwayat Pembayaran Card -->
+                    <div class="col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="flex-shrink-0 bg-info bg-opacity-10 p-3 rounded">
+                                        <i class="fas fa-history text-info fa-2x"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="card-subtitle text-muted mb-1">Pembayaran Terakhir</h6>
+                                        <h4 class="card-title mb-0">
+                                            {{ $pembayaran->first() ? $pembayaran->first()->created_at->format('d M Y') : '-' }}
+                                        </h4>
+                                    </div>
+                                </div>
+                                <a href="{{ route('wali.pembayaran') }}" class="btn btn-light btn-sm w-100">
+                                    <i class="fas fa-arrow-right me-1"></i>Lihat Riwayat
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Riwayat Pembayaran Table -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-history me-2"></i>Riwayat Pembayaran
+                            </h5>
+                            <a href="{{ route('wali.pembayaran') }}" class="btn btn-sm btn-primary">
+                                Lihat Semua
                             </a>
                         </div>
-                    @else
-                        <p class="text-center text-muted">Tidak ada tagihan</p>
-                    @endif
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Bulan</th>
+                                        <th>Nominal</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($pembayaran as $p)
+                                        <tr>
+                                            <td>{{ $p->created_at->format('d/m/Y') }}</td>
+                                            <td>{{ $p->bulan }}</td>
+                                            <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ $p->status == 'success' ? 'success' : 'warning' }}">
+                                                    {{ $p->status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center py-3">
+                                                <i class="fas fa-info-circle me-2"></i>Belum ada riwayat pembayaran
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Riwayat Pembayaran -->
-    <div class="card shadow">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Riwayat Pembayaran</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Tanggal</th>
-                            <th>Bulan/Tahun</th>
-                            <th>Nominal</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($pembayaran as $p)
-                            <tr>
-                                <td>{{ $p->tanggal_bayar->format('d/m/Y') }}</td>
-                                <td>{{ $p->bulan }}/{{ $p->tahun }}</td>
-                                <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
-                                <td>
-                                    <span class="badge bg-{{ $p->status == 'success' ? 'success' : 'warning' }}">
-                                        {{ $p->status }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-info">
-                                        <i class="fas fa-eye"></i> Detail
-                                    </a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center">Belum ada riwayat pembayaran</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+            @else
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <div>
+                        Data santri tidak ditemukan. Silakan hubungi admin untuk informasi lebih lanjut.
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>

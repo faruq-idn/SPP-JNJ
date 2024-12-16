@@ -22,6 +22,10 @@
     <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
+    <!-- Preload fonts -->
+    <link rel="preload" href="https://fonts.bunny.net/figtree/files/figtree-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="https://fonts.bunny.net/figtree/files/figtree-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+
     <style>
         /* Fixed sidebar */
         .sidebar {
@@ -169,6 +173,61 @@
                 font-size: 1.4rem;
             }
         }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+
+            .container-fluid {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+
+            .card {
+                border-radius: 0.5rem;
+            }
+
+            .table {
+                font-size: 0.9rem;
+            }
+
+            .datetime-wrapper {
+                display: none;
+            }
+
+            .navbar .dropdown-toggle::after {
+                display: none;
+            }
+
+            .navbar .user-name {
+                max-width: 100px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .top-navbar {
+                left: 0;
+            }
+        }
+
+        /* Improve touch targets */
+        @media (hover: none) {
+            .nav-link, .btn {
+                padding: 0.75rem 1rem;
+            }
+
+            .dropdown-item {
+                padding: 0.75rem 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -289,40 +348,55 @@
 
     @stack('scripts')
     <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Prevent back button
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted ||
+                (window.performance && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+
+        // Update time & date
+        function updateTime() {
+            const now = new Date();
+            const time = padZero(now.getHours()) + ':' +
+                        padZero(now.getMinutes()) + ':' +
+                        padZero(now.getSeconds());
+
+            const timeElement = document.getElementById('currentTime');
+            if (timeElement) {
+                timeElement.textContent = time;
+            }
+        }
+
+        function updateDate() {
+            const now = new Date();
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                           'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+            const dateStr = days[now.getDay()] + ', ' +
+                           now.getDate() + ' ' +
+                           months[now.getMonth()] + ' ' +
+                           now.getFullYear();
+
+            const dateElement = document.getElementById('currentDate');
+            if (dateElement) {
+                dateElement.textContent = dateStr;
+            }
+        }
+
+        // Initialize
+        updateTime();
+        updateDate();
+        setInterval(updateTime, 1000);
+    });
+
     // Fungsi untuk format angka menjadi 2 digit
     function padZero(num) {
         return num < 10 ? '0' + num : num;
     }
-
-    // Fungsi untuk update jam
-    function updateTime() {
-        const now = new Date();
-        const time = padZero(now.getHours()) + ':' +
-                    padZero(now.getMinutes()) + ':' +
-                    padZero(now.getSeconds());
-
-        document.getElementById('currentTime').textContent = time;
-    }
-
-    // Fungsi untuk update tanggal
-    function updateDate() {
-        const now = new Date();
-        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-
-        const dateStr = days[now.getDay()] + ', ' +
-                       now.getDate() + ' ' +
-                       months[now.getMonth()] + ' ' +
-                       now.getFullYear();
-
-        document.getElementById('currentDate').textContent = dateStr;
-    }
-
-    // Update setiap detik
-    setInterval(updateTime, 1000);
-    updateTime();
-    updateDate();
 
     // Toggle sidebar on mobile
     document.getElementById('sidebarToggle').addEventListener('click', function() {
@@ -339,40 +413,6 @@
             }
         }
     });
-
-    // Prevent back navigation
-    (function() {
-        // Prevent back button
-        window.history.pushState(null, null, window.location.href);
-        window.addEventListener('popstate', function() {
-            Swal.fire({
-                title: 'Peringatan Navigasi',
-                text: "Anda akan keluar dari sistem jika kembali ke halaman sebelumnya. Lanjutkan?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Ya, Keluar',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Submit form logout
-                    document.getElementById('logout-form').submit();
-                } else {
-                    window.history.pushState(null, null, window.location.href);
-                }
-            });
-        });
-
-        // Reload if accessed from back-forward cache
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted ||
-                window.performance &&
-                window.performance.navigation.type === 2) {
-                window.location.reload();
-            }
-        });
-    })();
 
     // Logout confirmation
     function confirmLogout() {

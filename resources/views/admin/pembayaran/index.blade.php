@@ -80,20 +80,24 @@
                         <div class="col-md-12 mb-4">
                             <div class="mb-3">
                                 <label class="form-label">Cari Santri</label>
-                                <select class="form-control" id="santri_id" name="santri_id" required></select>
-                                @error('santri_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <input type="text" class="form-control" id="searchSantri" placeholder="Ketik nama atau NISN santri...">
+                                <div class="form-text">Minimal 2 karakter untuk mencari</div>
                             </div>
 
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <div id="detail_santri">
-                                        <p class="text-muted text-center mb-0">
-                                            Pilih santri untuk melihat detail
-                                        </p>
-                                    </div>
-                                </div>
+                            <div class="table-responsive mb-3" id="hasilPencarian" style="display:none;">
+                                <table class="table table-hover table-bordered">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>NISN</th>
+                                            <th>Nama</th>
+                                            <th>Kelas</th>
+                                            <th>Kategori</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -199,31 +203,194 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Inisialisasi Select2 untuk pencarian santri
-    $('#santri_id').select2({
-        theme: 'bootstrap-5',
-        dropdownParent: $('#modalPembayaran'),
-        placeholder: 'Cari nama/NISN santri...',
-        allowClear: true,
-        minimumInputLength: 2,
-        ajax: {
-            url: '{{ route("admin.santri.search") }}',
-            dataType: 'json',
-            delay: 250,
-            processResults: function(data) {
-                return {
-                    results: data
-                };
-            },
-            cache: true
-        },
-        templateResult: formatSantri,
-        templateSelection: formatSantriSelection
-    });
+let typingTimer;
+const doneTypingInterval = 500;
+const minLength = 2;
 
-    $('#dataTable').DataTable();
+// Validasi input pencarian
+function validateSearch(keyword) {
+    if (keyword.length < minLength) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Peringatan',
+            text: 'Minimal 2 karakter untuk mencari',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        return false;
+    }
+    return true;
+}
+
+// Event handler untuk input pencarian
+$('#searchSantri').on('keyup', function() {
+    clearTimeout(typingTimer);
+    const keyword = $(this).val().trim();
+
+    // Reset hasil pencarian jika input kosong
+    if (keyword === '') {
+        $('#hasilPencarian').hide();
+        return;
+    }
+
+    // Validasi input
+    if (!validateSearch(keyword)) {
+        return;
+    }
+
+    // Tampilkan loading state
+    $('#hasilPencarian').show();
+    $('#hasilPencarian tbody').html(`
+        <tr>
+            <td colspan="5" class="text-center">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    `);
+
+    // Tunda pencarian untuk mengurangi request
+    typingTimer = setTimeout(() => doSearch(keyword), doneTypingInterval);
 });
+
+// Fungsi pencarian AJAX
+function doSearch(keyword) {
+    $.ajax({
+        url: '{{ route("admin.santri.search") }}',
+        data: { q: keyword },
+        method: 'GET',
+        success: function(data) {
+            renderHasilPencarian(data);
+        },
+        error: function(xhr) {
+            handleSearchError(xhr);
+        }
+    });
+}
+
+// Render hasil pencarian
+function renderHasilPencarian(data) {
+    let html = '';
+    if (data.length > 0) {
+        data.forEach(function(santri) {
+            html += `
+                <tr>
+                    <td>${santri.nisn}</td>
+                    <td>${santri.nama}</td>
+                    <td>${santri.kelas}</td>
+                    <td>${santri.kategori}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-primary pilih-santri"
+                            data-santri='${JSON.stringify(santri)}'>
+                            <i class="fas fa-check"></i> Pilih
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        html = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Tidak ada data yang sesuai
+                </td>
+            </tr>
+        `;
+    }
+    $('#hasilPencarian tbody').html(html);
+}
+
+// Handle error pencarian
+function handleSearchError(xhr) {
+    $('#hasilPencarian tbody').html(`
+        <tr>
+            <td colspan="5" class="text-center text-danger">
+                <i class="fas fa-exclamation-circle me-1"></i>
+                Terjadi kesalahan saat mencari data
+            </td>
+        </tr>
+    `);
+
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Gagal melakukan pencarian. Silakan coba lagi.',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+    });
+}
+
+// Event handler untuk memilih santri
+$(document).on('click', '.pilih-santri', function() {
+    const santri = $(this).data('santri');
+    pilihSantri(santri);
+});
+
+// Fungsi untuk mengisi form dengan data santri
+function pilihSantri(santri) {
+    try {
+        // Hapus input hidden yang mungkin sudah ada
+        $('input[name="santri_id"]').remove();
+
+        // Tambahkan input hidden baru
+        $('<input>').attr({
+            type: 'hidden',
+            name: 'santri_id',
+            value: santri.id
+        }).appendTo('form');
+
+        // Update detail santri
+        $('#detail_santri').html(`
+            <div class="card border-success">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Nama:</strong><br>${santri.nama}</p>
+                            <p class="mb-1"><strong>NISN:</strong><br>${santri.nisn}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Kelas:</strong><br>${santri.kelas}</p>
+                            <p class="mb-1"><strong>Kategori:</strong><br>${santri.kategori}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        // Sembunyikan hasil pencarian
+        $('#hasilPencarian').hide();
+        $('#searchSantri').val('');
+
+        // Tampilkan notifikasi sukses
+        Swal.fire({
+            icon: 'success',
+            title: 'Santri dipilih',
+            text: `${santri.nama} telah dipilih`,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2000
+        });
+
+    } catch (error) {
+        console.error('Error saat memilih santri:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Gagal memilih santri. Silakan coba lagi.',
+        });
+    }
+}
+
+$('#dataTable').DataTable();
 </script>
 @endpush
 @endsection

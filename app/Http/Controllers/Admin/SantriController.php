@@ -7,31 +7,17 @@ use App\Models\Santri;
 use App\Models\User;
 use App\Models\KategoriSantri;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SantriController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Santri::with(['wali', 'kategori']);
+        $santri = Santri::with(['kategori', 'wali'])
+            ->latest()
+            ->get();
 
-        // Filter berdasarkan request
-        if ($request->filled('jenjang')) {
-            $query->where('jenjang', $request->jenjang);
-        }
-        if ($request->filled('kelas')) {
-            $query->where('kelas', $request->kelas);
-        }
-        if ($request->filled('kategori_id')) {
-            $query->where('kategori_id', $request->kategori_id);
-        }
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $santri = $query->latest()->paginate(10);
-        $kategori = KategoriSantri::all();
-
-        return view('admin.santri.index', compact('santri', 'kategori'));
+        return view('admin.santri.index', compact('santri'));
     }
 
     public function create()
@@ -135,8 +121,25 @@ class SantriController extends Controller
 
     public function destroy(Santri $santri)
     {
-        $santri->delete();
-        return redirect()->route('admin.santri.index')->with('success', 'Data santri berhasil dihapus');
+        try {
+            DB::beginTransaction();
+
+            // Hapus semua pembayaran terkait
+            $santri->pembayaran()->delete();
+
+            // Hapus data santri
+            $santri->delete();
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.santri.index')
+                ->with('success', 'Data santri dan semua data terkait berhasil dihapus');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus data santri. Silakan coba lagi.');
+        }
     }
 
     public function show(Santri $santri)
@@ -154,40 +157,39 @@ class SantriController extends Controller
     public function search(Request $request)
     {
         $keyword = $request->get('q');
-        $query = Santri::with(['kategori', 'wali'])
-            ->where(function($q) use ($keyword) {
-                $q->where('nama', 'LIKE', "%{$keyword}%")
-                  ->orWhere('nisn', 'LIKE', "%{$keyword}%");
+
+        $santri = Santri::select('id', 'nisn', 'nama', 'jenjang', 'kelas', 'kategori_id')
+            ->with('kategori:id,nama')
+            ->where(function($query) use ($keyword) {
+                // Pencarian nama yang mirip
+                $query->where('nama', 'LIKE', "%{$keyword}%")
+                      ->orWhere('nama', 'LIKE', "{$keyword}%") // Awalan sama
+                      ->orWhere('nama', 'LIKE', "% {$keyword}%") // Kata kedua dst
+                      // Pencarian NISN yang mirip
+                      ->orWhere('nisn', 'LIKE', "%{$keyword}%")
+                      ->orWhere('nisn', 'LIKE', "{$keyword}%");
+            })
+            ->orderByRaw("
+                CASE
+                    WHEN nama LIKE '{$keyword}%' THEN 1
+                    WHEN nama LIKE '% {$keyword}%' THEN 2
+                    WHEN nisn LIKE '{$keyword}%' THEN 3
+                    ELSE 4
+                END
+            ") // Urutkan berdasarkan kemiripan
+            ->limit(10)
+            ->get()
+            ->map(function($santri) {
+                return [
+                    'id' => $santri->id,
+                    'text' => $santri->nisn . ' - ' . $santri->nama,
+                    'nama' => $santri->nama,
+                    'nisn' => $santri->nisn,
+                    'kelas' => $santri->jenjang . ' ' . $santri->kelas,
+                    'kategori' => $santri->kategori->nama ?? '-'
+                ];
             });
 
-        // Filter tambahan
-        if ($request->filled('jenjang')) {
-            $query->where('jenjang', $request->jenjang);
-        }
-        if ($request->filled('kelas')) {
-            $query->where('kelas', $request->kelas);
-        }
-        if ($request->filled('kategori_id')) {
-            $query->where('kategori_id', $request->kategori_id);
-        }
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $results = $query->limit(10)->get()->map(function($s) {
-            return [
-                'id' => $s->id,
-                'text' => "{$s->nama} - {$s->nisn}",
-                'nama' => $s->nama,
-                'nisn' => $s->nisn,
-                'kelas' => "{$s->jenjang} {$s->kelas}",
-                'kategori' => $s->kategori->nama,
-                'wali' => $s->wali->name,
-                'status' => ucfirst($s->status),
-                'url' => route('admin.santri.show', $s)
-            ];
-        });
-
-        return response()->json($results);
+        return response()->json($santri);
     }
 }

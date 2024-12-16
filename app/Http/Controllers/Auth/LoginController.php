@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Models\User;
 
 class LoginController extends Controller
 {
@@ -24,15 +26,17 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
-            if($user->role == 'admin') {
+            Log::info('User Login', [
+                'user_id' => $user->id,
+                'role' => $user->role
+            ]);
+
+            if ($user->role === 'admin') {
                 return redirect()->route('admin.dashboard');
-            }
-            else if($user->role == 'petugas') {
+            } elseif ($user->role === 'petugas') {
                 return redirect()->route('petugas.dashboard');
             }
-            else {
-                return redirect()->route('wali.dashboard');
-            }
+            return redirect()->route('wali.dashboard');
         }
 
         return back()->withErrors([
@@ -46,16 +50,5 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/');
-    }
-
-    protected function authenticated(Request $request, $user)
-    {
-        if($user->hasRole('admin')) {
-            return redirect()->route('admin.dashboard');
-        }
-        else if($user->hasRole('petugas')) {
-            return redirect()->route('petugas.dashboard');
-        }
-        return redirect()->route('wali.dashboard');
     }
 }

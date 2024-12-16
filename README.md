@@ -115,3 +115,57 @@ Pull request sangat diterima. Untuk perubahan besar, silakan buka issue terlebih
 ## Lisensi
 
 [MIT License]
+
+## Progres Pengembangan
+
+### Fitur yang Sudah Selesai
+1. Autentikasi dan Autorisasi
+   - Login untuk admin dan wali santri
+   - Middleware role dan permission
+   - Reset password
+
+2. Manajemen Data Master
+   - CRUD Kategori Santri
+   - CRUD Data Santri
+   - Riwayat perubahan tarif SPP
+   - Validasi data terkait
+
+3. Pencarian dan Filter
+   - Pencarian santri (nama/NISN)
+   - Filter berdasarkan jenjang
+   - Filter berdasarkan kelas
+   - Filter berdasarkan kategori
+   - Filter berdasarkan status
+
+4. Pembayaran SPP
+   - Form pembayaran dengan validasi
+   - Pencarian santri saat pembayaran
+   - Preview data santri sebelum pembayaran
+   - Riwayat pembayaran
+
+### Fitur yang Sedang Dikembangkan
+1. Dashboard
+   - Statistik pembayaran
+   - Grafik pendapatan
+   - Notifikasi tunggakan
+
+2. Laporan
+   - Laporan pembayaran per periode
+   - Laporan tunggakan
+   - Export data ke Excel/PDF
+
+3. Notifikasi
+   - Email notifikasi pembayaran
+   - Reminder tunggakan
+
+### Tech Stack
+- Laravel 10
+- MySQL
+- Bootstrap 5
+- jQuery
+- Select2
+- DataTables
+- SweetAlert2
+
+### Instalasi dan Penggunaan
+[Instruksi instalasi dan penggunaan akan ditambahkan]

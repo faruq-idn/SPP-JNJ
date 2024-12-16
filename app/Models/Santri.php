@@ -42,6 +42,6 @@ class Santri extends Model
 
     public function pembayaran(): HasMany
     {
-        return $this->hasMany(PembayaranSpp::class, 'santri_id');
+        return $this->hasMany(PembayaranSpp::class);
     }
 }

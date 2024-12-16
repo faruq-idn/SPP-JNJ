@@ -11,15 +11,14 @@ return new class extends Migration
         Schema::create('pembayaran_spp', function (Blueprint $table) {
             $table->id();
             $table->foreignId('santri_id')->constrained('santri');
+            $table->foreignId('petugas_id')->nullable()->constrained('users');
             $table->date('tanggal_bayar');
-            $table->string('bulan');
-            $table->integer('tahun');
-            $table->decimal('nominal', 10, 2);
+            $table->string('bulan', 2);
+            $table->year('tahun');
+            $table->decimal('nominal', 10, 0);
             $table->enum('metode_pembayaran', ['tunai', 'transfer', 'midtrans']);
-            $table->string('bukti_pembayaran')->nullable();
             $table->enum('status', ['pending', 'success', 'failed'])->default('pending');
             $table->string('keterangan')->nullable();
-            $table->foreignId('petugas_id')->nullable()->constrained('users');
             $table->timestamps();
         });
     }

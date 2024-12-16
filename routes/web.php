@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\SantriController;
 use App\Http\Controllers\Admin\KategoriSantriController;
@@ -9,7 +11,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Petugas\DashboardController as PetugasDashboard;
 use App\Http\Controllers\Wali\DashboardController as WaliDashboard;
 use App\Http\Controllers\Wali\TagihanController;
-use Illuminate\Support\Facades\Route;
+use App\Models\User;
 
 Route::get('/', function () {
     return view('welcome');
@@ -20,13 +22,25 @@ require __DIR__.'/auth.php';
 
 // Dashboard Routes
 Route::middleware(['auth'])->group(function () {
+    // Default dashboard redirect (pindahkan ke atas)
+    Route::get('/dashboard', function() {
+        $user = Auth::user();
+
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->role === 'petugas') {
+            return redirect()->route('petugas.dashboard');
+        }
+        return redirect()->route('wali.dashboard');
+    })->name('dashboard');
+
     // Admin routes
-    Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
 
         // Santri routes
-        Route::resource('santri', SantriController::class);
         Route::get('/santri/search', [SantriController::class, 'search'])->name('santri.search');
+        Route::resource('santri', SantriController::class);
 
         // Kategori routes
         Route::resource('kategori', KategoriSantriController::class);
@@ -48,7 +62,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Petugas routes
-    Route::middleware(['role:petugas'])->prefix('petugas')->name('petugas.')->group(function () {
+    Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')->group(function () {
         Route::get('/dashboard', [PetugasDashboard::class, 'index'])->name('dashboard');
 
         // Data Santri
@@ -67,21 +81,9 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Wali routes
-    Route::middleware(['role:wali'])->prefix('wali')->name('wali.')->group(function () {
+    Route::middleware(['auth', 'role:wali'])->prefix('wali')->name('wali.')->group(function () {
         Route::get('/dashboard', [WaliDashboard::class, 'index'])->name('dashboard');
         Route::get('/tagihan', [TagihanController::class, 'index'])->name('tagihan');
         Route::get('/pembayaran', [PembayaranController::class, 'riwayat'])->name('pembayaran');
     });
-
-    // Redirect sesuai role setelah login
-    Route::get('/dashboard', function() {
-        $user = \Illuminate\Support\Facades\Auth::user();
-        if($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
-        else if($user->role === 'petugas') {
-            return redirect()->route('petugas.dashboard');
-        }
-        return redirect()->route('wali.dashboard');
-    })->name('dashboard');
 });

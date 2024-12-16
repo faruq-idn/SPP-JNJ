@@ -67,10 +67,10 @@ class PembayaranSppSeeder extends Seeder
                 'bulan' => now()->format('m'),
                 'tahun' => now()->format('Y'),
                 'nominal' => 500000,
-                'metode_pembayaran' => 'midtrans',
+                'metode_pembayaran' => 'transfer',
                 'status' => 'pending',
                 'keterangan' => 'Menunggu pembayaran',
-                'petugas_id' => null
+                'petugas_id' => $petugas->id
             ]);
         }
     }

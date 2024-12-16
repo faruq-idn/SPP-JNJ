@@ -40,6 +40,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Santri routes
         Route::get('/santri/search', [SantriController::class, 'search'])->name('santri.search');
+        Route::get('/santri/kelas/{jenjang}/{kelas}', [SantriController::class, 'kelas'])->name('santri.kelas');
+        Route::get('/santri/template', [SantriController::class, 'downloadTemplate'])->name('santri.template');
+        Route::post('/santri/import', [SantriController::class, 'importExcel'])->name('santri.import');
         Route::resource('santri', SantriController::class);
 
         // Kategori routes

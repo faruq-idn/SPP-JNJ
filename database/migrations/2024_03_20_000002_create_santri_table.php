@@ -15,12 +15,14 @@ return new class extends Migration
             $table->enum('jenis_kelamin', ['L', 'P']);
             $table->date('tanggal_lahir');
             $table->text('alamat');
-            $table->foreignId('wali_id')->constrained('users');
+            $table->unsignedBigInteger('wali_id')->nullable();
+            $table->foreign('wali_id')->references('id')->on('users')->nullOnDelete();
+            $table->string('nama_wali')->nullable();
             $table->date('tanggal_masuk');
             $table->enum('jenjang', ['SMP', 'SMA']);
             $table->string('kelas');
-            $table->enum('status', ['aktif', 'non-aktif'])->default('aktif');
             $table->foreignId('kategori_id')->constrained('kategori_santri');
+            $table->enum('status', ['aktif', 'non-aktif'])->default('aktif');
             $table->timestamps();
         });
     }

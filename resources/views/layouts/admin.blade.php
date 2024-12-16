@@ -107,6 +107,29 @@
             padding: 1rem;
             border-radius: 0.25rem;
         }
+
+        /* Navbar dropdown styles */
+        .navbar .nav-link {
+            color: #333 !important;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar .dropdown-toggle::after {
+            margin-left: 0.5rem;
+        }
+
+        .navbar .user-name {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 768px) {
+            .navbar .user-name {
+                display: inline-block !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -140,7 +163,8 @@
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-user-circle"></i> {{ Auth::user()->name }}
+                                    <i class="fas fa-user-circle"></i>
+                                    <span class="user-name">{{ Auth::user()->name }}</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog"></i> Profil</a></li>

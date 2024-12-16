@@ -17,11 +17,17 @@ class Santri extends Model
         'tanggal_lahir',
         'alamat',
         'wali_id',
+        'nama_wali',
         'tanggal_masuk',
         'jenjang',
         'kelas',
         'kategori_id',
         'status'
+    ];
+
+    protected $nullable = [
+        'wali_id',
+        'nama_wali'
     ];
 
     protected $casts = [

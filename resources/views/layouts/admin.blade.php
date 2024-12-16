@@ -130,6 +130,45 @@
                 display: inline-block !important;
             }
         }
+
+        /* Jam & Tanggal styles */
+        #currentTime {
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #2c3e50;
+            letter-spacing: 2px;
+            margin: 0;
+            line-height: 1;
+        }
+
+        #currentDate {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .datetime-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-right: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .datetime-wrapper {
+                flex-direction: column;
+                gap: 0.5rem;
+                margin-right: 0;
+                text-align: center;
+            }
+            #currentTime {
+                font-size: 1.4rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -160,6 +199,14 @@
                         <span class="navbar-toggler-icon"></span>
                     </button>
                     <div class="collapse navbar-collapse" id="navbarNav">
+                        <!-- Jam & Tanggal -->
+                        <div class="ms-auto d-flex align-items-center">
+                            <div class="datetime-wrapper">
+                                <div id="currentTime" class="h5 mb-0"></div>
+                                <div id="currentDate" class="small text-muted"></div>
+                            </div>
+                        </div>
+
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
@@ -242,6 +289,41 @@
 
     @stack('scripts')
     <script>
+    // Fungsi untuk format angka menjadi 2 digit
+    function padZero(num) {
+        return num < 10 ? '0' + num : num;
+    }
+
+    // Fungsi untuk update jam
+    function updateTime() {
+        const now = new Date();
+        const time = padZero(now.getHours()) + ':' +
+                    padZero(now.getMinutes()) + ':' +
+                    padZero(now.getSeconds());
+
+        document.getElementById('currentTime').textContent = time;
+    }
+
+    // Fungsi untuk update tanggal
+    function updateDate() {
+        const now = new Date();
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+        const dateStr = days[now.getDay()] + ', ' +
+                       now.getDate() + ' ' +
+                       months[now.getMonth()] + ' ' +
+                       now.getFullYear();
+
+        document.getElementById('currentDate').textContent = dateStr;
+    }
+
+    // Update setiap detik
+    setInterval(updateTime, 1000);
+    updateTime();
+    updateDate();
+
     // Toggle sidebar on mobile
     document.getElementById('sidebarToggle').addEventListener('click', function() {
         document.querySelector('.sidebar').classList.toggle('show');

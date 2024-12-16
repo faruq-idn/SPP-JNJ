@@ -76,11 +76,32 @@
                     <table class="table">
                         <tr>
                             <th width="30%">Nama Wali</th>
-                            <td>{{ $santri->wali->name }}</td>
+                            <td>
+                                @if($santri->wali_id)
+                                    {{ $santri->wali->name }}
+                                @elseif($santri->nama_wali)
+                                    {{ $santri->nama_wali }}
+                                    <span class="badge bg-warning text-dark">Belum terhubung</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <th>Email</th>
-                            <td>{{ $santri->wali->email }}</td>
+                            <td>{{ $santri->wali->email ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Status Wali</th>
+                            <td>
+                                @if($santri->wali_id)
+                                    <span class="badge bg-success">Terhubung</span>
+                                @elseif($santri->nama_wali)
+                                    <span class="badge bg-warning text-dark">Menunggu Klaim</span>
+                                @else
+                                    <span class="badge bg-secondary">Belum Ada Wali</span>
+                                @endif
+                            </td>
                         </tr>
                     </table>
                 </div>

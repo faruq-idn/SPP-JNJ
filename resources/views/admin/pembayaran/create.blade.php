@@ -185,6 +185,18 @@ $(document).ready(function() {
                         ${data.kategori}
                     </p>
                 </div>
+                <div class="col-12 mt-2">
+                    <p class="mb-1">
+                        <strong>Wali Santri:</strong><br>
+                        ${data.wali.nama} (${data.wali.email})
+                    </p>
+                    <p class="mb-0">
+                        <strong>Status Pembayaran:</strong><br>
+                        <span class="badge bg-${data.tunggakan > 0 ? 'warning' : 'success'}">
+                            ${data.status}
+                        </span>
+                    </p>
+                </div>
             </div>
         `);
     }).on('select2:clear', function() {

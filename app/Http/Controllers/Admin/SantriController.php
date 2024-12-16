@@ -89,6 +89,9 @@ class SantriController extends Controller
 
     public function edit(Santri $santri)
     {
+        // Simpan URL sebelumnya ke session
+        session(['santri_previous_url' => url()->previous()]);
+
         $kategori = KategoriSantri::all();
         $wali = User::where('role', 'wali')->get();
         $jenjang = ['SMP', 'SMA'];
@@ -118,6 +121,14 @@ class SantriController extends Controller
 
         $santri->update($validated);
 
+        // Redirect ke URL sebelumnya jika ada
+        if ($previousUrl = session('santri_previous_url')) {
+            session()->forget('santri_previous_url');
+            return redirect($previousUrl)
+                ->with('success', 'Data santri berhasil diperbarui');
+        }
+
+        // Default: kembali ke index
         return redirect()->route('admin.santri.index')
             ->with('success', 'Data santri berhasil diperbarui');
     }
@@ -161,8 +172,17 @@ class SantriController extends Controller
     {
         $keyword = $request->get('q');
 
-        $santri = Santri::select('id', 'nisn', 'nama', 'jenjang', 'kelas', 'kategori_id')
-            ->with('kategori:id,nama')
+        $santri = Santri::query()
+            ->select('id', 'nisn', 'nama', 'jenjang', 'kelas', 'kategori_id', 'wali_id')
+            ->with([
+                'kategori:id,nama',
+                'wali:id,name,email',
+                'pembayaran' => function($query) {
+                    $query->select('id', 'santri_id', 'bulan', 'tahun', 'status')
+                        ->whereYear('created_at', now()->year)
+                        ->orderBy('bulan', 'desc');
+                }
+            ])
             ->where(function($query) use ($keyword) {
                 // Pencarian nama yang mirip
                 $query->where('nama', 'LIKE', "%{$keyword}%")
@@ -170,7 +190,12 @@ class SantriController extends Controller
                       ->orWhere('nama', 'LIKE', "% {$keyword}%") // Kata kedua dst
                       // Pencarian NISN yang mirip
                       ->orWhere('nisn', 'LIKE', "%{$keyword}%")
-                      ->orWhere('nisn', 'LIKE', "{$keyword}%");
+                      ->orWhere('nisn', 'LIKE', "{$keyword}%")
+                      // Pencarian berdasarkan wali
+                      ->orWhereHas('wali', function($q) use ($keyword) {
+                          $q->where('name', 'LIKE', "%{$keyword}%")
+                            ->orWhere('email', 'LIKE', "%{$keyword}%");
+                      });
             })
             ->orderByRaw("
                 CASE
@@ -183,13 +208,24 @@ class SantriController extends Controller
             ->limit(10)
             ->get()
             ->map(function($santri) {
+                // Hitung tunggakan
+                $tunggakan = $santri->pembayaran
+                    ->where('status', 'pending')
+                    ->count();
+
                 return [
                     'id' => $santri->id,
                     'text' => $santri->nisn . ' - ' . $santri->nama,
                     'nama' => $santri->nama,
                     'nisn' => $santri->nisn,
                     'kelas' => $santri->jenjang . ' ' . $santri->kelas,
-                    'kategori' => $santri->kategori->nama ?? '-'
+                    'kategori' => $santri->kategori->nama ?? '-',
+                    'wali' => [
+                        'nama' => $santri->wali->name ?? '-',
+                        'email' => $santri->wali->email ?? '-'
+                    ],
+                    'tunggakan' => $tunggakan,
+                    'status' => $tunggakan > 0 ? 'Menunggak ' . $tunggakan . ' bulan' : 'Lunas'
                 ];
             });
 

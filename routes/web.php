@@ -64,6 +64,9 @@ Route::middleware(['auth'])->group(function () {
 
         // User management routes
         Route::resource('users', UserController::class)->except(['show']);
+
+        // Ajax search routes
+        Route::get('/users/search', [UserController::class, 'search'])->name('users.search');
     });
 
     // Petugas routes

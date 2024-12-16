@@ -5,10 +5,12 @@
 @section('content')
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Edit Santri</h1>
-        <a href="{{ route('admin.santri.index') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Kembali
-        </a>
+        <h1 class="h3 mb-0 text-gray-800">Edit Data Santri</h1>
+        <div>
+            <a href="{{ url()->previous() }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </a>
+        </div>
     </div>
 
     <div class="card shadow">
@@ -85,16 +87,16 @@
 
                         <div class="mb-3">
                             <label for="wali_id" class="form-label">Wali Santri</label>
-                            <select class="form-select @error('wali_id') is-invalid @enderror"
+                            <select class="form-select select2-wali @error('wali_id') is-invalid @enderror"
                                 id="wali_id" name="wali_id" required>
                                 <option value="">Pilih Wali Santri</option>
-                                @foreach($wali as $w)
-                                    <option value="{{ $w->id }}"
-                                        {{ old('wali_id', $santri->wali_id) == $w->id ? 'selected' : '' }}>
-                                        {{ $w->name }}
+                                @if($santri->wali_id)
+                                    <option value="{{ $santri->wali_id }}" selected>
+                                        {{ $santri->wali->name }} ({{ $santri->wali->email }})
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
+                            <div id="wali_info" class="mt-2 small"></div>
                             @error('wali_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -193,6 +195,58 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+    // Inisialisasi Select2 untuk wali santri
+    $('.select2-wali').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Cari nama/email wali...',
+        allowClear: true,
+        minimumInputLength: 2,
+        ajax: {
+            url: '{{ route("admin.users.search") }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    q: params.term,
+                    role: 'wali'
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.map(function(item) {
+                        return {
+                            id: item.id,
+                            text: item.text,
+                            santri: item.santri
+                        };
+                    })
+                };
+            },
+            cache: true
+        }
+    }).on('select2:select', function(e) {
+        // Tampilkan info santri dari wali yang dipilih
+        var data = e.params.data;
+        if (data.santri && data.santri.length > 0) {
+            var santriInfo = '<div class="text-muted">' +
+                '<i class="fas fa-info-circle me-1"></i> ' +
+                'Wali dari:';
+
+            data.santri.forEach(function(s) {
+                santriInfo += `<br>• ${s.nama} (${s.kelas})`;
+            });
+
+            santriInfo += '</div>';
+            $('#wali_info').html(santriInfo);
+        } else {
+            $('#wali_info').html('<div class="text-muted">' +
+                '<i class="fas fa-info-circle me-1"></i> ' +
+                'Belum memiliki santri</div>');
+        }
+    }).on('select2:clear', function() {
+        $('#wali_info').empty();
+    });
+
     // Update opsi kelas saat jenjang berubah
     $('#jenjang').change(function() {
         var jenjang = $(this).val();

@@ -89,4 +89,55 @@ class UserController extends Controller
 
         return back()->with('success', 'Pengguna berhasil dihapus');
     }
+
+    public function search(Request $request)
+    {
+        $keyword = $request->get('q');
+        $role = $request->get('role', 'wali');
+
+        $users = User::query()
+            ->select('id', 'name', 'email')
+            ->with(['santri' => function($query) {
+                $query->select('id', 'wali_id', 'nama', 'nisn', 'kelas', 'jenjang')
+                    ->orderBy('nama');
+            }])
+            ->where('role', $role)
+            ->where(function($query) use ($keyword) {
+                $query->where('name', 'LIKE', "%{$keyword}%")
+                      ->orWhere('name', 'LIKE', "{$keyword}%") // Awalan sama
+                      ->orWhere('name', 'LIKE', "% {$keyword}%") // Kata kedua dst
+                      ->orWhere('email', 'LIKE', "%{$keyword}%")
+                      ->orWhereHas('santri', function($q) use ($keyword) {
+                          $q->where('nama', 'LIKE', "%{$keyword}%")
+                            ->orWhere('nisn', 'LIKE', "%{$keyword}%");
+                      });
+            })
+            ->orderByRaw("
+                CASE
+                    WHEN name LIKE '{$keyword}%' THEN 1
+                    WHEN name LIKE '% {$keyword}%' THEN 2
+                    WHEN email LIKE '{$keyword}%' THEN 3
+                    ELSE 4
+                END
+            ")
+            ->limit(10)
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'text' => $user->name . ' (' . $user->email . ')',
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'santri' => $user->santri->map(function($s) {
+                        return [
+                            'nama' => $s->nama,
+                            'nisn' => $s->nisn,
+                            'kelas' => $s->jenjang . ' ' . $s->kelas
+                        ];
+                    })
+                ];
+            });
+
+        return response()->json($users);
+    }
 }

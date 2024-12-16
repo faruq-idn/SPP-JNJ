@@ -6,9 +6,11 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-gray-800">Data Santri</h1>
-        <a href="{{ route('admin.santri.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Tambah Santri
-        </a>
+        <div>
+            <a href="{{ route('admin.santri.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tambah Santri
+            </a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -51,13 +53,7 @@
                             <tr>
                                 <td>{{ $s->nisn }}</td>
                                 <td>{{ $s->nama }}</td>
-                                <td>
-                                    @if($s->jenjang && $s->kelas)
-                                        {{ $s->jenjang }} {{ $s->kelas }}
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
+                                <td>{{ $s->jenjang }} {{ $s->kelas }}</td>
                                 <td>{{ $s->kategori->nama }}</td>
                                 <td>
                                     <span class="badge bg-{{ $s->status === 'aktif' ? 'success' : 'secondary' }}">
@@ -70,19 +66,21 @@
                                             class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('admin.santri.edit', $s) }}"
-                                            class="btn btn-sm btn-warning">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form action="{{ route('admin.santri.destroy', $s) }}"
-                                            method="POST"
-                                            class="d-inline delete-form">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        @if(Auth::user()->role === 'admin')
+                                            <a href="{{ route('admin.santri.edit', $s) }}"
+                                                class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form action="{{ route('admin.santri.destroy', $s) }}"
+                                                method="POST"
+                                                class="d-inline delete-form">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

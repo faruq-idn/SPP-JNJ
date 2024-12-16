@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title') - Admin Panel</title>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, private">
     <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Expires" content="-1">
+    <title>@yield('title') - Admin Panel</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="robots" content="noindex, nofollow, noarchive">
 
@@ -146,12 +146,12 @@
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog"></i> Profil</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <form action="{{ route('logout') }}" method="POST">
+                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                                             @csrf
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="fas fa-sign-out-alt"></i> Logout
-                                            </button>
                                         </form>
+                                        <button type="button" class="dropdown-item text-danger" onclick="confirmLogout()">
+                                            <i class="fas fa-sign-out-alt"></i> Logout
+                                        </button>
                                     </li>
                                 </ul>
                             </li>
@@ -234,32 +234,57 @@
         }
     });
 
-    // Prevent back button
+    // Prevent back navigation
     (function() {
-        window.onpageshow = function(event) {
-            if (event.persisted) {
+        // Prevent back button
+        window.history.pushState(null, null, window.location.href);
+        window.addEventListener('popstate', function() {
+            Swal.fire({
+                title: 'Peringatan Navigasi',
+                text: "Anda akan keluar dari sistem jika kembali ke halaman sebelumnya. Lanjutkan?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit form logout
+                    document.getElementById('logout-form').submit();
+                } else {
+                    window.history.pushState(null, null, window.location.href);
+                }
+            });
+        });
+
+        // Reload if accessed from back-forward cache
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted ||
+                window.performance &&
+                window.performance.navigation.type === 2) {
                 window.location.reload();
             }
-        };
-
-        // Disable browser back button
-        window.history.pushState(null, "", window.location.href);
-        window.onpopstate = function() {
-            window.history.pushState(null, "", window.location.href);
-        };
-
-        // Clear browser cache on page load
-        window.onload = function() {
-            if (window.history.replaceState) {
-                window.history.replaceState(null, null, window.location.href);
-            }
-        }
-
-        // Handle beforeunload
-        window.addEventListener('beforeunload', function() {
-            // Clear any sensitive data if needed
         });
     })();
+
+    // Logout confirmation
+    function confirmLogout() {
+        Swal.fire({
+            title: 'Konfirmasi Logout',
+            text: "Anda yakin ingin keluar dari sistem?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Logout!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('logout-form').submit();
+            }
+        });
+    }
     </script>
 </body>
 </html>

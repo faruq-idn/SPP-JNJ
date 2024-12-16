@@ -27,7 +27,6 @@ class Santri extends Model
     protected $casts = [
         'tanggal_lahir' => 'date',
         'tanggal_masuk' => 'date',
-        'status' => 'string'
     ];
 
     public function wali(): BelongsTo

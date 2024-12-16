@@ -58,11 +58,13 @@ Route::middleware(['auth'])->group(function () {
 
         // Laporan
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+
+        // User management routes
+        Route::resource('users', UserController::class)->except(['show']);
     });
 
     // Petugas routes
-    Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')->group(function () {
+    Route::middleware(['auth', 'role:petugas', 'prevent-back'])->prefix('petugas')->name('petugas.')->group(function () {
         Route::get('/dashboard', [PetugasDashboard::class, 'index'])->name('dashboard');
 
         // Data Santri
@@ -81,7 +83,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Wali routes
-    Route::middleware(['auth', 'role:wali'])->prefix('wali')->name('wali.')->group(function () {
+    Route::middleware(['auth', 'role:wali', 'prevent-back'])->prefix('wali')->name('wali.')->group(function () {
         Route::get('/dashboard', [WaliDashboard::class, 'index'])->name('dashboard');
         Route::get('/tagihan', [TagihanController::class, 'index'])->name('tagihan');
         Route::get('/pembayaran', [PembayaranController::class, 'riwayat'])->name('pembayaran');

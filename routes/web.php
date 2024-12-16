@@ -40,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Santri routes
         Route::get('/santri/search', [SantriController::class, 'search'])->name('santri.search');
+        Route::get('/santri/{santri}/pembayaran', [SantriController::class, 'pembayaran'])->name('santri.pembayaran');
         Route::get('/santri/kelas/{jenjang}/{kelas}', [SantriController::class, 'kelas'])->name('santri.kelas');
         Route::get('/santri/template', [SantriController::class, 'downloadTemplate'])->name('santri.template');
         Route::post('/santri/import', [SantriController::class, 'importExcel'])->name('santri.import');
@@ -59,8 +60,14 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/', 'store')->name('store');
         });
 
-        // Laporan
-        Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+        // Laporan routes
+        Route::prefix('laporan')->name('laporan.')->group(function () {
+            Route::get('/', [LaporanController::class, 'index'])->name('index');
+            Route::get('/pembayaran', [LaporanController::class, 'pembayaran'])->name('pembayaran');
+            Route::get('/tunggakan', [LaporanController::class, 'tunggakan'])->name('tunggakan');
+            Route::get('/pembayaran/export', [LaporanController::class, 'exportPembayaran'])->name('export.pembayaran');
+            Route::get('/tunggakan/export', [LaporanController::class, 'exportTunggakan'])->name('export.tunggakan');
+        });
 
         // User management routes
         Route::resource('users', UserController::class)->except(['show']);

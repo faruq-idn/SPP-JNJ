@@ -382,4 +382,34 @@ class SantriController extends Controller
             'title' => "Data Santri Kelas {$kelas} {$jenjang}"
         ]);
     }
+
+    public function pembayaran(Santri $santri)
+    {
+        $pembayaran = $santri->pembayaran()
+            ->select('id', 'bulan', 'tahun', 'nominal', 'status', 'tanggal_bayar')
+            ->orderBy('tahun', 'desc')
+            ->orderBy('bulan', 'desc')
+            ->get()
+            ->map(function($p) {
+                $bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                return [
+                    'bulan_nama' => $bulan[$p->bulan - 1],
+                    'tahun' => $p->tahun,
+                    'nominal' => $p->nominal,
+                    'status' => $p->status,
+                    'tanggal_bayar' => $p->tanggal_bayar ? $p->tanggal_bayar->format('d/m/Y') : null
+                ];
+            });
+
+        return response()->json([
+            'santri' => [
+                'nama' => $santri->nama,
+                'nisn' => $santri->nisn,
+                'kelas' => $santri->jenjang . ' ' . $santri->kelas,
+                'kategori' => $santri->kategori->nama
+            ],
+            'pembayaran' => $pembayaran
+        ]);
+    }
 }

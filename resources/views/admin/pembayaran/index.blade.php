@@ -46,10 +46,19 @@
                                         {{ $p->status }}
                                     </span>
                                 </td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-info">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-info" title="Detail"
+                                            onclick="showDetailPembayaran({{ $p->santri_id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <a href="#" class="btn btn-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-danger" title="Hapus">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -196,6 +205,61 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detail Pembayaran -->
+<div class="modal fade" id="detailPembayaranModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Pembayaran Santri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p class="mb-1">
+                            <strong>Nama Santri:</strong><br>
+                            <span id="modal-nama"></span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>NISN:</strong><br>
+                            <span id="modal-nisn"></span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1">
+                            <strong>Kelas:</strong><br>
+                            <span id="modal-kelas"></span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>Kategori:</strong><br>
+                            <span id="modal-kategori"></span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Bulan</th>
+                                <th>Tahun</th>
+                                <th>Nominal</th>
+                                <th>Status</th>
+                                <th>Tanggal Bayar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-pembayaran">
+                            <tr>
+                                <td colspan="5" class="text-center">Memuat data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -391,6 +455,61 @@ function pilihSantri(santri) {
 }
 
 $('#dataTable').DataTable();
+
+// Fungsi untuk menampilkan detail pembayaran
+window.showDetailPembayaran = function(santriId) {
+    // Reset modal
+    $('#modal-pembayaran').html('<tr><td colspan="5" class="text-center">Memuat data...</td></tr>');
+
+    // Tampilkan modal
+    $('#detailPembayaranModal').modal('show');
+
+    // Ambil data pembayaran
+    $.get(`{{ url('admin/santri') }}/${santriId}/pembayaran`, function(response) {
+        // Update info santri
+        $('#modal-nama').text(response.santri.nama);
+        $('#modal-nisn').text(response.santri.nisn);
+        $('#modal-kelas').text(response.santri.kelas);
+        $('#modal-kategori').text(response.santri.kategori);
+
+        // Update tabel pembayaran
+        if (response.pembayaran.length > 0) {
+            let rows = '';
+            response.pembayaran.forEach(function(p) {
+                rows += `
+                    <tr>
+                        <td>${p.bulan_nama}</td>
+                        <td>${p.tahun}</td>
+                        <td>Rp ${parseInt(p.nominal).toLocaleString('id')}</td>
+                        <td>
+                            <span class="badge bg-${p.status === 'success' ? 'success' : 'warning'}">
+                                ${p.status === 'success' ? 'Lunas' : 'Belum Lunas'}
+                            </span>
+                        </td>
+                        <td>${p.tanggal_bayar ?? '-'}</td>
+                    </tr>
+                `;
+            });
+            $('#modal-pembayaran').html(rows);
+        } else {
+            $('#modal-pembayaran').html(`
+                <tr>
+                    <td colspan="5" class="text-center text-muted">
+                        Belum ada data pembayaran
+                    </td>
+                </tr>
+            `);
+        }
+    }).fail(function() {
+        $('#modal-pembayaran').html(`
+            <tr>
+                <td colspan="5" class="text-center text-danger">
+                    Gagal memuat data. Silakan coba lagi.
+                </td>
+            </tr>
+        `);
+    });
+}
 </script>
 @endpush
 @endsection

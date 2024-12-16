@@ -42,3 +42,59 @@
 ## 🛠️ Instalasi
 
 1. Clone repository
+```bash
+git clone https://github.com/username/repo.git
+cd repo
+```
+
+2. Install dependencies
+```bash
+composer install
+```
+```bash
+npm install
+```
+
+3. Setup environment
+```bash
+cp .env.example .env
+```  
+
+4. Konfigurasi database
+```bash
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+```
+
+5. Jalankan server
+```bash
+php artisan serve
+```
+
+6. Akses aplikasi
+```bash
+http://localhost:8000
+```
+
+## 📝 Keterangan Status
+- ✅ Selesai
+- ⚠️ Sedang dikerjakan  
+- 🚫 Belum dikerjakan
+
+## 📄 Lisensi
+
+Project ini dilisensikan dibawah [MIT License](LICENSE)
+
+## 👥 Kontribusi
+
+Kontribusi selalu diterima! Silakan buat pull request atau buka issue untuk diskusi.
+
+## 📞 Kontak
+
+Jika ada pertanyaan, silakan hubungi:
+- Email: admin@example.com
+- Website: https://example.com
+
+---
+Made with ❤️ by Tim Pengembang

@@ -11,19 +11,17 @@ class PembayaranSpp extends Model
 
     protected $fillable = [
         'santri_id',
-        'tanggal_bayar',
         'bulan',
-        'tahun',
         'nominal',
-        'metode_pembayaran',
-        'bukti_pembayaran',
+        'metode_pembayaran_id',
         'status',
-        'keterangan',
-        'petugas_id'
+        'keterangan'
     ];
 
     protected $casts = [
-        'tanggal_bayar' => 'date',
+        'tanggal_bayar' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
     public function santri(): BelongsTo
@@ -31,8 +29,8 @@ class PembayaranSpp extends Model
         return $this->belongsTo(Santri::class);
     }
 
-    public function petugas(): BelongsTo
+    public function metode_pembayaran(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'petugas_id');
+        return $this->belongsTo(MetodePembayaran::class);
     }
 }

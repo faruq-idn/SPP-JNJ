@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Rap2hpoutre\FastExcel\FastExcel;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use App\Models\PembayaranSpp;
 
 class SantriController extends Controller
 {
@@ -158,14 +159,54 @@ class SantriController extends Controller
 
     public function show(Santri $santri)
     {
-        $santri->load(['wali', 'kategori', 'pembayaran' => function($query) {
-            $query->latest()->take(5);
-        }]);
+        // Load relasi yang dibutuhkan
+        $santri->load(['wali', 'kategori']);
 
         // Hitung total tunggakan
-        $totalTunggakan = 0; // Logika perhitungan tunggakan akan ditambahkan nanti
+        $totalTunggakan = PembayaranSpp::where('santri_id', $santri->id)
+            ->where('status', 'pending')
+            ->sum('nominal');
 
-        return view('admin.santri.show', compact('santri', 'totalTunggakan'));
+        // Ambil tahun-tahun yang memiliki pembayaran
+        $tahunPembayaran = PembayaranSpp::where('santri_id', $santri->id)
+            ->selectRaw('DISTINCT tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
+            ->toArray();
+
+        // Jika belum ada data tahun, gunakan tahun sekarang
+        if (empty($tahunPembayaran)) {
+            $tahunPembayaran = [date('Y')];
+        }
+
+        // Siapkan data pembayaran per tahun
+        $pembayaranPerTahun = [];
+        foreach ($tahunPembayaran as $tahun) {
+            $pembayaran = [];
+            // Data pembayaran yang sudah ada
+            $existingPembayaran = PembayaranSpp::with('metode_pembayaran')
+                ->where('santri_id', $santri->id)
+                ->where('tahun', $tahun)
+                ->get()
+                ->keyBy('bulan');
+
+            // Generate 12 bulan
+            for ($bulan = 1; $bulan <= 12; $bulan++) {
+                $bulanPadded = str_pad($bulan, 2, '0', STR_PAD_LEFT);
+                $pembayaran[] = $existingPembayaran->get($bulanPadded) ?? (object)[
+                    'bulan' => $bulanPadded,
+                    'tahun' => $tahun,
+                    'nominal' => $santri->kategori->tarifTerbaru->nominal ?? 0,
+                    'status' => 'pending',
+                    'tanggal_bayar' => null,
+                    'metode_pembayaran' => null
+                ];
+            }
+
+            $pembayaranPerTahun[$tahun] = $pembayaran;
+        }
+
+        return view('admin.santri.show', compact('santri', 'totalTunggakan', 'pembayaranPerTahun'));
     }
 
     public function search(Request $request)
@@ -377,10 +418,14 @@ class SantriController extends Controller
             ->latest()
             ->get();
 
-        return view('admin.santri.index', [
-            'santri' => $santri,
-            'title' => "Data Santri Kelas {$kelas} {$jenjang}"
-        ]);
+        // Tambahkan informasi kelas untuk tampilan
+        $title = "Data Santri Kelas {$kelas} {$jenjang}";
+        $currentKelas = [
+            'jenjang' => $jenjang,
+            'kelas' => $kelas
+        ];
+
+        return view('admin.santri.index', compact('santri', 'title', 'currentKelas'));
     }
 
     public function pembayaran(Santri $santri)

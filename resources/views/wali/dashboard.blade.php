@@ -17,7 +17,36 @@
                 </div>
             @endif
 
-            @if($santri)
+            @if($santri_list->isEmpty())
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <div>
+                        Tidak ada santri yang terdaftar. Silakan hubungi admin untuk informasi lebih lanjut.
+                    </div>
+                </div>
+            @else
+                <!-- Santri Selector -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <form action="{{ route('wali.change-santri') }}" method="POST" class="d-flex align-items-center">
+                            @csrf
+                            <div class="me-3">
+                                <i class="fas fa-users text-primary fa-2x"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <label for="santri_id" class="form-label mb-0">Pilih Santri:</label>
+                                <select name="santri_id" id="santri_id" class="form-select" onchange="this.form.submit()">
+                                    @foreach($santri_list as $s)
+                                        <option value="{{ $s->id }}" {{ $santri->id == $s->id ? 'selected' : '' }}>
+                                            {{ $s->nama }} ({{ $s->nis }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Info Cards -->
                 <div class="row g-3 mb-4">
                     <!-- Status SPP Card -->
@@ -103,7 +132,7 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover mb-0">
+                            <table class="table table-hover align-middle mb-0">
                                 <thead class="bg-light">
                                     <tr>
                                         <th>Tanggal</th>
@@ -134,13 +163,6 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                </div>
-            @else
-                <div class="alert alert-warning d-flex align-items-center" role="alert">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <div>
-                        Data santri tidak ditemukan. Silakan hubungi admin untuk informasi lebih lanjut.
                     </div>
                 </div>
             @endif

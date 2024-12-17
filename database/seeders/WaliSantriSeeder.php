@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Santri;
 use App\Models\KategoriSantri;
 use App\Models\PembayaranSpp;
+use App\Models\MetodePembayaran;
 use Carbon\Carbon;
 
 class WaliSantriSeeder extends Seeder
@@ -165,13 +166,23 @@ class WaliSantriSeeder extends Seeder
                 $bulan = $now->copy()->subMonths($i);
                 $status = $i < $tunggakan ? 'pending' : 'success';
 
+                // Ambil ID metode pembayaran tunai
+                $metodeTunai = MetodePembayaran::where('kode', 'MANUAL')->first();
+                if (!$metodeTunai) {
+                    $metodeTunai = MetodePembayaran::create([
+                        'nama' => 'Manual/Tunai',
+                        'kode' => 'MANUAL',
+                        'status' => 'aktif'
+                    ]);
+                }
+
                 PembayaranSpp::create([
                     'santri_id' => $santri->id,
                     'tanggal_bayar' => $status === 'success' ? $bulan : null,
                     'bulan' => $bulan->format('m'),
                     'tahun' => $bulan->format('Y'),
                     'nominal' => $nominal,
-                    'metode_pembayaran' => $status === 'success' ? 'tunai' : null,
+                    'metode_pembayaran_id' => $metodeTunai->id,
                     'status' => $status,
                     'keterangan' => $status === 'success' ? 'Lunas' : 'Belum dibayar'
                 ]);

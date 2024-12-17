@@ -1,0 +1,21 @@
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,.05);
+    transition: transform 0.2s;
+    margin-bottom: 1.5rem;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+
+    &-header {
+        background-color: transparent;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+        padding: 1.25rem;
+    }
+
+    &-body {
+        padding: 1.25rem;
+    }
+}

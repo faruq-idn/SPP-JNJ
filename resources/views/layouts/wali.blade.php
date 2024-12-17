@@ -97,10 +97,107 @@
         .content-wrapper {
             padding-bottom: 70px;
         }
+
+        /* Table Styles */
+        .table-responsive {
+            margin: 0;
+            border-radius: 0.5rem;
+            background: white;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .table-responsive {
+                margin: 0;
+                padding: 0.5rem;
+            }
+
+            .table td,
+            .table th {
+                padding: 0.75rem;
+                white-space: nowrap;
+            }
+
+            .card-body {
+                padding: 1.25rem;
+            }
+
+            .card .table-responsive {
+                margin: 0 0.5rem;
+            }
+        }
+
+        /* Card Styles */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,.05);
+            transition: transform 0.2s;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+            padding: 1.25rem;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        /* Table Header & Footer */
+        .table thead th {
+            border-top: 0;
+            background-color: #f8f9fa;
+            font-weight: 600;
+            padding: 1rem 0.75rem;
+        }
+
+        .table tbody td {
+            vertical-align: middle;
+            padding: 1rem 0.75rem;
+        }
+
+        /* Responsive padding adjustments */
+        @media (min-width: 768px) {
+            .container-fluid {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+
+            .card .table-responsive {
+                margin: 0;
+                padding: 0 1rem;
+            }
+
+            .table td,
+            .table th {
+                padding: 1rem;
+            }
+        }
+
+        /* Bottom Navigation adjustments */
+        .content-wrapper {
+            padding-bottom: calc(70px + 1rem);
+        }
+
+        /* Alert spacing */
+        .alert {
+            margin-bottom: 1.5rem;
+        }
     </style>
     @stack('styles')
 </head>
-<body>
+<body class="wali-layout">
     <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
         <div class="container-fluid">

@@ -9,6 +9,7 @@ use App\Models\KategoriSantri;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class LaporanController extends Controller
 {
@@ -30,129 +31,110 @@ class LaporanController extends Controller
 
     public function pembayaran(Request $request)
     {
-        $query = PembayaranSpp::with(['santri.kategori', 'santri.wali'])
-            ->select('pembayaran_spp.*')
-            ->join('santri', 'santri.id', '=', 'pembayaran_spp.santri_id');
+        $query = PembayaranSpp::with(['santri.kategori', 'metode_pembayaran'])
+            ->when($request->filled('tanggal_awal'), function($q) use ($request) {
+                $q->whereDate('tanggal_bayar', '>=', $request->tanggal_awal);
+            })
+            ->when($request->filled('tanggal_akhir'), function($q) use ($request) {
+                $q->whereDate('tanggal_bayar', '<=', $request->tanggal_akhir);
+            })
+            ->when($request->filled('status'), function($q) use ($request) {
+                $q->where('status', $request->status);
+            });
 
-        // Filter berdasarkan tahun
-        if ($request->tahun) {
-            $query->where('tahun', $request->tahun);
-        }
+        $pembayaran = $query->latest()->get();
+        $totalPembayaran = $pembayaran->sum('nominal');
 
-        // Filter berdasarkan bulan
-        if ($request->bulan) {
-            $query->where('bulan', $request->bulan);
-        }
-
-        // Filter berdasarkan status
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        // Filter berdasarkan kategori santri
-        if ($request->kategori_id) {
-            $query->where('santri.kategori_id', $request->kategori_id);
-        }
-
-        // Filter berdasarkan jenjang
-        if ($request->jenjang) {
-            $query->where('santri.jenjang', $request->jenjang);
-        }
-
-        // Filter berdasarkan kelas
-        if ($request->kelas) {
-            $query->where('santri.kelas', $request->kelas);
-        }
-
-        $pembayaran = $query->orderBy('tanggal_bayar', 'desc')->get();
-
-        // Hitung total
-        $total = [
-            'nominal' => $pembayaran->sum('nominal'),
-            'lunas' => $pembayaran->where('status', 'success')->count(),
-            'tunggakan' => $pembayaran->where('status', 'pending')->count(),
-        ];
-
-        return response()->json([
-            'data' => $pembayaran->map(function($p) {
-                return [
-                    'tanggal' => $p->tanggal_bayar ? $p->tanggal_bayar->format('d/m/Y') : '-',
-                    'nama_santri' => $p->santri->nama,
-                    'nisn' => $p->santri->nisn,
-                    'kelas' => $p->santri->jenjang . ' ' . $p->santri->kelas,
-                    'kategori' => $p->santri->kategori->nama,
-                    'wali' => $p->santri->wali->name,
-                    'nominal' => $p->nominal,
-                    'bulan' => $p->bulan,
-                    'tahun' => $p->tahun,
-                    'status' => $p->status,
-                    'metode' => $p->metode_pembayaran
-                ];
-            }),
-            'total' => $total
-        ]);
+        return view('admin.laporan.pembayaran', compact('pembayaran', 'totalPembayaran'));
     }
 
     public function tunggakan(Request $request)
     {
-        $query = Santri::with(['kategori', 'wali', 'pembayaran' => function($q) {
-            $q->whereYear('created_at', date('Y'))
-              ->orderBy('bulan', 'desc');
-        }]);
-
-        // Filter berdasarkan kategori
-        if ($request->kategori_id) {
-            $query->where('kategori_id', $request->kategori_id);
-        }
-
-        // Filter berdasarkan jenjang
-        if ($request->jenjang) {
-            $query->where('jenjang', $request->jenjang);
-        }
-
-        // Filter berdasarkan kelas
-        if ($request->kelas) {
-            $query->where('kelas', $request->kelas);
-        }
+        $query = Santri::with(['kategori', 'wali', 'pembayaran' => function($query) {
+                $query->where('status', 'pending');
+            }])
+            ->when($request->filled('jenjang'), function($q) use ($request) {
+                $q->where('jenjang', $request->jenjang);
+            })
+            ->when($request->filled('kelas'), function($q) use ($request) {
+                $q->where('kelas', $request->kelas);
+            })
+            ->where('status', 'aktif')
+            ->withCount(['pembayaran as tunggakan_count' => function($query) {
+                $query->where('status', 'pending');
+            }])
+            ->having('tunggakan_count', '>', 0);
 
         $santri = $query->get();
+        $totalTunggakan = $santri->sum(function($s) {
+            return $s->pembayaran->sum('nominal');
+        });
 
-        $data = $santri->map(function($s) {
-            $tunggakan = $s->pembayaran->where('status', 'pending')->count();
-            $nominal = $s->kategori->tarifTerbaru->nominal ?? 0;
-
-            return [
-                'nama' => $s->nama,
-                'nisn' => $s->nisn,
-                'kelas' => $s->jenjang . ' ' . $s->kelas,
-                'kategori' => $s->kategori->nama,
-                'wali' => $s->wali->name,
-                'jumlah_tunggakan' => $tunggakan,
-                'total_tunggakan' => $tunggakan * $nominal
-            ];
-        })->filter(function($item) {
-            return $item['jumlah_tunggakan'] > 0;
-        })->values();
-
-        $total = [
-            'santri' => $data->count(),
-            'tunggakan' => $data->sum('jumlah_tunggakan'),
-            'nominal' => $data->sum('total_tunggakan')
-        ];
-
-        return response()->json([
-            'data' => $data,
-            'total' => $total
-        ]);
+        return view('admin.laporan.tunggakan', compact('santri', 'totalTunggakan'));
     }
 
     public function exportPembayaran(Request $request)
     {
-        // Logic untuk export ke Excel
+        $pembayaran = PembayaranSpp::with(['santri.kategori', 'metode_pembayaran'])
+            ->when($request->filled('tanggal_awal'), function($q) use ($request) {
+                $q->whereDate('tanggal_bayar', '>=', $request->tanggal_awal);
+            })
+            ->when($request->filled('tanggal_akhir'), function($q) use ($request) {
+                $q->whereDate('tanggal_bayar', '<=', $request->tanggal_akhir);
+            })
+            ->when($request->filled('status'), function($q) use ($request) {
+                $q->where('status', $request->status);
+            })
+            ->latest()
+            ->get()
+            ->map(function($p) {
+                return [
+                    'Tanggal' => $p->tanggal_bayar ? $p->tanggal_bayar->format('d/m/Y') : '-',
+                    'NISN' => $p->santri->nisn,
+                    'Nama Santri' => $p->santri->nama,
+                    'Kelas' => $p->santri->jenjang . ' ' . $p->santri->kelas,
+                    'Bulan' => Carbon::createFromFormat('m', $p->bulan)->translatedFormat('F Y'),
+                    'Nominal' => 'Rp ' . number_format($p->nominal, 0, ',', '.'),
+                    'Metode' => $p->metode_pembayaran->nama ?? 'Manual',
+                    'Status' => ucfirst($p->status),
+                    'Keterangan' => $p->keterangan ?? '-'
+                ];
+            });
+
+        return (new FastExcel($pembayaran))
+            ->download('laporan-pembayaran.xlsx');
     }
 
     public function exportTunggakan(Request $request)
     {
-        // Logic untuk export ke Excel
+        $santri = Santri::with(['kategori', 'wali', 'pembayaran' => function($query) {
+                $query->where('status', 'pending');
+            }])
+            ->when($request->filled('jenjang'), function($q) use ($request) {
+                $q->where('jenjang', $request->jenjang);
+            })
+            ->when($request->filled('kelas'), function($q) use ($request) {
+                $q->where('kelas', $request->kelas);
+            })
+            ->where('status', 'aktif')
+            ->withCount(['pembayaran as tunggakan_count' => function($query) {
+                $query->where('status', 'pending');
+            }])
+            ->having('tunggakan_count', '>', 0)
+            ->get()
+            ->map(function($s) {
+                return [
+                    'NISN' => $s->nisn,
+                    'Nama Santri' => $s->nama,
+                    'Kelas' => $s->jenjang . ' ' . $s->kelas,
+                    'Kategori' => $s->kategori->nama,
+                    'Jumlah Tunggakan' => $s->tunggakan_count . ' bulan',
+                    'Total Nominal' => 'Rp ' . number_format($s->pembayaran->sum('nominal'), 0, ',', '.'),
+                    'Wali Santri' => $s->wali->name ?? '-'
+                ];
+            });
+
+        return (new FastExcel($santri))
+            ->download('laporan-tunggakan.xlsx');
     }
 }

@@ -17,7 +17,9 @@ return new class extends Migration
             $table->string('bulan');
             $table->year('tahun');
             $table->decimal('nominal', 10, 2);
-            $table->string('metode_pembayaran')->nullable();
+            $table->foreignId('metode_pembayaran_id')->nullable()
+                ->constrained('metode_pembayaran')
+                ->nullOnDelete();
             $table->enum('status', ['pending', 'success', 'failed'])->default('pending');
             $table->string('keterangan')->nullable();
             $table->timestamps();

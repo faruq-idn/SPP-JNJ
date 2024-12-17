@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Petugas\DashboardController as PetugasDashboard;
 use App\Http\Controllers\Wali\DashboardController as WaliDashboard;
 use App\Http\Controllers\Wali\TagihanController;
+use App\Http\Controllers\Wali\PembayaranController as WaliPembayaranController;
 use App\Models\User;
 
 Route::get('/', function () {
@@ -74,6 +75,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Ajax search routes
         Route::get('/users/search', [UserController::class, 'search'])->name('users.search');
+
+        // Pembayaran routes
+        Route::get('/pembayaran/{pembayaran}', [PembayaranController::class, 'show'])->name('pembayaran.show');
     });
 
     // Petugas routes
@@ -98,7 +102,8 @@ Route::middleware(['auth'])->group(function () {
     // Wali routes
     Route::middleware(['auth', 'role:wali'])->prefix('wali')->name('wali.')->group(function () {
         Route::get('/dashboard', [WaliDashboard::class, 'index'])->name('dashboard');
+        Route::post('/change-santri', [WaliDashboard::class, 'changeSantri'])->name('change-santri');
         Route::get('/tagihan', [TagihanController::class, 'index'])->name('tagihan');
-        Route::get('/pembayaran', [PembayaranController::class, 'riwayat'])->name('pembayaran');
+        Route::get('/pembayaran', [WaliPembayaranController::class, 'riwayat'])->name('pembayaran');
     });
 });

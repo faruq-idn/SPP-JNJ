@@ -21,41 +21,65 @@
     <div class="card shadow">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover" id="dataTable">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Tanggal</th>
                             <th>Santri</th>
-                            <th>Bulan/Tahun</th>
+                            <th>Bulan</th>
                             <th>Nominal</th>
                             <th>Metode</th>
                             <th>Status</th>
-                            <th>Aksi</th>
+                            <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($pembayaran ?? [] as $p)
+                        @forelse($pembayaran as $p)
                             <tr>
-                                <td>{{ $p->tanggal_bayar->format('d/m/Y') }}</td>
-                                <td>{{ $p->santri->nama }}</td>
-                                <td>{{ $p->bulan }}/{{ $p->tahun }}</td>
-                                <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
-                                <td>{{ ucfirst($p->metode_pembayaran) }}</td>
                                 <td>
-                                    <span class="badge bg-{{ $p->status == 'success' ? 'success' : 'warning' }}">
-                                        {{ $p->status }}
+                                    @if($p->tanggal_bayar)
+                                        {{ \Carbon\Carbon::parse($p->tanggal_bayar)->format('d/m/Y') }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ $p->santri->nama }}</div>
+                                    <small class="text-muted">{{ $p->santri->nisn }}</small>
+                                </td>
+                                <td>
+                                    @php
+                                        $bulan = str_pad($p->bulan, 2, '0', STR_PAD_LEFT);
+                                        $namaBulan = \Carbon\Carbon::createFromFormat('m', $bulan)->isoFormat('MMMM Y');
+                                    @endphp
+                                    {{ $namaBulan }}
+                                </td>
+                                <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
+                                <td>
+                                    @if($p->metode_pembayaran)
+                                        <span class="badge bg-info">
+                                            {{ $p->metode_pembayaran->nama }}
+                                        </span>
+                                    @else
+                                        <span class="badge bg-secondary">Manual</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ $p->status == 'success' ? 'success' : ($p->status == 'pending' ? 'warning' : 'danger') }}">
+                                        {{ ucfirst($p->status) }}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-info" title="Detail"
-                                            onclick="showDetailPembayaran({{ $p->santri_id }})">
+                                        <button class="btn btn-info" onclick="showDetail('{{ $p->id }}')">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <a href="#" class="btn btn-warning" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-danger" title="Hapus">
+                                        @if($p->status != 'success')
+                                            <button class="btn btn-success" onclick="verifikasiPembayaran('{{ $p->id }}')">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        @endif
+                                        <button class="btn btn-danger" onclick="hapusPembayaran('{{ $p->id }}')">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -63,12 +87,22 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">Tidak ada data pembayaran</td>
+                                <td colspan="7" class="text-center py-3">
+                                    <i class="fas fa-info-circle me-2"></i>Belum ada data pembayaran
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+
+            @if($pembayaran->hasPages())
+                <div class="card-footer bg-white border-0 pt-0">
+                    <div class="d-flex justify-content-end">
+                        {{ $pembayaran->links('pagination::bootstrap-4') }}
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -89,8 +123,32 @@
                         <div class="col-md-12 mb-4">
                             <div class="mb-3">
                                 <label class="form-label">Cari Santri</label>
-                                <input type="text" class="form-control" id="searchSantri" placeholder="Ketik nama atau NISN santri...">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="searchSantri"
+                                        placeholder="Ketik nama atau NISN santri..." autocomplete="off">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="resetSantri()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text">Minimal 2 karakter untuk mencari</div>
+                            </div>
+
+                            <!-- Tampilan santri terpilih -->
+                            <div id="selectedSantri" style="display:none;" class="mb-3">
+                                <div class="card border-success">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p class="mb-1"><strong>Nama:</strong><br><span id="selected-nama"></span></p>
+                                                <p class="mb-1"><strong>NISN:</strong><br><span id="selected-nisn"></span></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-1"><strong>Kelas:</strong><br><span id="selected-kelas"></span></p>
+                                                <p class="mb-1"><strong>Kategori:</strong><br><span id="selected-kategori"></span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="table-responsive mb-3" id="hasilPencarian" style="display:none;">
@@ -128,7 +186,7 @@
                                         <select class="form-select @error('bulan') is-invalid @enderror"
                                             name="bulan" required>
                                             <option value="">Pilih Bulan</option>
-                                            @foreach($bulan as $key => $value)
+                                            @foreach($bulanList as $key => $value)
                                                 <option value="{{ $key }}"
                                                     {{ old('bulan') == $key ? 'selected' : '' }}>
                                                     {{ $value }}
@@ -146,7 +204,7 @@
                                         <select class="form-select @error('tahun') is-invalid @enderror"
                                             name="tahun" required>
                                             <option value="">Pilih Tahun</option>
-                                            @foreach($tahun as $y)
+                                            @foreach($tahunList as $y)
                                                 <option value="{{ $y }}"
                                                     {{ old('tahun') == $y ? 'selected' : '' }}>
                                                     {{ $y }}
@@ -211,55 +269,90 @@
 </div>
 
 <!-- Modal Detail Pembayaran -->
-<div class="modal fade" id="detailPembayaranModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Detail Pembayaran Santri</h5>
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Detail Pembayaran
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <p class="mb-1">
-                            <strong>Nama Santri:</strong><br>
-                            <span id="modal-nama"></span>
-                        </p>
-                        <p class="mb-1">
-                            <strong>NISN:</strong><br>
-                            <span id="modal-nisn"></span>
-                        </p>
-                    </div>
-                    <div class="col-md-6">
-                        <p class="mb-1">
-                            <strong>Kelas:</strong><br>
-                            <span id="modal-kelas"></span>
-                        </p>
-                        <p class="mb-1">
-                            <strong>Kategori:</strong><br>
-                            <span id="modal-kategori"></span>
-                        </p>
+                <!-- Data Santri -->
+                <div class="card border-0 bg-light mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Data Santri</h6>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <p class="mb-1">
+                                    <strong>Nama:</strong><br>
+                                    <span id="detail-santri-nama"></span>
+                                </p>
+                                <p class="mb-0">
+                                    <strong>NISN:</strong><br>
+                                    <span id="detail-santri-nisn"></span>
+                                </p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="mb-1">
+                                    <strong>Kelas:</strong><br>
+                                    <span id="detail-santri-kelas"></span>
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Kategori:</strong><br>
+                                    <span id="detail-santri-kategori"></span>
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Bulan</th>
-                                <th>Tahun</th>
-                                <th>Nominal</th>
-                                <th>Status</th>
-                                <th>Tanggal Bayar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="modal-pembayaran">
-                            <tr>
-                                <td colspan="5" class="text-center">Memuat data...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Data Pembayaran -->
+                <div class="card border-0">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Data Pembayaran</h6>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <p class="mb-1">
+                                    <strong>Tanggal Bayar:</strong><br>
+                                    <span id="detail-pembayaran-tanggal"></span>
+                                </p>
+                                <p class="mb-1">
+                                    <strong>Bulan:</strong><br>
+                                    <span id="detail-pembayaran-bulan"></span>
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Tahun:</strong><br>
+                                    <span id="detail-pembayaran-tahun"></span>
+                                </p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="mb-1">
+                                    <strong>Nominal:</strong><br>
+                                    Rp <span id="detail-pembayaran-nominal"></span>
+                                </p>
+                                <p class="mb-1">
+                                    <strong>Metode:</strong><br>
+                                    <span id="detail-pembayaran-metode"></span>
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Status:</strong><br>
+                                    <span id="detail-pembayaran-status"></span>
+                                </p>
+                            </div>
+                            <div class="col-12">
+                                <p class="mb-0">
+                                    <strong>Keterangan:</strong><br>
+                                    <span id="detail-pembayaran-keterangan"></span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
@@ -350,7 +443,7 @@ function renderHasilPencarian(data) {
                     <td>${santri.kategori}</td>
                     <td>
                         <button type="button" class="btn btn-sm btn-primary pilih-santri"
-                            data-santri='${JSON.stringify(santri)}'>
+                            onclick="pilihSantri(${JSON.stringify(santri).replace(/"/g, '&quot;')})">
                             <i class="fas fa-check"></i> Pilih
                         </button>
                     </td>
@@ -392,13 +485,7 @@ function handleSearchError(xhr) {
     });
 }
 
-// Event handler untuk memilih santri
-$(document).on('click', '.pilih-santri', function() {
-    const santri = $(this).data('santri');
-    pilihSantri(santri);
-});
-
-// Fungsi untuk mengisi form dengan data santri
+// Fungsi untuk memilih santri
 function pilihSantri(santri) {
     try {
         // Hapus input hidden yang mungkin sudah ada
@@ -411,27 +498,20 @@ function pilihSantri(santri) {
             value: santri.id
         }).appendTo('form');
 
-        // Update detail santri
-        $('#detail_santri').html(`
-            <div class="card border-success">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Nama:</strong><br>${santri.nama}</p>
-                            <p class="mb-1"><strong>NISN:</strong><br>${santri.nisn}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Kelas:</strong><br>${santri.kelas}</p>
-                            <p class="mb-1"><strong>Kategori:</strong><br>${santri.kategori}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `);
+        // Update tampilan santri terpilih
+        $('#selected-nama').text(santri.nama);
+        $('#selected-nisn').text(santri.nisn);
+        $('#selected-kelas').text(santri.kelas);
+        $('#selected-kategori').text(santri.kategori);
+
+        // Tampilkan card santri terpilih
+        $('#selectedSantri').show();
 
         // Sembunyikan hasil pencarian
         $('#hasilPencarian').hide();
-        $('#searchSantri').val('');
+
+        // Update input pencarian dengan nama santri
+        $('#searchSantri').val(santri.nama);
 
         // Tampilkan notifikasi sukses
         Swal.fire({
@@ -453,6 +533,29 @@ function pilihSantri(santri) {
         });
     }
 }
+
+// Fungsi untuk reset pilihan santri
+function resetSantri() {
+    // Hapus input hidden santri_id
+    $('input[name="santri_id"]').remove();
+
+    // Reset form pencarian
+    $('#searchSantri').val('');
+    $('#hasilPencarian').hide();
+
+    // Sembunyikan card santri terpilih
+    $('#selectedSantri').hide();
+
+    // Reset nilai-nilai yang ditampilkan
+    $('#selected-nama, #selected-nisn, #selected-kelas, #selected-kategori').text('-');
+}
+
+// Event handler untuk tombol reset di input pencarian
+$('#searchSantri').on('search', function() {
+    if ($(this).val() === '') {
+        $('#hasilPencarian').hide();
+    }
+});
 
 $('#dataTable').DataTable();
 
@@ -508,6 +611,48 @@ window.showDetailPembayaran = function(santriId) {
                 </td>
             </tr>
         `);
+    });
+}
+
+function showDetail(id) {
+    // Reset modal content
+    $('#detailModal .modal-body span[id^="detail-"]').text('-');
+
+    // Show modal
+    $('#detailModal').modal('show');
+
+    // Fetch data
+    $.get(`{{ url('admin/pembayaran') }}/${id}`, function(response) {
+        // Update Santri Info
+        $('#detail-santri-nama').text(response.santri.nama);
+        $('#detail-santri-nisn').text(response.santri.nisn);
+        $('#detail-santri-kelas').text(response.santri.kelas);
+        $('#detail-santri-kategori').text(response.santri.kategori);
+
+        // Update Pembayaran Info
+        $('#detail-pembayaran-tanggal').text(response.pembayaran.tanggal);
+        $('#detail-pembayaran-bulan').text(response.pembayaran.bulan);
+        $('#detail-pembayaran-tahun').text(response.pembayaran.tahun);
+        $('#detail-pembayaran-nominal').text(response.pembayaran.nominal);
+        $('#detail-pembayaran-metode').text(response.pembayaran.metode);
+
+        // Update status dengan badge
+        const statusClass = response.pembayaran.status.toLowerCase() === 'success' ? 'success' :
+                          (response.pembayaran.status.toLowerCase() === 'pending' ? 'warning' : 'danger');
+        $('#detail-pembayaran-status').html(`
+            <span class="badge bg-${statusClass}">
+                ${response.pembayaran.status}
+            </span>
+        `);
+
+        $('#detail-pembayaran-keterangan').text(response.pembayaran.keterangan);
+    }).fail(function() {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Gagal memuat detail pembayaran'
+        });
+        $('#detailModal').modal('hide');
     });
 }
 </script>

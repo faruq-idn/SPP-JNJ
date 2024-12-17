@@ -11,12 +11,12 @@ class PembayaranController extends Controller
 {
     public function index()
     {
-        $pembayaran = PembayaranSpp::with('santri')
-            ->latest('tanggal_bayar')
+        $pembayaran = PembayaranSpp::with(['santri', 'metode_pembayaran'])
+            ->latest()
             ->paginate(10);
 
         // Data untuk dropdown di form
-        $bulan = [
+        $bulanList = [
             '01' => 'Januari',
             '02' => 'Februari',
             '03' => 'Maret',
@@ -30,13 +30,14 @@ class PembayaranController extends Controller
             '11' => 'November',
             '12' => 'Desember'
         ];
-        $tahun = range(date('Y') - 2, date('Y') + 1);
+
+        $tahunList = range(date('Y') - 2, date('Y') + 1);
 
         return view('admin.pembayaran.index', [
             'title' => 'Pembayaran SPP',
             'pembayaran' => $pembayaran,
-            'bulan' => $bulan,
-            'tahun' => $tahun
+            'bulanList' => $bulanList,
+            'tahunList' => $tahunList
         ]);
     }
 
@@ -84,5 +85,29 @@ class PembayaranController extends Controller
         return redirect()
             ->route('admin.pembayaran.index')
             ->with('success', 'Pembayaran SPP berhasil disimpan');
+    }
+
+    public function show(PembayaranSpp $pembayaran)
+    {
+        $pembayaran->load(['santri', 'metode_pembayaran']);
+
+        return response()->json([
+            'id' => $pembayaran->id,
+            'santri' => [
+                'nama' => $pembayaran->santri->nama,
+                'nisn' => $pembayaran->santri->nisn,
+                'kelas' => $pembayaran->santri->jenjang . ' ' . $pembayaran->santri->kelas,
+                'kategori' => $pembayaran->santri->kategori->nama ?? '-'
+            ],
+            'pembayaran' => [
+                'tanggal' => $pembayaran->tanggal_bayar ? $pembayaran->tanggal_bayar->format('d/m/Y') : '-',
+                'bulan' => \Carbon\Carbon::createFromFormat('m', $pembayaran->bulan)->translatedFormat('F'),
+                'tahun' => $pembayaran->tahun,
+                'nominal' => number_format($pembayaran->nominal, 0, ',', '.'),
+                'metode' => $pembayaran->metode_pembayaran->nama ?? 'Manual',
+                'status' => ucfirst($pembayaran->status),
+                'keterangan' => $pembayaran->keterangan ?? '-'
+            ]
+        ]);
     }
 }

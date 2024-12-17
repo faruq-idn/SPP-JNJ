@@ -26,6 +26,8 @@
     <link rel="preload" href="https://fonts.bunny.net/figtree/files/figtree-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="https://fonts.bunny.net/figtree/files/figtree-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 
+    <link href="{{ mix('css/app.css') }}" rel="stylesheet">
+
     <style>
         /* Fixed sidebar */
         .sidebar {
@@ -230,7 +232,7 @@
         }
     </style>
 </head>
-<body>
+<body class="admin-layout">
     <div class="container-fluid p-0">
         <!-- Sidebar -->
         <div class="sidebar">

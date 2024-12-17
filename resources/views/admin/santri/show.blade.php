@@ -139,52 +139,168 @@
         </div>
 
         <!-- Riwayat Pembayaran -->
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Riwayat Pembayaran Terakhir</h6>
-                    <a href="#" class="btn btn-sm btn-primary">
-                        <i class="fas fa-history"></i> Lihat Semua
-                    </a>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>Riwayat Pembayaran
+                    </h5>
+                    <button class="btn btn-sm btn-primary" onclick="tambahPembayaran()">
+                        <i class="fas fa-plus me-1"></i>Tambah Pembayaran
+                    </button>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Tanggal</th>
-                                    <th>Bulan/Tahun</th>
-                                    <th>Nominal</th>
-                                    <th>Metode</th>
-                                    <th>Status</th>
-                                    <th>Keterangan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($santri->pembayaran as $p)
+            </div>
+
+            <!-- Tab tahun -->
+            <div class="card-header bg-light py-2 border-top">
+                <ul class="nav nav-tabs card-header-tabs">
+                    @foreach($pembayaranPerTahun as $tahun => $pembayaran)
+                        <li class="nav-item">
+                            <a class="nav-link {{ $loop->first ? 'active' : '' }}"
+                               data-bs-toggle="tab"
+                               href="#tahun-{{ $tahun }}">
+                                {{ $tahun }}
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+
+            <div class="tab-content">
+                @foreach($pembayaranPerTahun as $tahun => $pembayaranList)
+                    <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                         id="tahun-{{ $tahun }}">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
                                     <tr>
-                                        <td>{{ $p->tanggal_bayar->format('d/m/Y') }}</td>
-                                        <td>{{ $p->bulan }}/{{ $p->tahun }}</td>
-                                        <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
-                                        <td>{{ ucfirst($p->metode_pembayaran) }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ $p->status == 'success' ? 'success' : 'warning' }}">
-                                                {{ $p->status }}
-                                            </span>
-                                        </td>
-                                        <td>{{ $p->keterangan }}</td>
+                                        <th>Bulan</th>
+                                        <th>Tanggal Bayar</th>
+                                        <th>Nominal</th>
+                                        <th>Metode</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Aksi</th>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center">Belum ada riwayat pembayaran</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach($pembayaranList as $p)
+                                        <tr>
+                                            <td>
+                                                @php
+                                                    $namaBulan = \Carbon\Carbon::createFromFormat('m', $p->bulan)->translatedFormat('F');
+                                                @endphp
+                                                {{ $namaBulan }}
+                                            </td>
+                                            <td>
+                                                @if($p->tanggal_bayar)
+                                                    {{ \Carbon\Carbon::parse($p->tanggal_bayar)->format('d/m/Y') }}
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
+                                            <td>
+                                                @if($p->metode_pembayaran)
+                                                    <span class="badge bg-info">
+                                                        {{ $p->metode_pembayaran->nama }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-secondary">-</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ $p->status == 'success' ? 'success' : ($p->status == 'pending' ? 'warning' : 'danger') }}">
+                                                    {{ ucfirst($p->status) }}
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                @if(is_object($p) && isset($p->id))
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-info" onclick="showDetail('{{ $p->id }}')">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        @if($p->status != 'success')
+                                                            <button class="btn btn-success" onclick="verifikasiPembayaran('{{ $p->id }}')">
+                                                                <i class="fas fa-check"></i>
+                                                            </button>
+                                                        @endif
+                                                        <button class="btn btn-danger" onclick="hapusPembayaran('{{ $p->id }}')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                @else
+                                                    <button class="btn btn-sm btn-primary" onclick="tambahPembayaran('{{ $tahun }}', '{{ $p->bulan }}')">
+                                                        <i class="fas fa-plus me-1"></i>Bayar
+                                                    </button>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function showDetail(id) {
+    // Implementasi detail pembayaran
+    Swal.fire({
+        title: 'Detail Pembayaran',
+        text: 'Fitur detail pembayaran akan segera tersedia',
+        icon: 'info'
+    });
+}
+
+function verifikasiPembayaran(id) {
+    Swal.fire({
+        title: 'Verifikasi Pembayaran',
+        text: 'Apakah Anda yakin ingin memverifikasi pembayaran ini?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#dc3545',
+        confirmButtonText: 'Ya, Verifikasi',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Implementasi verifikasi pembayaran
+            Swal.fire('Berhasil', 'Pembayaran telah diverifikasi', 'success');
+        }
+    });
+}
+
+function hapusPembayaran(id) {
+    Swal.fire({
+        title: 'Hapus Pembayaran',
+        text: 'Apakah Anda yakin ingin menghapus pembayaran ini?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Implementasi hapus pembayaran
+            Swal.fire('Berhasil', 'Pembayaran telah dihapus', 'success');
+        }
+    });
+}
+
+function tambahPembayaran() {
+    // Implementasi tambah pembayaran
+    Swal.fire({
+        title: 'Tambah Pembayaran',
+        text: 'Fitur tambah pembayaran akan segera tersedia',
+        icon: 'info'
+    });
+}
+</script>
+@endpush

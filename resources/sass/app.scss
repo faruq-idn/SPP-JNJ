@@ -1,0 +1,20 @@
+// Import Bootstrap
+@import 'bootstrap/scss/bootstrap';
+
+// Base styles
+@import 'base/variables';
+@import 'base/mixins';
+@import 'base/utilities';
+
+// Components
+@import 'components/cards';
+@import 'components/tables';
+@import 'components/alerts';
+@import 'components/buttons';
+@import 'components/forms';
+@import 'components/navigation';
+
+// Layouts
+@import 'layouts/admin';
+@import 'layouts/petugas';
+@import 'layouts/wali';

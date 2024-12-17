@@ -51,9 +51,9 @@
                     <label class="form-label">Role</label>
                     <select class="form-select @error('role') is-invalid @enderror" name="role" required>
                         <option value="">Pilih Role</option>
-                        @foreach($roles as $role)
-                            <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
-                                {{ ucfirst($role) }}
+                        @foreach($roles as $value => $label)
+                            <option value="{{ $value }}" {{ old('role') == $value ? 'selected' : '' }}>
+                                {{ $label }}
                             </option>
                         @endforeach
                     </select>

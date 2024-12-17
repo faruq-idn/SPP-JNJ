@@ -9,66 +9,66 @@
 
         <!-- Data Santri dengan Sub Menu -->
         <li class="nav-item">
-            <a class="nav-link {{ Request::is('admin/santri*') ? 'active' : '' }} d-flex align-items-center justify-content-between"
-               href="#santriSubmenu"
+            <a class="nav-link {{ Request::is('admin/santri*') ? '' : 'collapsed' }}"
+               href="#"
                data-bs-toggle="collapse"
-               aria-expanded="{{ Request::is('admin/santri*') ? 'true' : 'false' }}">
-                <span>
-                    <i class="fas fa-users"></i> Data Santri
-                </span>
-                <i class="fas fa-chevron-down"></i>
+               data-bs-target="#collapseKelas">
+                <i class="fas fa-users fa-fw me-2"></i>
+                <span>Data Santri</span>
+                <i class="fas fa-angle-down ms-auto"></i>
             </a>
-            <div class="collapse {{ Request::is('admin/santri*') ? 'show' : '' }}" id="santriSubmenu">
-                <ul class="nav flex-column ms-3">
-                    <li class="nav-item">
-                        <a class="nav-link {{ Request::is('admin/santri') ? 'active' : '' }}"
-                           href="{{ route('admin.santri.index') }}">
-                            <i class="fas fa-list"></i> Semua Santri
-                        </a>
-                    </li>
+            <div id="collapseKelas" class="collapse {{ Request::is('admin/santri*') ? 'show' : '' }}">
+                <div class="submenu">
                     <!-- SMP -->
-                    <li class="nav-item">
-                        <a class="nav-link {{ Request::is('admin/santri/kelas/smp*') ? 'active' : '' }}"
-                           href="#smpSubmenu"
-                           data-bs-toggle="collapse"
-                           aria-expanded="{{ Request::is('admin/santri/kelas/smp*') ? 'true' : 'false' }}">
-                            <i class="fas fa-school"></i> SMP
-                        </a>
-                        <div class="collapse {{ Request::is('admin/santri/kelas/smp*') ? 'show' : '' }}" id="smpSubmenu">
-                            <ul class="nav flex-column ms-3">
-                                @foreach(['7A', '7B', '8A', '8B', '9A', '9B'] as $kelas)
-                                    <li class="nav-item">
-                                        <a class="nav-link {{ Request::is('admin/santri/kelas/smp/'.$kelas) ? 'active' : '' }}"
-                                           href="{{ route('admin.santri.kelas', ['jenjang' => 'smp', 'kelas' => $kelas]) }}">
-                                            Kelas {{ $kelas }}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </li>
+                    <div class="submenu-section">
+                        <div class="submenu-header">SMP</div>
+                        @php
+                            $kelasSMP = ['7A', '7B', '8A', '8B', '9A', '9B'];
+                        @endphp
+                        @foreach($kelasSMP as $kelas)
+                            <a class="submenu-item {{ isset($currentKelas) && $currentKelas['jenjang'] == 'SMP' && $currentKelas['kelas'] == $kelas ? 'active' : '' }}"
+                               href="{{ route('admin.santri.kelas', ['jenjang' => 'smp', 'kelas' => $kelas]) }}">
+                                <span>Kelas {{ $kelas }}</span>
+                                @php
+                                    $count = \App\Models\Santri::where('jenjang', 'SMP')
+                                        ->where('kelas', $kelas)
+                                        ->where('status', 'aktif')
+                                        ->count();
+                                @endphp
+                                <span class="badge">{{ $count }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+
                     <!-- SMA -->
-                    <li class="nav-item">
-                        <a class="nav-link {{ Request::is('admin/santri/kelas/sma*') ? 'active' : '' }}"
-                           href="#smaSubmenu"
-                           data-bs-toggle="collapse"
-                           aria-expanded="{{ Request::is('admin/santri/kelas/sma*') ? 'true' : 'false' }}">
-                            <i class="fas fa-school"></i> SMA
+                    <div class="submenu-section">
+                        <div class="submenu-header">SMA</div>
+                        @php
+                            $kelasSMA = ['10A', '10B', '11A', '11B', '12A', '12B'];
+                        @endphp
+                        @foreach($kelasSMA as $kelas)
+                            <a class="submenu-item {{ isset($currentKelas) && $currentKelas['jenjang'] == 'SMA' && $currentKelas['kelas'] == $kelas ? 'active' : '' }}"
+                               href="{{ route('admin.santri.kelas', ['jenjang' => 'sma', 'kelas' => $kelas]) }}">
+                                <span>Kelas {{ $kelas }}</span>
+                                @php
+                                    $count = \App\Models\Santri::where('jenjang', 'SMA')
+                                        ->where('kelas', $kelas)
+                                        ->where('status', 'aktif')
+                                        ->count();
+                                @endphp
+                                <span class="badge">{{ $count }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+
+                    <!-- Tombol Semua Santri -->
+                    <div class="submenu-section">
+                        <a href="{{ route('admin.santri.index') }}"
+                           class="btn-all-santri">
+                            <i class="fas fa-list me-1"></i>Semua Santri
                         </a>
-                        <div class="collapse {{ Request::is('admin/santri/kelas/sma*') ? 'show' : '' }}" id="smaSubmenu">
-                            <ul class="nav flex-column ms-3">
-                                @foreach(['10A', '10B', '11A', '11B', '12A', '12B'] as $kelas)
-                                    <li class="nav-item">
-                                        <a class="nav-link {{ Request::is('admin/santri/kelas/sma/'.$kelas) ? 'active' : '' }}"
-                                           href="{{ route('admin.santri.kelas', ['jenjang' => 'sma', 'kelas' => $kelas]) }}">
-                                            Kelas {{ $kelas }}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </li>
-                </ul>
+                    </div>
+                </div>
             </div>
         </li>
 
@@ -152,5 +152,91 @@
 
 .fas.fa-chevron-down {
     transition: transform 0.2s;
+}
+
+/* Submenu Styling */
+.submenu {
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.5rem;
+    margin: 0.5rem;
+}
+
+.submenu-section {
+    margin-bottom: 1rem;
+}
+
+.submenu-section:last-child {
+    margin-bottom: 0;
+}
+
+.submenu-header {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.submenu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+    margin-bottom: 0.25rem;
+}
+
+.submenu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.submenu-item.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.submenu-item .badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+}
+
+.btn-all-santri {
+    display: block;
+    text-align: center;
+    padding: 0.5rem;
+    background: #0d6efd;
+    color: white;
+    text-decoration: none;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-all-santri:hover {
+    background: #0b5ed7;
+    color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .submenu {
+        padding: 0.25rem;
+    }
+
+    .submenu-item {
+        padding: 0.5rem;
+    }
+
+    .submenu-header {
+        padding: 0.5rem 0.25rem;
+    }
 }
 </style>

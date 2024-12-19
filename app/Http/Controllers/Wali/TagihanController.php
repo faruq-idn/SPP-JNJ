@@ -21,7 +21,7 @@ class TagihanController extends Controller
             return response()->view('wali.tagihan.index', [
                 'santri' => null,
                 'santri_list' => collect(),
-                'tagihan' => collect(),
+                'pembayaranPerTahun' => [],
                 'total_tunggakan' => 0
             ])->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
         }
@@ -37,39 +37,56 @@ class TagihanController extends Controller
             Session::put('selected_santri_id', $santri->id);
         }
 
-        // Ambil data pembayaran
-        $pembayaran = PembayaranSpp::where('santri_id', $santri->id)
-            ->where('status', 'success')
-            ->pluck('bulan')
+        // Ambil tahun-tahun yang memiliki pembayaran
+        $tahunPembayaran = PembayaranSpp::where('santri_id', $santri->id)
+            ->selectRaw('DISTINCT tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
             ->toArray();
 
-        // Generate tagihan untuk 12 bulan
-        $tagihan = collect();
+        // Jika belum ada data tahun, gunakan tahun sekarang
+        if (empty($tahunPembayaran)) {
+            $tahunPembayaran = [date('Y')];
+        }
+
+        // Siapkan data pembayaran per tahun
+        $pembayaranPerTahun = [];
         $total_tunggakan = 0;
-        $bulan_sekarang = Carbon::now()->month;
-        $tahun_sekarang = Carbon::now()->year;
+        foreach ($tahunPembayaran as $tahun) {
+            $pembayaran = [];
+            // Data pembayaran yang sudah ada
+            $existingPembayaran = PembayaranSpp::with('metode_pembayaran')
+                ->where('santri_id', $santri->id)
+                ->where('tahun', $tahun)
+                ->get()
+                ->keyBy('bulan');
 
-        for ($i = 1; $i <= 12; $i++) {
-            $bulan = Carbon::create(null, $i, 1)->format('m');
-            $nama_bulan = Carbon::create(null, $i, 1)->translatedFormat('F');
-            $status = in_array($bulan, $pembayaran) ? 'Lunas' : 'Belum Lunas';
+            // Generate 12 bulan
+            for ($bulan = 1; $bulan <= 12; $bulan++) {
+                $bulanPadded = str_pad($bulan, 2, '0', STR_PAD_LEFT);
+                $nominal = $santri->kategori->tarifTerbaru->nominal ?? 0;
 
-            // Hitung tunggakan
-            if ($status === 'Belum Lunas' && $i <= $bulan_sekarang) {
-                $total_tunggakan += $santri->kategori->tarif ?? 0;
+                if (!isset($existingPembayaran[$bulanPadded]) &&
+                    $tahun <= date('Y') &&
+                    $bulan <= ($tahun == date('Y') ? date('m') : 12)) {
+                    $total_tunggakan += $nominal;
+                }
+
+                $pembayaran[] = $existingPembayaran->get($bulanPadded) ?? (object)[
+                    'bulan' => $bulanPadded,
+                    'tahun' => $tahun,
+                    'nominal' => $nominal,
+                    'status' => 'pending',
+                    'tanggal_bayar' => null,
+                    'metode_pembayaran' => null
+                ];
             }
 
-            $tagihan->push([
-                'bulan' => $nama_bulan,
-                'tahun' => $tahun_sekarang,
-                'nominal' => $santri->kategori->tarif ?? 0,
-                'status' => $status,
-                'status_class' => $status === 'Lunas' ? 'success' : 'warning'
-            ]);
+            $pembayaranPerTahun[$tahun] = $pembayaran;
         }
 
         return response()
-            ->view('wali.tagihan.index', compact('santri', 'santri_list', 'tagihan', 'total_tunggakan'))
+            ->view('wali.tagihan.index', compact('santri', 'santri_list', 'pembayaranPerTahun', 'total_tunggakan'))
             ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
             ->header('Pragma', 'no-cache')
             ->header('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');

@@ -10,6 +10,13 @@
                 <i class="fas fa-home me-2"></i>Dashboard
             </h2>
 
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
             @if(session('error'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
@@ -21,10 +28,12 @@
                 <div class="alert alert-warning d-flex align-items-center" role="alert">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     <div>
-                        Tidak ada santri yang terdaftar. Silakan hubungi admin untuk informasi lebih lanjut.
+                        Tidak ada santri yang terdaftar. Silakan klik menu "Hubungkan" untuk menghubungkan santri.
                     </div>
                 </div>
-            @else
+            @endif
+
+            @if($santri_list->isNotEmpty())
                 <!-- Santri Selector -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body">
@@ -38,10 +47,14 @@
                                 <select name="santri_id" id="santri_id" class="form-select" onchange="this.form.submit()">
                                     @foreach($santri_list as $s)
                                         <option value="{{ $s->id }}" {{ $santri->id == $s->id ? 'selected' : '' }}>
-                                            {{ $s->nama }} ({{ $s->nis }})
+                                            {{ $s->nama }} - NISN: {{ $s->nisn }} ({{ $s->jenjang }} {{ $s->kelas }})
                                         </option>
                                     @endforeach
                                 </select>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Pilih santri untuk melihat informasi tagihan dan pembayaran
+                                </small>
                             </div>
                         </form>
                     </div>
@@ -87,8 +100,8 @@
                                     </div>
                                 </div>
                                 <div class="small">
-                                    <p class="mb-1"><strong>NIS:</strong> {{ $santri->nis }}</p>
-                                    <p class="mb-1"><strong>Kelas:</strong> {{ $santri->kelas }}</p>
+                                    <p class="mb-1"><strong>NISN:</strong> {{ $santri->nisn }}</p>
+                                    <p class="mb-1"><strong>Kelas:</strong> {{ $santri->jenjang }} {{ $santri->kelas }}</p>
                                     <p class="mb-0"><strong>Kategori:</strong> {{ $santri->kategori->nama ?? '-' }}</p>
                                 </div>
                             </div>
@@ -110,7 +123,7 @@
                                         </h4>
                                     </div>
                                 </div>
-                                <a href="{{ route('wali.pembayaran') }}" class="btn btn-light btn-sm w-100">
+                                <a href="{{ route('wali.tagihan') }}" class="btn btn-light btn-sm w-100">
                                     <i class="fas fa-arrow-right me-1"></i>Lihat Riwayat
                                 </a>
                             </div>
@@ -125,7 +138,7 @@
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-history me-2"></i>Riwayat Pembayaran
                             </h5>
-                            <a href="{{ route('wali.pembayaran') }}" class="btn btn-sm btn-primary">
+                            <a href="{{ route('wali.tagihan') }}" class="btn btn-sm btn-primary">
                                 Lihat Semua
                             </a>
                         </div>

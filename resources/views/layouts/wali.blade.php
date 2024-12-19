@@ -236,23 +236,23 @@
             <div class="row g-0">
                 <div class="col-4">
                     <a href="{{ route('wali.dashboard') }}"
-                       class="nav-link {{ request()->routeIs('wali.dashboard') ? 'active' : '' }}">
+                       class="nav-link {{ Route::is('wali.dashboard') ? 'active' : '' }}">
                         <i class="fas fa-home"></i>
                         <span>Home</span>
                     </a>
                 </div>
                 <div class="col-4">
                     <a href="{{ route('wali.tagihan') }}"
-                       class="nav-link {{ request()->routeIs('wali.tagihan') ? 'active' : '' }}">
+                       class="nav-link {{ Route::is('wali.tagihan') ? 'active' : '' }}">
                         <i class="fas fa-file-invoice-dollar"></i>
                         <span>Tagihan</span>
                     </a>
                 </div>
                 <div class="col-4">
-                    <a href="{{ route('wali.pembayaran') }}"
-                       class="nav-link {{ request()->routeIs('wali.pembayaran') ? 'active' : '' }}">
-                        <i class="fas fa-history"></i>
-                        <span>Riwayat</span>
+                    <a href="{{ route('wali.hubungkan') }}"
+                       class="nav-link {{ Route::is('wali.hubungkan') ? 'active' : '' }}">
+                        <i class="fas fa-link"></i>
+                        <span>Hubungkan</span>
                     </a>
                 </div>
             </div>

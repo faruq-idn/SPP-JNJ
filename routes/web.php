@@ -101,9 +101,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Wali routes
     Route::middleware(['auth', 'role:wali'])->prefix('wali')->name('wali.')->group(function () {
+        // Dashboard wali
         Route::get('/dashboard', [WaliDashboard::class, 'index'])->name('dashboard');
         Route::post('/change-santri', [WaliDashboard::class, 'changeSantri'])->name('change-santri');
         Route::get('/tagihan', [TagihanController::class, 'index'])->name('tagihan');
-        Route::get('/pembayaran', [WaliPembayaranController::class, 'riwayat'])->name('pembayaran');
+        Route::get('/hubungkan', [WaliDashboard::class, 'hubungkan'])->name('hubungkan');
     });
 });

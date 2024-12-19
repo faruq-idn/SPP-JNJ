@@ -26,8 +26,6 @@
     <link rel="preload" href="https://fonts.bunny.net/figtree/files/figtree-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="https://fonts.bunny.net/figtree/files/figtree-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-    <link href="{{ mix('css/app.css') }}" rel="stylesheet">
-
     <style>
         /* Fixed sidebar */
         .sidebar {
@@ -35,7 +33,7 @@
             top: 0;
             left: 0;
             bottom: 0;
-            width: 250px; /* Sesuaikan dengan lebar sidebar */
+            width: 250px;
             z-index: 100;
             overflow-y: auto;
             background-color: #343a40;
@@ -47,15 +45,15 @@
             position: fixed;
             top: 0;
             right: 0;
-            left: 250px; /* Sesuaikan dengan lebar sidebar */
+            left: 250px;
             z-index: 99;
             background: white;
         }
 
         /* Main content padding */
         .main-content {
-            margin-left: 250px; /* Sesuaikan dengan lebar sidebar */
-            padding-top: 70px; /* Sesuaikan dengan tinggi navbar */
+            margin-left: 250px;
+            padding-top: 70px;
         }
 
         /* Responsive adjustments */

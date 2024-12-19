@@ -12,47 +12,60 @@ use Illuminate\Support\Facades\Session;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        try {
-            // Ambil semua santri yang terhubung dengan wali
-            $santri_list = Santri::where('wali_id', Auth::id())->get();
+        // Ambil semua santri yang terhubung dengan wali
+        $santri_list = Santri::where('wali_id', Auth::id())->get();
 
-            if ($santri_list->isEmpty()) {
-                return response()->view('wali.dashboard', [
-                    'santri' => null,
-                    'santri_list' => collect(),
-                    'pembayaran' => collect()
-                ])->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
-            }
+        // Ambil santri yang belum terhubung tapi memiliki nama wali yang sama
+        $unlinked_santri = Santri::whereNull('wali_id')
+            ->where('nama_wali', Auth::user()->name)
+            ->get();
 
-            // Ambil santri yang dipilih atau santri pertama sebagai default
-            $santri = null;
-            $selected_santri_id = Session::get('selected_santri_id');
+        // Ambil santri yang belum terhubung dan belum ada nama wali
+        $available_santri = Santri::whereNull('wali_id')
+            ->whereNull('nama_wali')
+            ->get();
 
-            if ($selected_santri_id && $santri_list->contains('id', $selected_santri_id)) {
-                $santri = $santri_list->find($selected_santri_id);
-            } else {
-                $santri = $santri_list->first();
+        if ($santri_list->isEmpty() && $unlinked_santri->isEmpty()) {
+            return view('wali.dashboard', [
+                'santri' => null,
+                'santri_list' => collect(),
+                'unlinked_santri' => collect(),
+                'available_santri' => $available_santri,
+                'pembayaran' => collect()
+            ]);
+        }
+
+        // Ambil santri yang dipilih atau santri pertama sebagai default
+        $santri = null;
+        $selected_santri_id = Session::get('selected_santri_id');
+
+        if ($selected_santri_id && $santri_list->contains('id', $selected_santri_id)) {
+            $santri = $santri_list->find($selected_santri_id);
+        } else {
+            $santri = $santri_list->first();
+            if ($santri) {
                 Session::put('selected_santri_id', $santri->id);
             }
+        }
 
-            // Ambil data pembayaran
+        // Ambil data pembayaran jika ada santri yang terhubung
+        $pembayaran = collect();
+        if ($santri) {
             $pembayaran = PembayaranSpp::where('santri_id', $santri->id)
                 ->latest()
                 ->take(5)
                 ->get();
-
-            return response()
-                ->view('wali.dashboard', compact('santri', 'santri_list', 'pembayaran'))
-                ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
-                ->header('Pragma', 'no-cache')
-                ->header('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');
-
-        } catch (\Exception $e) {
-            Log::error('Error in WaliDashboard: ' . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan saat memuat dashboard');
         }
+
+        return view('wali.dashboard', compact(
+            'santri',
+            'santri_list',
+            'unlinked_santri',
+            'available_santri',
+            'pembayaran'
+        ));
     }
 
     public function changeSantri(Request $request)
@@ -70,5 +83,20 @@ class DashboardController extends Controller
         }
 
         return back()->with('error', 'Santri tidak ditemukan');
+    }
+
+    public function hubungkan()
+    {
+        // Ambil santri yang belum terhubung tapi memiliki nama wali yang sama
+        $unlinked_santri = Santri::whereNull('wali_id')
+            ->where('nama_wali', Auth::user()->name)
+            ->get();
+
+        // Ambil santri yang belum terhubung dan belum ada nama wali
+        $available_santri = Santri::whereNull('wali_id')
+            ->whereNull('nama_wali')
+            ->get();
+
+        return view('wali.hubungkan', compact('unlinked_santri', 'available_santri'));
     }
 }

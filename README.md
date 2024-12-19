@@ -2,36 +2,71 @@
 
 > Sistem informasi untuk mengelola pembayaran SPP di Pesantren Jabal Nur Jadid.
 
-## 🚀 Fitur Utama
+## 🚀 Progress
 
-### Fitur Admin ⚡
-- ✅ Kelola data santri
-    - ✅ Import data santri dari Excel
-    - ✅ Tambah, edit, hapus data santri
-    - ✅ Lihat detail santri
-    - ✅ Filter santri per kelas
-- ✅ Kelola data wali santri
-    - ✅ Tambah, edit, hapus data wali
-    - ✅ Reset password wali
-- ⚠️ Kelola pembayaran SPP
-    - ✅ Input pembayaran SPP
-    - ⚠️ Cetak bukti pembayaran
-    - ⚠️ Laporan pembayaran
-- ✅ Kelola master data
-    - ✅ Kategori santri
-    - ✅ Tarif SPP
+### ✅ Fitur yang Sudah Selesai
 
-### Fitur Wali Santri 🚫
-- [ ] Lihat tagihan SPP
-- [ ] Riwayat pembayaran  
+#### Autentikasi & Otorisasi
+- [x] Login multi user (Admin, Petugas, Wali Santri)
+- [x] Role based access control
+- [x] Logout dengan konfirmasi
+- [x] Prevent back history setelah logout
+
+#### Dashboard Admin
+- [x] Statistik total santri
+- [x] Statistik total penerimaan
+- [x] Statistik total tunggakan
+- [x] Daftar pembayaran terbaru
+- [x] Daftar santri dengan tunggakan terbanyak
+
+#### Manajemen Data Santri
+- [x] CRUD data santri
+- [x] Import data santri via Excel
+- [x] Filter santri per kelas
+- [x] Pencarian santri
+- [x] Detail santri dengan riwayat pembayaran
+
+#### Manajemen Kategori Santri
+- [x] CRUD kategori santri
+- [x] Setting tarif SPP per kategori
+- [x] Riwayat perubahan tarif
+
+#### Dashboard Wali Santri
+- [x] Multi santri dalam satu akun wali
+- [x] Informasi tagihan SPP
+- [x] Riwayat pembayaran
+- [x] Fitur hubungkan santri dengan wali
+
+#### Laporan
+- [x] Laporan pembayaran SPP
+- [x] Laporan tunggakan
+- [x] Filter laporan (periode/kelas)
+- [x] Export laporan ke Excel
+
+### 🚧 Fitur yang Sedang Dikerjakan
+
+#### Pembayaran SPP
+- [ ] Input pembayaran manual oleh admin/petugas
+- [ ] Upload bukti pembayaran oleh wali
+- [ ] Verifikasi pembayaran
+- [ ] Notifikasi status pembayaran
+
+#### Integrasi Payment Gateway
+- [ ] Integrasi Midtrans
 - [ ] Pembayaran online
-- [ ] Cetak bukti pembayaran
+- [ ] Callback pembayaran
+- [ ] Status transaksi realtime
 
-### Lainnya 🚫
+### 📋 Fitur yang Akan Datang
+
+- [ ] Notifikasi WhatsApp
+- [ ] Notifikasi Email
+- [ ] Kartu SPP digital
+- [ ] Grafik pembayaran
+- [ ] Dashboard petugas
 - [ ] Backup database
-- [ ] Pengaturan aplikasi
-- [ ] Logs aktivitas
-- [ ] API untuk mobile app
+- [ ] Setting aplikasi
+- [ ] Manajemen pengguna
 
 ## 💻 Tech Stack
 ![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
@@ -79,7 +114,7 @@ http://localhost:8000
 
 ## 📝 Keterangan Status
 - ✅ Selesai
-- ⚠️ Sedang dikerjakan  
+- 🚧 Sedang dikerjakan  
 - 🚫 Belum dikerjakan
 
 ## 📄 Lisensi

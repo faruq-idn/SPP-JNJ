@@ -32,11 +32,12 @@ class LoginController extends Controller
             ]);
 
             if ($user->role === 'admin') {
-                return redirect()->route('admin.dashboard');
+                return redirect()->intended(route('admin.dashboard'));
             } elseif ($user->role === 'petugas') {
-                return redirect()->route('petugas.dashboard');
+                return redirect()->intended(route('petugas.dashboard'));
+            } elseif ($user->role === 'wali') {
+                return redirect()->intended(route('wali.dashboard'));
             }
-            return redirect()->route('wali.dashboard');
         }
 
         return back()->withErrors([

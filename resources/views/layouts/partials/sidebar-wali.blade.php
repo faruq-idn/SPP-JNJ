@@ -13,21 +13,15 @@
 
     <div class="nav-items">
         <a href="{{ route('wali.dashboard') }}"
-           class="nav-link d-flex align-items-center {{ request()->routeIs('wali.dashboard') ? 'active' : '' }}">
+           class="nav-link d-flex align-items-center {{ Route::is('wali.dashboard') ? 'active' : '' }}">
             <i class="fas fa-tachometer-alt fa-fw me-3"></i>
             <span>Dashboard</span>
         </a>
 
         <a href="{{ route('wali.tagihan') }}"
-           class="nav-link d-flex align-items-center {{ request()->routeIs('wali.tagihan') ? 'active' : '' }}">
+           class="nav-link d-flex align-items-center {{ Route::is('wali.tagihan') ? 'active' : '' }}">
             <i class="fas fa-file-invoice-dollar fa-fw me-3"></i>
-            <span>Tagihan SPP</span>
-        </a>
-
-        <a href="{{ route('wali.pembayaran') }}"
-           class="nav-link d-flex align-items-center {{ Request::routeIs('wali.pembayaran') ? 'active' : '' }}">
-            <i class="fas fa-history fa-fw me-3"></i>
-            <span>Riwayat Pembayaran</span>
+            <span>Tagihan & Riwayat SPP</span>
         </a>
     </div>
 </nav>

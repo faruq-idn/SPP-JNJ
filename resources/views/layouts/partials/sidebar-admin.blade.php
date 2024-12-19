@@ -19,6 +19,14 @@
             </a>
             <div id="collapseKelas" class="collapse {{ Request::is('admin/santri*') ? 'show' : '' }}">
                 <div class="submenu">
+                    <!-- Tombol Semua Santri dipindah ke atas -->
+                    <div class="submenu-section">
+                        <a href="{{ route('admin.santri.index') }}"
+                           class="btn-all-santri">
+                            <i class="fas fa-list me-1"></i>Semua Santri
+                        </a>
+                    </div>
+
                     <!-- SMP -->
                     <div class="submenu-section">
                         <div class="submenu-header">SMP</div>
@@ -59,14 +67,6 @@
                                 <span class="badge">{{ $count }}</span>
                             </a>
                         @endforeach
-                    </div>
-
-                    <!-- Tombol Semua Santri -->
-                    <div class="submenu-section">
-                        <a href="{{ route('admin.santri.index') }}"
-                           class="btn-all-santri">
-                            <i class="fas fa-list me-1"></i>Semua Santri
-                        </a>
                     </div>
                 </div>
             </div>

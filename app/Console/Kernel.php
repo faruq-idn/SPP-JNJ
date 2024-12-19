@@ -15,9 +15,15 @@ class Kernel extends ConsoleKernel
      * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
      * @return void
      */
+    protected $commands = [
+        Commands\GenerateTagihanBulanan::class
+    ];
+
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire:inspire')->hourly();
+        $schedule->command('tagihan:generate')
+            ->monthlyOn(1, '00:00')
+            ->appendOutputTo(storage_path('logs/scheduler.log'));
     }
 
     /**

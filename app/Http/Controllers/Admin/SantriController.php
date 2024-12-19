@@ -213,64 +213,34 @@ class SantriController extends Controller
     {
         $keyword = $request->get('q');
 
-        $santri = Santri::query()
-            ->select('id', 'nisn', 'nama', 'jenjang', 'kelas', 'kategori_id', 'wali_id')
-            ->with([
-                'kategori:id,nama',
-                'wali:id,name,email',
-                'pembayaran' => function($query) {
-                    $query->select('id', 'santri_id', 'bulan', 'tahun', 'status')
-                        ->whereYear('created_at', now()->year)
-                        ->orderBy('bulan', 'desc');
-                }
-            ])
+        return Santri::with(['kategori.tarifTerbaru', 'pembayaran' => function($query) {
+                $query->where('status', 'pending')
+                      ->orderBy('tahun')
+                      ->orderBy('bulan');
+            }])
             ->where(function($query) use ($keyword) {
-                // Pencarian nama yang mirip
                 $query->where('nama', 'LIKE', "%{$keyword}%")
-                      ->orWhere('nama', 'LIKE', "{$keyword}%") // Awalan sama
-                      ->orWhere('nama', 'LIKE', "% {$keyword}%") // Kata kedua dst
-                      // Pencarian NISN yang mirip
-                      ->orWhere('nisn', 'LIKE', "%{$keyword}%")
-                      ->orWhere('nisn', 'LIKE', "{$keyword}%")
-                      // Pencarian berdasarkan wali
-                      ->orWhereHas('wali', function($q) use ($keyword) {
-                          $q->where('name', 'LIKE', "%{$keyword}%")
-                            ->orWhere('email', 'LIKE', "%{$keyword}%");
-                      });
+                      ->orWhere('nisn', 'LIKE', "%{$keyword}%");
             })
-            ->orderByRaw("
-                CASE
-                    WHEN nama LIKE '{$keyword}%' THEN 1
-                    WHEN nama LIKE '% {$keyword}%' THEN 2
-                    WHEN nisn LIKE '{$keyword}%' THEN 3
-                    ELSE 4
-                END
-            ") // Urutkan berdasarkan kemiripan
+            ->where('status', 'aktif')
             ->limit(10)
             ->get()
             ->map(function($santri) {
-                // Hitung tunggakan
-                $tunggakan = $santri->pembayaran
-                    ->where('status', 'pending')
-                    ->count();
+                $tunggakan = $santri->pembayaran->map(function($p) {
+                    return [
+                        'bulan' => $p->bulan,
+                        'tahun' => $p->tahun
+                    ];
+                });
 
                 return [
                     'id' => $santri->id,
-                    'text' => $santri->nisn . ' - ' . $santri->nama,
                     'nama' => $santri->nama,
                     'nisn' => $santri->nisn,
-                    'kelas' => $santri->jenjang . ' ' . $santri->kelas,
-                    'kategori' => $santri->kategori->nama ?? '-',
-                    'wali' => [
-                        'nama' => $santri->wali->name ?? '-',
-                        'email' => $santri->wali->email ?? '-'
-                    ],
-                    'tunggakan' => $tunggakan,
-                    'status' => $tunggakan > 0 ? 'Menunggak ' . $tunggakan . ' bulan' : 'Lunas'
+                    'nominal_spp' => $santri->kategori->tarifTerbaru->nominal ?? 0,
+                    'tunggakan' => $tunggakan
                 ];
             });
-
-        return response()->json($santri);
     }
 
     public function importExcel(Request $request)
@@ -456,5 +426,55 @@ class SantriController extends Controller
             ],
             'pembayaran' => $pembayaran
         ]);
+    }
+
+    public function kenaikanKelas()
+    {
+        try {
+            DB::beginTransaction();
+
+            // Nonaktifkan santri kelas akhir (9 SMP dan 12 SMA)
+            Santri::where('status', 'aktif')
+                ->where(function($query) {
+                    $query->where(function($q) {
+                        $q->where('jenjang', 'SMP')
+                          ->where('kelas', 'LIKE', '9%');
+                    })->orWhere(function($q) {
+                        $q->where('jenjang', 'SMA')
+                          ->where('kelas', 'LIKE', '12%');
+                    });
+                })
+                ->update(['status' => 'non-aktif']);
+
+            // Kenaikan kelas untuk SMP
+            foreach(['7A' => '8A', '7B' => '8B', '8A' => '9A', '8B' => '9B'] as $dari => $ke) {
+                Santri::where('status', 'aktif')
+                    ->where('jenjang', 'SMP')
+                    ->where('kelas', $dari)
+                    ->update(['kelas' => $ke]);
+            }
+
+            // Kenaikan kelas untuk SMA
+            foreach(['10A' => '11A', '10B' => '11B', '11A' => '12A', '11B' => '12B'] as $dari => $ke) {
+                Santri::where('status', 'aktif')
+                    ->where('jenjang', 'SMA')
+                    ->where('kelas', $dari)
+                    ->update(['kelas' => $ke]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Berhasil memproses kenaikan kelas'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal memproses kenaikan kelas: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\KategoriSantri;
 use App\Models\RiwayatTarifSpp;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class KategoriSantriController extends Controller
 {
@@ -88,16 +89,51 @@ class KategoriSantriController extends Controller
 
     public function destroy(KategoriSantri $kategori)
     {
-        // Cek apakah ada santri yang menggunakan kategori ini
-        if ($kategori->santri()->exists()) {
-            return back()->with('error', 'Tidak dapat menghapus kategori yang masih digunakan oleh santri');
+        try {
+            DB::beginTransaction();
+
+            // Cek apakah ini kategori Reguler (konfirmasi 3x sudah di handle di frontend)
+            if (strtolower($kategori->nama) === 'reguler') {
+                // Jika ada santri yang masih menggunakan kategori Reguler
+                if ($kategori->santri()->exists()) {
+                    return back()->with('error', 'Tidak dapat menghapus kategori Reguler karena masih digunakan oleh santri');
+                }
+            } else {
+                // Untuk kategori non-Reguler, pindahkan santri ke Reguler
+                $kategoriReguler = KategoriSantri::where('nama', 'Reguler')->first();
+                if (!$kategoriReguler) {
+                    return back()->with('error', 'Kategori Reguler tidak ditemukan');
+                }
+
+                // Hitung jumlah santri yang akan dipindahkan
+                $jumlahSantri = $kategori->santri()->count();
+
+                if ($jumlahSantri > 0) {
+                    // Pindahkan semua santri ke kategori Reguler
+                    $kategori->santri()->update([
+                        'kategori_id' => $kategoriReguler->id
+                    ]);
+                }
+            }
+
+            // Hapus riwayat tarif
+            $kategori->riwayatTarif()->delete();
+
+            // Hapus kategori
+            $kategori->delete();
+
+            DB::commit();
+
+            $message = 'Kategori berhasil dihapus.';
+            if (isset($jumlahSantri) && $jumlahSantri > 0) {
+                $message .= " {$jumlahSantri} santri dipindahkan ke kategori Reguler.";
+            }
+
+            return back()->with('success', $message);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus kategori: ' . $e->getMessage());
         }
-
-        // Untuk kategori Reguler, perlu 3x konfirmasi (sudah dihandle di frontend)
-        // Hapus riwayat tarif terlebih dahulu
-        $kategori->riwayatTarif()->delete();
-        $kategori->delete();
-
-        return back()->with('success', 'Kategori berhasil dihapus');
     }
 }

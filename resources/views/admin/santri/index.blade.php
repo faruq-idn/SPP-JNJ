@@ -6,7 +6,10 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-gray-800">{{ $title ?? 'Data Santri' }}</h1>
-        <div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success" onclick="kenaikanKelas()">
+                <i class="fas fa-graduation-cap me-1"></i>Kenaikan Kelas
+            </button>
             <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i class="fas fa-file-excel"></i> Import Excel
             </button>
@@ -172,6 +175,35 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Tambahkan modal konfirmasi -->
+<div class="modal fade" id="modalKenaikanKelas" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Konfirmasi Kenaikan Kelas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Perhatian!</strong> Tindakan ini akan:
+                    <ul class="mb-0">
+                        <li>Menaikkan kelas semua santri (7A→8A, 7B→8B, dst)</li>
+                        <li>Menonaktifkan santri kelas 9 SMP dan 12 SMA</li>
+                        <li>Proses ini tidak dapat dibatalkan</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" onclick="prosesKenaikanKelas()">
+                    <i class="fas fa-graduation-cap me-1"></i>Proses Kenaikan Kelas
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -398,6 +430,43 @@ $(document).ready(function() {
         $('#importFile').val('');
     });
 });
+
+function kenaikanKelas() {
+    $('#modalKenaikanKelas').modal('show');
+}
+
+function prosesKenaikanKelas() {
+    Swal.fire({
+        title: 'Yakin Proses Kenaikan Kelas?',
+        text: "Tindakan ini tidak dapat dibatalkan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Proses!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.post('{{ route("admin.santri.kenaikan-kelas") }}', {
+                _token: '{{ csrf_token() }}'
+            })
+            .done(response => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: response.message,
+                }).then(() => window.location.reload());
+            })
+            .fail(xhr => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON?.message || 'Terjadi kesalahan saat memproses kenaikan kelas'
+                });
+            });
+        }
+    });
+}
 </script>
 @endpush
 

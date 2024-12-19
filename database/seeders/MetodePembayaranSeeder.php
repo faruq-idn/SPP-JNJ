@@ -10,9 +10,8 @@ class MetodePembayaranSeeder extends Seeder
     public function run()
     {
         $metode = [
-            ['nama' => 'Manual', 'kode' => 'MANUAL'],
-            ['nama' => 'Transfer Bank', 'kode' => 'BANK'],
-            ['nama' => 'E-Wallet', 'kode' => 'EWALLET']
+            ['id' => 1, 'nama' => 'Manual/Tunai', 'kode' => 'MANUAL', 'status' => 'aktif'],
+            ['id' => 2, 'nama' => 'Transfer Bank', 'kode' => 'BANK', 'status' => 'aktif']
         ];
 
         foreach ($metode as $m) {

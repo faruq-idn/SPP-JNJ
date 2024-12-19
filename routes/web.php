@@ -59,6 +59,9 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/create', 'create')->name('create');
             Route::post('/', 'store')->name('store');
+            Route::get('/{pembayaran}/print', 'print')->name('print');
+            Route::delete('/hapus-tagihan', 'hapusTagihan')->name('hapus-tagihan');
+            Route::get('/check-status', 'checkStatus')->name('check-status');
         });
 
         // Laporan routes
@@ -78,6 +81,14 @@ Route::middleware(['auth'])->group(function () {
 
         // Pembayaran routes
         Route::get('/pembayaran/{pembayaran}', [PembayaranController::class, 'show'])->name('pembayaran.show');
+
+        // Generate tagihan routes
+        Route::post('/pembayaran/generate-tagihan', [PembayaranController::class, 'generateTagihan'])
+            ->name('pembayaran.generate-tagihan');
+
+        // Kenaikan kelas routes
+        Route::post('/santri/kenaikan-kelas', [SantriController::class, 'kenaikanKelas'])
+            ->name('santri.kenaikan-kelas');
     });
 
     // Petugas routes

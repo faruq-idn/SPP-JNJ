@@ -5,166 +5,152 @@ namespace App\Http\Controllers\Wali;
 use App\Http\Controllers\Controller;
 use App\Models\PembayaranSpp;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use \Midtrans\Config as MidtransConfig;
-use \Midtrans\Snap;
+use Illuminate\Support\Str;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class PembayaranController extends Controller
 {
-    public function __construct()
-    {
-        if (!config('midtrans.server_key')) {
-            throw new \Exception('Midtrans Server Key tidak ditemukan');
-        }
-
-        \Midtrans\Config::$serverKey = config('midtrans.server_key');
-        \Midtrans\Config::$isProduction = config('midtrans.is_production');
-        \Midtrans\Config::$isSanitized = config('midtrans.is_sanitized');
-        \Midtrans\Config::$is3ds = config('midtrans.is_3ds');
-
-        Log::info('Midtrans Config:', [
-            'server_key_exists' => !empty(config('midtrans.server_key')),
-            'is_production' => config('midtrans.is_production')
-        ]);
-    }
-
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'tagihan_id' => 'required|exists:pembayaran_spp,id'
-            ]);
+        $pembayaran = PembayaranSpp::findOrFail($request->tagihan_id);
 
-            $tagihan = PembayaranSpp::with(['santri.wali'])
-                ->whereHas('santri', function($query) {
-                    $query->where('wali_id', Auth::id());
-                })
-                ->find($validated['tagihan_id']);
+        // Generate unique order ID
+        $order_id = 'SPP-' . $pembayaran->id . '-' . time() . '-' . Str::random(5);
 
-            if (!$tagihan) {
-                throw new \Exception('Tagihan tidak ditemukan atau bukan milik Anda');
-            }
+        // Update pembayaran dengan order_id baru
+        $pembayaran->update([
+            'order_id' => $order_id
+        ]);
 
-            // Validasi data wali
-            if (!$tagihan->santri->wali->email || !$tagihan->santri->wali->no_hp) {
-                throw new \Exception('Mohon lengkapi data email dan nomor HP di profil Anda');
-            }
+        // Set konfigurasi Midtrans
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
 
-            // Cek status tagihan
-            if ($tagihan->status === 'success') {
-                throw new \Exception('Tagihan ini sudah dibayar');
-            }
-
-            // Generate order ID baru jika belum ada atau sudah expired
-            if (!$tagihan->order_id || $tagihan->status === 'expired') {
-                $tagihan->order_id = 'SPP-' . $tagihan->id . '-' . time();
-                $tagihan->save();
-            }
-
-            // Setup transaksi Midtrans
-            $params = [
-                'transaction_details' => [
-                    'order_id' => $tagihan->order_id,
-                    'gross_amount' => (int) $tagihan->nominal
-                ],
-                'customer_details' => [
-                    'first_name' => $tagihan->santri->wali->name,
-                    'email' => $tagihan->santri->wali->email,
-                    'phone' => $tagihan->santri->wali->no_hp
-                ],
-                'item_details' => [
-                    [
-                        'id' => 'SPP-' . $tagihan->id,
-                        'price' => (int) $tagihan->nominal,
-                        'quantity' => 1,
-                        'name' => 'Pembayaran SPP ' . $tagihan->bulan . '/' . $tagihan->tahun
-                    ]
-                ],
-                'callbacks' => [
-                    'finish' => route('wali.tagihan'),
-                    'error' => route('wali.tagihan'),
-                    'cancel' => route('wali.tagihan')
+        // Siapkan item untuk Midtrans
+        $params = [
+            'transaction_details' => [
+                'order_id' => $order_id,
+                'gross_amount' => (int) $pembayaran->nominal,
+            ],
+            'customer_details' => [
+                'first_name' => $pembayaran->santri->nama,
+                'email' => $pembayaran->santri->wali->email ?? '',
+                'phone' => $pembayaran->santri->wali->no_hp ?? '',
+            ],
+            'item_details' => [
+                [
+                    'id' => $pembayaran->id,
+                    'price' => (int) $pembayaran->nominal,
+                    'quantity' => 1,
+                    'name' => "SPP {$pembayaran->nama_bulan} {$pembayaran->tahun}",
                 ]
-            ];
+            ],
+            // Tambahkan callback URLs
+            'callbacks' => [
+                'finish' => route('wali.tagihan'),
+                'error' => route('wali.tagihan'),
+                'cancel' => route('wali.tagihan')
+            ],
+            // Tambahkan notification URL
+            'notification_url' => config('midtrans.notification_url')
+        ];
 
-            Log::info('Creating Midtrans transaction', [
-                'order_id' => $tagihan->order_id,
-                'params' => $params
+        try {
+            $snapToken = Snap::getSnapToken($params);
+
+            // Update pembayaran dengan snap token
+            $pembayaran->update([
+                'snap_token' => $snapToken,
+                'status' => 'pending'
             ]);
 
-            try {
-                $snapToken = Snap::getSnapToken($params);
-
-                // Update snap token
-                $tagihan->update([
-                    'snap_token' => $snapToken,
-                    'status' => 'pending'
-                ]);
-
-                return response()->json([
-                    'status' => 'success',
-                    'snap_token' => $snapToken
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Midtrans Error', [
-                    'message' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                throw new \Exception('Gagal membuat transaksi: ' . $e->getMessage());
-            }
+            return response()->json([
+                'snap_token' => $snapToken,
+                'message' => 'Berhasil membuat transaksi'
+            ]);
         } catch (\Exception $e) {
-            Log::error('Payment Error', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json(['message' => $e->getMessage()], 422);
+            return response()->json([
+                'message' => 'Gagal membuat transaksi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function notification(Request $request)
     {
-        try {
-            $notification = $request->all();
+        $payload = $request->all();
+        $signatureKey = $payload['signature_key'] ?? '';
+        $orderId = $payload['order_id'] ?? '';
+        $statusCode = $payload['status_code'] ?? '';
+        $grossAmount = $payload['gross_amount'] ?? '';
+        $serverKey = config('midtrans.server_key');
 
-            Log::info('Payment notification received', ['data' => $notification]);
+        $mySignatureKey = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
 
-            $orderId = $notification['order_id'];
-            $transactionStatus = $notification['transaction_status'];
-            $paymentType = $notification['payment_type'];
-            $transactionId = $notification['transaction_id'];
-
-            // Cari pembayaran berdasarkan order_id
-            $pembayaran = PembayaranSpp::where('order_id', $orderId)->firstOrFail();
-
-            // Update status pembayaran
-            $status = match($transactionStatus) {
-                'capture', 'settlement' => 'success',
-                'pending' => 'pending',
-                'deny', 'cancel', 'expire' => 'expired',
-                default => 'failed'
-            };
-
-            $pembayaran->update([
-                'status' => $status,
-                'payment_type' => $paymentType,
-                'transaction_id' => $transactionId,
-                'payment_details' => $notification,
-                'tanggal_bayar' => $status === 'success' ? now() : null
-            ]);
-
-            Log::info('Payment status updated', [
-                'order_id' => $orderId,
-                'status' => $status
-            ]);
-
-            return response()->json(['status' => 'success']);
-        } catch (\Exception $e) {
-            Log::error('Notification Error', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json(['status' => 'error'], 500);
+        if ($signatureKey !== $mySignatureKey) {
+            return response()->json(['message' => 'Invalid signature'], 400);
         }
+
+        $pembayaran = PembayaranSpp::where('order_id', $orderId)->first();
+        if (!$pembayaran) {
+            return response()->json(['message' => 'Pembayaran tidak ditemukan'], 404);
+        }
+
+        $transactionStatus = $payload['transaction_status'] ?? '';
+        $type = $payload['payment_type'] ?? '';
+
+        // Update status pembayaran
+        switch ($transactionStatus) {
+            case 'capture':
+            case 'settlement':
+                $pembayaran->update([
+                    'status' => 'success',
+                    'tanggal_bayar' => now(),
+                    'payment_type' => $type,
+                    'transaction_id' => $payload['transaction_id'] ?? null,
+                    'payment_details' => $payload
+                ]);
+
+                // Update status SPP santri
+                $this->updateSantriSppStatus($pembayaran->santri_id);
+                break;
+
+            case 'pending':
+                $pembayaran->update([
+                    'status' => 'pending',
+                    'payment_type' => $type,
+                    'payment_details' => $payload
+                ]);
+                break;
+
+            case 'deny':
+            case 'expire':
+            case 'cancel':
+                $pembayaran->update([
+                    'status' => 'unpaid',
+                    'payment_details' => $payload
+                ]);
+                break;
+        }
+
+        return response()->json(['message' => 'Notifikasi berhasil diproses']);
+    }
+
+    private function updateSantriSppStatus($santri_id)
+    {
+        $santri = \App\Models\Santri::find($santri_id);
+        if (!$santri) return;
+
+        // Cek apakah ada pembayaran yang belum lunas
+        $unpaidCount = PembayaranSpp::where('santri_id', $santri_id)
+            ->where('status', '!=', 'success')
+            ->count();
+
+        // Update status SPP santri
+        $santri->update([
+            'status_spp' => $unpaidCount === 0 ? 'Lunas' : 'Belum Lunas'
+        ]);
     }
 }

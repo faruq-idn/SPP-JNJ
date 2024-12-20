@@ -30,7 +30,7 @@ class DashboardController extends Controller
             ->toArray();
 
         // Pembayaran Terbaru
-        $pembayaranTerbaru = PembayaranSpp::with(['santri', 'metode_pembayaran'])
+        $pembayaranTerbaru = PembayaranSpp::with(['santri'])
             ->latest()
             ->take(5)
             ->get();

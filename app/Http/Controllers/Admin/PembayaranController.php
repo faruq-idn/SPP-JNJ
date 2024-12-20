@@ -12,12 +12,12 @@ class PembayaranController extends Controller
 {
     public function index()
     {
-        $belumLunas = PembayaranSpp::with(['santri', 'metode_pembayaran'])
+        $belumLunas = PembayaranSpp::with(['santri'])
             ->where('status', '!=', 'success')
             ->latest('created_at')
             ->paginate(10, ['*'], 'belum_lunas');
 
-        $lunas = PembayaranSpp::with(['santri', 'metode_pembayaran'])
+        $lunas = PembayaranSpp::with(['santri'])
             ->where('status', 'success')
             ->latest('tanggal_bayar')
             ->paginate(10, ['*'], 'lunas');

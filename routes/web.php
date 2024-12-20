@@ -9,7 +9,7 @@ use App\Http\Controllers\Admin\PembayaranController;
 use App\Http\Controllers\Admin\LaporanController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Petugas\DashboardController as PetugasDashboard;
-use App\Http\Controllers\Wali\DashboardController as WaliDashboard;
+use App\Http\Controllers\Wali\WaliDashboard;
 use App\Http\Controllers\Wali\TagihanController;
 use App\Http\Controllers\Wali\PembayaranController as WaliPembayaranController;
 use App\Models\User;
@@ -132,4 +132,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('payment-notification', [PembayaranController::class, 'notification'])
         ->name('payment.notification')
         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+    // Midtrans Notification Handler (tanpa middleware auth dan csrf)
+    Route::post('payment/notification', [WaliPembayaranController::class, 'notification'])
+        ->name('payment.notification')
+        ->withoutMiddleware([
+            \App\Http\Middleware\VerifyCsrfToken::class,
+            \App\Http\Middleware\Authenticate::class
+        ]);
 });

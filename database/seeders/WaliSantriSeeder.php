@@ -155,7 +155,8 @@ class WaliSantriSeeder extends Seeder
                 'tanggal_lahir' => Carbon::now()->subYears(rand(12,18)),
                 'alamat' => 'Jl. Contoh No. ' . rand(1,100),
                 'tanggal_masuk' => Carbon::now()->subMonths(rand(1,24)),
-                'status' => 'aktif'
+                'status' => 'aktif',
+                // Status SPP akan otomatis default ke 'Belum Lunas'
             ]));
 
             // Generate pembayaran 12 bulan terakhir

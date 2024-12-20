@@ -23,7 +23,14 @@ return new class extends Migration
             $table->string('kelas');
             $table->foreignId('kategori_id')->constrained('kategori_santri');
             $table->enum('status', ['aktif', 'non-aktif'])->default('aktif');
+            $table->enum('status_spp', ['Lunas', 'Belum Lunas'])->default('Belum Lunas');
             $table->timestamps();
+
+            // Index
+            $table->index('wali_id');
+            $table->index('kategori_id');
+            $table->index('status');
+            $table->index('status_spp');
         });
     }
 

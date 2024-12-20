@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class PembayaranSpp extends Model
 {
@@ -17,9 +18,13 @@ class PembayaranSpp extends Model
         'tahun',
         'tanggal_bayar',
         'metode_pembayaran_id',
-        'bukti_bayar',
         'status',
-        'keterangan'
+        'keterangan',
+        'snap_token',
+        'order_id',
+        'payment_type',
+        'transaction_id',
+        'payment_details'
     ];
 
     protected $casts = [
@@ -28,7 +33,8 @@ class PembayaranSpp extends Model
         'bulan' => 'string',
         'nominal' => 'decimal:0',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'updated_at' => 'datetime',
+        'payment_details' => 'array'
     ];
 
     public function santri(): BelongsTo
@@ -64,5 +70,15 @@ class PembayaranSpp extends Model
     public function scopeBelumLunas($query)
     {
         return $query->where('status', '!=', 'success');
+    }
+
+    protected static function booted()
+    {
+        static::updating(function ($pembayaran) {
+            Log::info('Updating payment', [
+                'id' => $pembayaran->id,
+                'changes' => $pembayaran->getDirty()
+            ]);
+        });
     }
 }

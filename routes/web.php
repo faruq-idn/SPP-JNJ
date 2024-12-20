@@ -13,6 +13,7 @@ use App\Http\Controllers\Wali\DashboardController as WaliDashboard;
 use App\Http\Controllers\Wali\TagihanController;
 use App\Http\Controllers\Wali\PembayaranController as WaliPembayaranController;
 use App\Models\User;
+use App\Http\Controllers\Wali\ProfilController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -117,5 +118,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/change-santri', [WaliDashboard::class, 'changeSantri'])->name('change-santri');
         Route::get('/tagihan', [TagihanController::class, 'index'])->name('tagihan');
         Route::get('/hubungkan', [WaliDashboard::class, 'hubungkan'])->name('hubungkan');
+        Route::post('/pembayaran', [WaliPembayaranController::class, 'store'])->name('pembayaran.store');
+        Route::post('/pembayaran/notification', [WaliPembayaranController::class, 'notification'])
+            ->name('pembayaran.notification')
+            ->withoutMiddleware(['auth', 'role:wali']);
+
+        // Profil routes
+        Route::get('/profil', [ProfilController::class, 'edit'])->name('profil.edit');
+        Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
     });
 });

@@ -10,12 +10,23 @@ class MetodePembayaranSeeder extends Seeder
     public function run()
     {
         $metode = [
-            ['id' => 1, 'nama' => 'Manual/Tunai', 'kode' => 'MANUAL', 'status' => 'aktif'],
-            ['id' => 2, 'nama' => 'Transfer Bank', 'kode' => 'BANK', 'status' => 'aktif']
+            [
+                'kode' => 'MANUAL',
+                'nama' => 'Manual/Tunai',
+                'status' => 'aktif'
+            ],
+            [
+                'kode' => 'MIDTRANS',
+                'nama' => 'Payment Gateway',
+                'status' => 'aktif'
+            ]
         ];
 
         foreach ($metode as $m) {
-            MetodePembayaran::create($m);
+            MetodePembayaran::firstOrCreate(
+                ['kode' => $m['kode']],
+                $m
+            );
         }
     }
 }

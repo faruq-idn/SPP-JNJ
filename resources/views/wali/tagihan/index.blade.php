@@ -134,7 +134,7 @@
                                                                 <i class="fas fa-eye me-1"></i>Detail
                                                             </button>
                                                         @else
-                                                            <button class="btn btn-sm btn-warning" onclick="bayarSekarang('{{ $tahun }}', '{{ $p->bulan }}')">
+                                                            <button class="btn btn-sm btn-warning" onclick="bayarSPP('{{ $p->id }}')">
                                                                 <i class="fas fa-money-bill me-1"></i>Bayar
                                                             </button>
                                                         @endif
@@ -173,28 +173,118 @@
 </div>
 
 @push('scripts')
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 <script>
-function bayarSPP(bulan) {
-    Swal.fire({
-        title: 'Konfirmasi Pembayaran',
-        text: `Anda akan membayar SPP untuk bulan ${bulan}?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Ya, Bayar Sekarang',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Implementasi pembayaran akan ditambahkan nanti
-            Swal.fire(
-                'Info',
-                'Fitur pembayaran akan segera tersedia',
-                'info'
-            );
-        }
-    });
-}
+document.addEventListener('DOMContentLoaded', function() {
+    window.bayarSPP = function(id) {
+        // Tambahkan konfirmasi sebelum memproses pembayaran
+        Swal.fire({
+            title: 'Konfirmasi Pembayaran',
+            text: 'Anda akan melanjutkan ke halaman pembayaran?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Lanjutkan',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Tampilkan loading
+                Swal.fire({
+                    title: 'Memproses Pembayaran',
+                    text: 'Mohon tunggu...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                fetch('{{ route("wali.pembayaran.store") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        tagihan_id: id
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => Promise.reject(err));
+                    }
+                    return response.json();
+                })
+                .then(response => {
+                    Swal.close();
+                    if(response.snap_token) {
+                        try {
+                            snap.pay(response.snap_token, {
+                                onSuccess: function(result) {
+                                    Swal.fire({
+                                        title: 'Pembayaran Berhasil',
+                                        text: 'Halaman akan diperbarui',
+                                        icon: 'success',
+                                        timer: 2000,
+                                        showConfirmButton: false
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                },
+                                onPending: function(result) {
+                                    Swal.fire({
+                                        title: 'Pembayaran Pending',
+                                        text: 'Silakan selesaikan pembayaran Anda',
+                                        icon: 'info'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                },
+                                onError: function(result) {
+                                    console.error('Payment Error:', result);
+                                    Swal.fire('Error', 'Pembayaran gagal', 'error');
+                                },
+                                onClose: function() {
+                                    Swal.fire('Info', 'Pembayaran dibatalkan', 'info');
+                                }
+                            });
+                        } catch (e) {
+                            console.error('Snap Error:', e);
+                            Swal.fire('Error', 'Gagal memuat halaman pembayaran', 'error');
+                        }
+                    }
+                })
+                .catch(error => {
+                    Swal.close();
+                    console.error('Fetch Error:', error);
+                    if (error.message && error.message.includes('Mohon lengkapi data')) {
+                        Swal.fire({
+                            title: 'Data Belum Lengkap',
+                            text: error.message,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Lengkapi Data',
+                            cancelButtonText: 'Nanti Saja'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = '{{ route("wali.profil.edit") }}';
+                            }
+                        });
+                    } else {
+                        Swal.fire('Error', error.message || 'Terjadi kesalahan saat memproses pembayaran', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    window.showDetail = function(id) {
+        // Implementasi tampilan detail pembayaran
+        Swal.fire({
+            title: 'Detail Pembayaran',
+            text: 'Fitur detail pembayaran akan segera tersedia',
+            icon: 'info'
+        });
+    }
+});
 </script>
 @endpush
 @endsection

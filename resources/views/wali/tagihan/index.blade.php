@@ -1,193 +1,137 @@
 @extends('layouts.wali')
 
-@section('title', 'Tagihan SPP')
+@section('title', 'Tagihan & Riwayat SPP')
 
 @section('content')
 <div class="container-fluid py-4">
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-12">
-            <h2 class="mb-4">
-                <i class="fas fa-file-invoice-dollar me-2"></i>Tagihan SPP
+            @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            @endif
+
+            @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            @endif
+
+            <h2 class="mb-3">
+                <i class="fas fa-file-invoice-dollar me-2"></i>Tagihan & Riwayat SPP
             </h2>
 
-            @if(!$santri)
-                <div class="alert alert-warning d-flex align-items-center" role="alert">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <div>
-                        Data santri tidak ditemukan. Silakan hubungi admin untuk informasi lebih lanjut.
-                    </div>
-                </div>
-            @else
-                <!-- Info Santri -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-auto">
-                                <div class="bg-primary bg-opacity-10 p-3 rounded">
-                                    <i class="fas fa-user-graduate text-primary fa-2x"></i>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <h5 class="card-title mb-0">{{ $santri->nama }}</h5>
-                                <p class="card-text text-muted mb-0">
-                                    NIS: {{ $santri->nis }} | Kelas: {{ $santri->kelas }}
-                                </p>
-                                <p class="card-text">
-                                    <small class="text-muted">
-                                        Kategori: {{ $santri->kategori->nama ?? '-' }}
-                                        (Rp {{ number_format($santri->kategori->tarif ?? 0, 0, ',', '.') }}/bulan)
-                                    </small>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Total Tunggakan -->
-                @if($total_tunggakan > 0)
-                    <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
-                        <div class="bg-warning bg-opacity-25 p-2 rounded me-3">
-                            <i class="fas fa-exclamation-circle text-warning fa-2x"></i>
-                        </div>
-                        <div>
-                            <h6 class="alert-heading mb-1">Total Tunggakan</h6>
-                            <p class="mb-0">
-                                Rp {{ number_format($total_tunggakan, 0, ',', '.') }}
-                            </p>
-                        </div>
-                    </div>
-                @endif
-
-                <!-- Riwayat Pembayaran -->
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-history me-2"></i>Riwayat Pembayaran
-                        </h5>
-                    </div>
-
-                    <!-- Tab tahun -->
-                    <div class="card-header bg-light py-2 border-top">
-                        <ul class="nav nav-tabs card-header-tabs">
-                            @foreach($pembayaranPerTahun as $tahun => $pembayaran)
-                                <li class="nav-item">
-                                    <a class="nav-link {{ $loop->first ? 'active' : '' }}"
-                                       data-bs-toggle="tab"
-                                       href="#tahun-{{ $tahun }}">
-                                        {{ $tahun }}
-                                    </a>
-                                </li>
+            @if($santri_list->count() > 1)
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form action="{{ route('wali.change-santri') }}" method="POST" class="d-flex align-items-center">
+                        @csrf
+                        <label class="me-2 fw-bold">Pilih Santri:</label>
+                        <select name="santri_id" class="form-select me-2" onchange="this.form.submit()">
+                            @foreach($santri_list as $s)
+                            <option value="{{ $s->id }}" {{ $santri->id == $s->id ? 'selected' : '' }}>
+                                {{ $s->nama }} ({{ str_pad($s->nisn, 5, '0', STR_PAD_LEFT) }})
+                            </option>
                             @endforeach
-                        </ul>
-                    </div>
-
-                    <div class="tab-content">
-                        @foreach($pembayaranPerTahun as $tahun => $pembayaranList)
-                            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
-                                 id="tahun-{{ $tahun }}">
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="bg-light">
-                                            <tr>
-                                                <th>Bulan</th>
-                                                <th>Tanggal Bayar</th>
-                                                <th>Nominal</th>
-                                                <th>Metode</th>
-                                                <th>Status</th>
-                                                <th class="text-center">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($pembayaranList as $p)
-                                                <tr>
-                                                    <td>
-                                                        @php
-                                                            $namaBulan = \Carbon\Carbon::createFromFormat('m', $p->bulan)->translatedFormat('F');
-                                                        @endphp
-                                                        {{ $namaBulan }}
-                                                    </td>
-                                                    <td>
-                                                        @if($p->tanggal_bayar)
-                                                            {{ \Carbon\Carbon::parse($p->tanggal_bayar)->format('d/m/Y') }}
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </td>
-                                                    <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
-                                                    <td>
-                                                        @if($p->metode_pembayaran)
-                                                            <span class="badge bg-info">
-                                                                {{ $p->metode_pembayaran->nama }}
-                                                            </span>
-                                                        @else
-                                                            <span class="badge bg-secondary">-</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge bg-{{ $p->status == 'success' ? 'success' : 'warning' }}">
-                                                            {{ $p->status == 'success' ? 'Lunas' : 'Belum Lunas' }}
-                                                        </span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        @if($p->status == 'success')
-                                                            <button class="btn btn-sm btn-primary" onclick="showDetail('{{ $p->id }}')">
-                                                                <i class="fas fa-eye me-1"></i>Detail
-                                                            </button>
-                                                        @else
-                                                            <button class="btn btn-sm btn-warning" onclick="bayarSPP('{{ $p->id }}')">
-                                                                <i class="fas fa-money-bill me-1"></i>Bayar
-                                                            </button>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+                        </select>
+                    </form>
                 </div>
+            </div>
+            @endif
 
-                <!-- Informasi Pembayaran -->
-                <div class="card border-0 shadow-sm mt-4">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">
-                            <i class="fas fa-info-circle me-2"></i>Informasi Pembayaran
-                        </h5>
-                        <div class="alert alert-info mb-0">
-                            <h6 class="alert-heading">Cara Pembayaran:</h6>
-                            <ol class="mb-0">
-                                <li>Klik tombol "Bayar" pada bulan yang ingin dibayar</li>
-                                <li>Pilih metode pembayaran yang tersedia</li>
-                                <li>Ikuti instruksi pembayaran yang muncul</li>
-                                <li>Pembayaran akan diverifikasi secara otomatis</li>
-                                <li>Status akan berubah menjadi "Lunas" jika pembayaran berhasil</li>
-                            </ol>
+            <!-- Info Santri -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Informasi Santri</h5>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <p class="mb-1"><strong>Nama:</strong> {{ $santri->nama }}</p>
+                            <p class="mb-1"><strong>NIS:</strong> {{ str_pad($santri->nisn, 5, '0', STR_PAD_LEFT) }}</p>
+                            <p class="mb-0"><strong>Kelas:</strong> {{ $santri->kelas }}</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="mb-1"><strong>Status SPP:</strong>
+                                <span class="badge bg-{{ isset($santri->status_spp) && $santri->status_spp == 'Lunas' ? 'success' : 'warning' }}">
+                                    {{ $santri->status_spp ?? 'Belum Lunas' }}
+                                </span>
+                            </p>
+                            <p class="mb-1"><strong>Kategori:</strong> {{ $santri->kategori->nama }}</p>
+                            <p class="mb-0"><strong>Tarif SPP:</strong> Rp {{ number_format($santri->kategori->tarifTerbaru->nominal ?? 0, 0, ',', '.') }}</p>
                         </div>
                     </div>
                 </div>
-            @endif
+            </div>
+
+            <!-- Riwayat Pembayaran per Tahun -->
+            @foreach($pembayaranPerTahun as $tahun => $pembayaranBulanan)
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">Tahun {{ $tahun }}</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Bulan</th>
+                                <th>Status</th>
+                                <th>Nominal</th>
+                                <th>Tanggal Bayar</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($pembayaranBulanan as $pembayaran)
+                            <tr>
+                                <td>{{ $pembayaran->bulan }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $pembayaran->status == 'success' ? 'success' : ($pembayaran->status == 'pending' ? 'warning' : 'danger') }}">
+                                        {{ ucfirst($pembayaran->status) }}
+                                    </span>
+                                </td>
+                                <td>Rp {{ number_format($pembayaran->nominal, 0, ',', '.') }}</td>
+                                <td>{{ $pembayaran->tanggal_bayar ? $pembayaran->tanggal_bayar->format('d/m/Y H:i') : '-' }}</td>
+                                <td>
+                                    @if($pembayaran->status == 'unpaid')
+                                    <button class="btn btn-primary btn-sm" onclick="bayarSPP({{ $pembayaran->id }})">
+                                        <i class="fas fa-money-bill me-1"></i>Bayar Online
+                                    </button>
+                                    @elseif($pembayaran->status == 'success')
+                                    <button class="btn btn-success btn-sm" onclick="lihatBukti({{ $pembayaran->id }})">
+                                        <i class="fas fa-receipt me-1"></i>Bukti
+                                    </button>
+                                    @elseif($pembayaran->status == 'pending')
+                                    <button class="btn btn-warning btn-sm" onclick="bayarSPP({{ $pembayaran->id }})">
+                                        <i class="fas fa-clock me-1"></i>Lanjutkan Pembayaran
+                                    </button>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endforeach
         </div>
     </div>
 </div>
 
 @push('scripts')
-<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     window.bayarSPP = function(id) {
-        // Tambahkan konfirmasi sebelum memproses pembayaran
         Swal.fire({
             title: 'Konfirmasi Pembayaran',
-            text: 'Anda akan melanjutkan ke halaman pembayaran?',
+            text: 'Anda akan melanjutkan ke halaman pembayaran online?',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Ya, Lanjutkan',
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Tampilkan loading
                 Swal.fire({
                     title: 'Memproses Pembayaran',
                     text: 'Mohon tunggu...',
@@ -200,88 +144,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetch('{{ route("wali.pembayaran.store") }}', {
                     method: 'POST',
                     headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({
                         tagihan_id: id
                     })
                 })
-                .then(response => {
+                .then(async response => {
+                    const data = await response.json();
                     if (!response.ok) {
-                        return response.json().then(err => Promise.reject(err));
+                        throw new Error(data.message || 'Terjadi kesalahan');
                     }
-                    return response.json();
+                    return data;
                 })
                 .then(response => {
                     Swal.close();
                     if(response.snap_token) {
-                        try {
-                            snap.pay(response.snap_token, {
-                                onSuccess: function(result) {
-                                    Swal.fire({
-                                        title: 'Pembayaran Berhasil',
-                                        text: 'Halaman akan diperbarui',
-                                        icon: 'success',
-                                        timer: 2000,
-                                        showConfirmButton: false
-                                    }).then(() => {
-                                        window.location.reload();
-                                    });
-                                },
-                                onPending: function(result) {
-                                    Swal.fire({
-                                        title: 'Pembayaran Pending',
-                                        text: 'Silakan selesaikan pembayaran Anda',
-                                        icon: 'info'
-                                    }).then(() => {
-                                        window.location.reload();
-                                    });
-                                },
-                                onError: function(result) {
-                                    console.error('Payment Error:', result);
-                                    Swal.fire('Error', 'Pembayaran gagal', 'error');
-                                },
-                                onClose: function() {
-                                    Swal.fire('Info', 'Pembayaran dibatalkan', 'info');
-                                }
-                            });
-                        } catch (e) {
-                            console.error('Snap Error:', e);
-                            Swal.fire('Error', 'Gagal memuat halaman pembayaran', 'error');
-                        }
+                        snap.pay(response.snap_token, {
+                            onSuccess: function(result) {
+                                Swal.fire({
+                                    title: 'Pembayaran Berhasil',
+                                    text: 'Halaman akan diperbarui',
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            },
+                            onPending: function(result) {
+                                Swal.fire({
+                                    title: 'Pembayaran Pending',
+                                    text: 'Silakan selesaikan pembayaran Anda',
+                                    icon: 'info'
+                                });
+                            },
+                            onError: function(result) {
+                                console.error('Payment Error:', result);
+                                Swal.fire('Error', 'Pembayaran gagal', 'error');
+                            },
+                            onClose: function() {
+                                Swal.fire('Info', 'Pembayaran dibatalkan', 'info');
+                            }
+                        });
                     }
                 })
                 .catch(error => {
-                    Swal.close();
-                    console.error('Fetch Error:', error);
-                    if (error.message && error.message.includes('Mohon lengkapi data')) {
-                        Swal.fire({
-                            title: 'Data Belum Lengkap',
-                            text: error.message,
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonText: 'Lengkapi Data',
-                            cancelButtonText: 'Nanti Saja'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = '{{ route("wali.profil.edit") }}';
-                            }
-                        });
-                    } else {
-                        Swal.fire('Error', error.message || 'Terjadi kesalahan saat memproses pembayaran', 'error');
-                    }
+                    console.error('Error:', error);
+                    Swal.fire('Error', error.message, 'error');
                 });
             }
-        });
-    }
-
-    window.showDetail = function(id) {
-        // Implementasi tampilan detail pembayaran
-        Swal.fire({
-            title: 'Detail Pembayaran',
-            text: 'Fitur detail pembayaran akan segera tersedia',
-            icon: 'info'
         });
     }
 });

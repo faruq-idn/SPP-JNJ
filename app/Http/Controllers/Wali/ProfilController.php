@@ -22,6 +22,12 @@ class ProfilController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . Auth::id(),
             'no_hp' => 'required|string|max:15'
+        ], [
+            'name.required' => 'Nama lengkap harus diisi',
+            'email.required' => 'Email harus diisi',
+            'email.email' => 'Format email tidak valid',
+            'email.unique' => 'Email sudah digunakan',
+            'no_hp.required' => 'Nomor HP harus diisi'
         ]);
 
         DB::table('users')->where('id', Auth::id())->update([
@@ -30,8 +36,6 @@ class ProfilController extends Controller
             'no_hp' => $request->no_hp
         ]);
 
-        return redirect()
-            ->route('wali.profil.edit')
-            ->with('success', 'Profil berhasil diperbarui');
+        return back()->with('success', 'Profil berhasil diperbarui');
     }
 }

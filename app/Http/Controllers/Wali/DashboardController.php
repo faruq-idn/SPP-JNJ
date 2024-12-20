@@ -70,6 +70,10 @@ class DashboardController extends Controller
 
     public function changeSantri(Request $request)
     {
+        $request->validate([
+            'santri_id' => 'required|exists:santri,id'
+        ]);
+
         $santri_id = $request->santri_id;
 
         // Validasi santri_id
@@ -77,12 +81,14 @@ class DashboardController extends Controller
             ->where('id', $santri_id)
             ->first();
 
-        if ($santri) {
-            Session::put('selected_santri_id', $santri_id);
-            return back()->with('success', 'Berhasil mengubah santri');
+        if (!$santri) {
+            return back()->with('error', 'Santri tidak ditemukan atau bukan santri Anda');
         }
 
-        return back()->with('error', 'Santri tidak ditemukan');
+        // Simpan santri_id yang dipilih ke session
+        Session::put('selected_santri_id', $santri_id);
+
+        return back()->with('success', 'Berhasil mengubah santri yang dipilih');
     }
 
     public function hubungkan()

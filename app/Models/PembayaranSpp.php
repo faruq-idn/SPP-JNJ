@@ -13,12 +13,11 @@ class PembayaranSpp extends Model
 
     protected $fillable = [
         'santri_id',
-        'nominal',
         'bulan',
         'tahun',
-        'tanggal_bayar',
-        'metode_pembayaran_id',
+        'nominal',
         'status',
+        'tanggal_bayar',
         'keterangan',
         'snap_token',
         'order_id',
@@ -29,22 +28,12 @@ class PembayaranSpp extends Model
 
     protected $casts = [
         'tanggal_bayar' => 'datetime',
-        'tahun' => 'integer',
-        'bulan' => 'string',
-        'nominal' => 'decimal:0',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
         'payment_details' => 'array'
     ];
 
     public function santri(): BelongsTo
     {
         return $this->belongsTo(Santri::class);
-    }
-
-    public function metode_pembayaran(): BelongsTo
-    {
-        return $this->belongsTo(MetodePembayaran::class);
     }
 
     public function getNamaBulanAttribute(): string

@@ -10,9 +10,16 @@
                 <i class="fas fa-user-edit me-2"></i>Edit Profil
             </h2>
 
+            @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            @endif
+
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <form action="{{ route('wali.profil.update') }}" method="POST">
+                    <form id="profileForm" action="{{ route('wali.profil.update') }}" method="POST">
                         @csrf
                         @method('PUT')
 
@@ -52,9 +59,9 @@
                             @enderror
                         </div>
 
-                        <div class="text-end">
+                        <div class="d-flex justify-content-end">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Simpan Perubahan
+                                <i class="fas fa-save me-1"></i>Simpan Perubahan
                             </button>
                         </div>
                     </form>
@@ -63,4 +70,27 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.getElementById('profileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    Swal.fire({
+        title: 'Konfirmasi Perubahan',
+        text: 'Apakah Anda yakin ingin menyimpan perubahan profil?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Simpan',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            this.submit();
+        }
+    });
+});
+</script>
+@endpush
 @endsection

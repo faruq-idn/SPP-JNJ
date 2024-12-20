@@ -13,16 +13,26 @@ return new class extends Migration
         Schema::create('pembayaran_spp', function (Blueprint $table) {
             $table->id();
             $table->foreignId('santri_id')->constrained('santri')->onDelete('cascade');
-            $table->date('tanggal_bayar')->nullable();
             $table->string('bulan');
             $table->year('tahun');
-            $table->decimal('nominal', 10, 2);
-            $table->foreignId('metode_pembayaran_id')->nullable()
-                ->constrained('metode_pembayaran')
-                ->nullOnDelete();
-            $table->enum('status', ['pending', 'success', 'failed'])->default('pending');
+            $table->decimal('nominal', 10, 0);
+            $table->timestamp('tanggal_bayar')->nullable();
             $table->string('keterangan')->nullable();
+
+            // Kolom untuk Midtrans
+            $table->string('snap_token')->nullable();
+            $table->string('order_id')->nullable()->unique();
+            $table->string('payment_type')->nullable();
+            $table->string('transaction_id')->nullable();
+            $table->json('payment_details')->nullable();
+            $table->string('status')->default('unpaid');
+
             $table->timestamps();
+
+            // Index untuk performa
+            $table->index(['santri_id', 'bulan', 'tahun']);
+            $table->index('order_id');
+            $table->index('status');
         });
     }
 

@@ -14,6 +14,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- Midtrans -->
+    <script type="text/javascript"
+            src="https://app.sandbox.midtrans.com/snap/snap.js"
+            data-client-key="{{ config('midtrans.client_key') }}">
+    </script>
 
     <style>
         body {
@@ -196,6 +201,8 @@
         }
     </style>
     @stack('styles')
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="wali-layout">
     <!-- Top Navbar -->
@@ -206,18 +213,28 @@
             </a>
             <div class="ms-auto d-flex align-items-center">
                 <div class="dropdown">
-                    <button class="btn btn-link text-dark text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-link text-dark text-decoration-none dropdown-toggle"
+                            type="button"
+                            id="userDropdown"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
                         <i class="fas fa-user-circle me-1"></i>
                         <span class="d-none d-md-inline">{{ Auth::user()->name }}</span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                            <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#profileModal">
+                                <i class="fas fa-user-edit me-2"></i>Edit Profil
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST">
                                 @csrf
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </button>
                             </form>
-                            <button type="button" class="dropdown-item text-danger" onclick="confirmLogout()">
-                                <i class="fas fa-sign-out-alt me-2"></i>Logout
-                            </button>
                         </li>
                     </ul>
                 </div>
@@ -261,8 +278,145 @@
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @vite(['resources/js/app.js'])
     @stack('scripts')
+    <script>
+    document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
+        new bootstrap.Dropdown(element);
+    });
+
+    document.getElementById('logout-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        Swal.fire({
+            title: 'Konfirmasi Logout',
+            text: "Anda yakin ingin keluar dari sistem?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Logout!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        });
+    });
+    </script>
+
+    <!-- Profile Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-edit me-2"></i>Edit Profil
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="profileForm" action="{{ route('wali.profil.update') }}" method="POST">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="mb-3">
+                            <label class="form-label">Nama Lengkap</label>
+                            <input type="text"
+                                   name="name"
+                                   class="form-control @error('name') is-invalid @enderror"
+                                   value="{{ Auth::user()->name }}"
+                                   required>
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email"
+                                   name="email"
+                                   class="form-control @error('email') is-invalid @enderror"
+                                   value="{{ Auth::user()->email }}"
+                                   required>
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nomor HP</label>
+                            <input type="text"
+                                   name="no_hp"
+                                   class="form-control @error('no_hp') is-invalid @enderror"
+                                   value="{{ Auth::user()->no_hp }}"
+                                   required>
+                            @error('no_hp')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="submitProfile()">
+                        <i class="fas fa-save me-1"></i>Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tambahkan script -->
+    <script>
+    // Pindahkan fungsi submitProfile ke sini
+    function submitProfile() {
+        Swal.fire({
+            title: 'Konfirmasi Perubahan',
+            text: 'Apakah Anda yakin ingin menyimpan perubahan profil?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Simpan',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('profileForm').submit();
+            }
+        });
+    }
+
+    // Handle response after form submission
+    @if(session('success'))
+        Swal.fire({
+            title: 'Berhasil',
+            text: '{{ session('success') }}',
+            icon: 'success'
+        }).then(() => {
+            // Tutup modal setelah berhasil
+            bootstrap.Modal.getInstance(document.getElementById('profileModal')).hide();
+        });
+    @endif
+
+    @if($errors->any())
+        // Tampilkan modal jika ada error validasi
+        new bootstrap.Modal(document.getElementById('profileModal')).show();
+    @endif
+    </script>
+
+    <!-- Midtrans -->
+    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js"
+            data-client-key="{{ config('midtrans.client_key') }}">
+    </script>
+
+    <!-- Tambahkan error handling -->
+    <script>
+    // Cek apakah Midtrans SDK berhasil dimuat
+    if (typeof snap === 'undefined') {
+        console.error('Midtrans SDK tidak berhasil dimuat');
+    }
+    </script>
 </body>
 </html>

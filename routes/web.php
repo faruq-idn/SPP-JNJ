@@ -127,4 +127,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/profil', [ProfilController::class, 'edit'])->name('profil.edit');
         Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
     });
+
+    // Midtrans Notification Handler
+    Route::post('payment-notification', [PembayaranController::class, 'notification'])
+        ->name('payment.notification')
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 });

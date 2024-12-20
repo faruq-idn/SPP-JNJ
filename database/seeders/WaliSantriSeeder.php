@@ -12,7 +12,7 @@ use Carbon\Carbon;
 
 class WaliSantriSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         // Data wali santri
         $waliData = [
@@ -166,15 +166,10 @@ class WaliSantriSeeder extends Seeder
                 $bulan = $now->copy()->subMonths($i);
                 $status = $i < $tunggakan ? 'pending' : 'success';
 
-                // Ambil ID metode pembayaran tunai
-                $metodeTunai = MetodePembayaran::where('kode', 'MANUAL')->first();
-                if (!$metodeTunai) {
-                    $metodeTunai = MetodePembayaran::create([
-                        'nama' => 'Manual/Tunai',
-                        'kode' => 'MANUAL',
-                        'status' => 'aktif'
-                    ]);
-                }
+                // Untuk pembayaran yang success, gunakan pembayaran manual
+                $payment_type = $status === 'success' ? 'Manual/Tunai' : null;
+                $transaction_id = $status === 'success' ? 'MANUAL-'.$santri->id.'-'.$i.'-'.time() : null;
+                $order_id = $status === 'success' ? 'MANUAL-'.$santri->id.'-'.$i.'-'.time() : null;
 
                 PembayaranSpp::create([
                     'santri_id' => $santri->id,
@@ -182,11 +177,27 @@ class WaliSantriSeeder extends Seeder
                     'bulan' => $bulan->format('m'),
                     'tahun' => $bulan->format('Y'),
                     'nominal' => $nominal,
-                    'metode_pembayaran_id' => $metodeTunai->id,
                     'status' => $status,
-                    'keterangan' => $status === 'success' ? 'Lunas' : 'Belum dibayar'
+                    'keterangan' => $status === 'success' ? 'Pembayaran Manual/Tunai' : 'Belum dibayar',
+                    'payment_type' => $payment_type,
+                    'transaction_id' => $transaction_id,
+                    'order_id' => $order_id
                 ]);
             }
         }
+
+        // Contoh pembayaran SPP online (Midtrans)
+        PembayaranSpp::create([
+            'santri_id' => 1,
+            'tanggal_bayar' => '2024-01-20 07:00:32',
+            'bulan' => '01',
+            'tahun' => '2024',
+            'nominal' => 500000.00,
+            'status' => 'success',
+            'keterangan' => 'Pembayaran via Midtrans',
+            'payment_type' => 'bank_transfer',
+            'transaction_id' => 'TRX-'.time(),
+            'order_id' => 'SPP-1-'.time()
+        ]);
     }
 }

@@ -11,6 +11,7 @@
         "jolicode/jolinotif": "^3.0",
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
+        "midtrans/midtrans-php": "^2.6",
         "rap2hpoutre/fast-excel": "^5.5",
         "spatie/laravel-permission": "^6.10"
     },

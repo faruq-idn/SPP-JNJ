@@ -22,7 +22,8 @@ class Santri extends Model
         'jenjang',
         'kelas',
         'kategori_id',
-        'status'
+        'status',
+        'status_spp'
     ];
 
     protected $nullable = [
@@ -33,6 +34,7 @@ class Santri extends Model
     protected $casts = [
         'tanggal_lahir' => 'date',
         'tanggal_masuk' => 'date',
+        'nisn' => 'string',
     ];
 
     public function wali(): BelongsTo

@@ -26,7 +26,7 @@
                 <table class="table table-hover" id="dataTable">
                     <thead>
                         <tr>
-                            <th>Nama</th>
+                            <th>Nama Wali</th>
                             <th>Email</th>
                             @if(request()->query('type') == 'wali')
                                 <th>Santri</th>

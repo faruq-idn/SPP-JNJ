@@ -105,4 +105,24 @@ class DashboardController extends Controller
 
         return view('wali.hubungkan', compact('unlinked_santri', 'available_santri'));
     }
+
+    public function getData()
+    {
+        try {
+            $data = [
+                'status' => 'success',
+                'data' => [
+                    // data yang diperlukan
+                ]
+            ];
+
+            return response()->json($data);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat memuat data'
+            ], 500);
+        }
+    }
 }

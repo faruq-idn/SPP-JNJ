@@ -14,6 +14,7 @@ use App\Http\Controllers\Wali\TagihanController;
 use App\Http\Controllers\Wali\PembayaranController as WaliPembayaranController;
 use App\Models\User;
 use App\Http\Controllers\Wali\ProfilController;
+use App\Http\Controllers\Wali\DashboardController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -117,7 +118,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [WaliDashboard::class, 'index'])->name('dashboard');
         Route::post('/change-santri', [WaliDashboard::class, 'changeSantri'])->name('change-santri');
         Route::get('/tagihan', [TagihanController::class, 'index'])->name('tagihan');
-        Route::get('/hubungkan', [WaliDashboard::class, 'hubungkan'])->name('hubungkan');
+        Route::get('/hubungkan', [DashboardController::class, 'hubungkan'])->name('hubungkan');
         Route::post('/pembayaran', [WaliPembayaranController::class, 'store'])->name('pembayaran.store');
         Route::post('/pembayaran/notification', [WaliPembayaranController::class, 'notification'])
             ->name('pembayaran.notification')

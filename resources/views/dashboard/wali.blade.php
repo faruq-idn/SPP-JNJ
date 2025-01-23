@@ -88,4 +88,39 @@
         </div>
     </div>
 </div>
+
+<script>
+// Tambahkan di bagian script
+function handleResponse(response) {
+    try {
+        // Pastikan response valid
+        if (typeof response === 'string') {
+            return JSON.parse(response);
+        }
+        return response; // Jika sudah dalam bentuk object
+    } catch (error) {
+        console.error('Error parsing response:', error);
+        return null;
+    }
+}
+
+// Gunakan saat fetch/ajax
+fetch('/some-endpoint')
+    .then(response => response.json())
+    .then(data => {
+        const validData = handleResponse(data);
+        if (validData) {
+            // Proses data
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Tampilkan pesan error ke user
+        Swal.fire({
+            icon: 'error',
+            title: 'Terjadi Kesalahan',
+            text: 'Gagal memuat data. Silakan coba lagi.'
+        });
+    });
+</script>
 @endsection

@@ -173,24 +173,30 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }).then(() => {
                                     window.location.reload();
                                 });
-                            },
-                            onPending: function(result) {
-                                Swal.fire({
-                                    title: 'Pembayaran Pending',
-                                    text: 'Silakan selesaikan pembayaran Anda',
-                                    icon: 'info'
-                                });
-                            },
-                            onError: function(result) {
-                                console.error('Payment Error:', result);
-                                Swal.fire('Error', 'Pembayaran gagal', 'error');
-                            },
-                            onClose: function() {
-                                Swal.fire('Info', 'Pembayaran dibatalkan', 'info');
-                            }
-                        });
-                    }
-                })
+                           },
+                           onPending: function(result) {
+                               Swal.close(); // Tutup loading state
+                               Swal.fire({
+                                   title: 'Pembayaran Pending',
+                                   text: 'Silakan selesaikan pembayaran Anda',
+                                   icon: 'info'
+                               });
+                           },
+                           onError: function(result) {
+                               Swal.close(); // Tutup loading state
+                               console.error('Payment Error:', result);
+                               Swal.fire('Error', 'Pembayaran gagal', 'error');
+                           },
+                           onClose: function() {
+                               Swal.close(); // Tutup loading state
+                               Swal.fire('Info', 'Pembayaran dibatalkan', 'info');
+                           },
+                       
+                   });
+                   } else {
+                       Swal.close(); // Tutup loading state jika snap_token tidak ada
+                   }
+               })
                 .catch(error => {
                     console.error('Error:', error);
                     Swal.fire('Error', error.message, 'error');

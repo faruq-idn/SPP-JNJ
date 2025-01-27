@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Wali;
 
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\PembayaranSpp;
 use Illuminate\Http\Request;
@@ -13,10 +14,14 @@ class PembayaranController extends Controller
 {
     public function store(Request $request)
     {
-        $pembayaran = PembayaranSpp::findOrFail($request->tagihan_id);
+        $validatedData = $request->validate([
+            'tagihan_id' => 'required|exists:pembayaran_spp,id',
+        ]);
 
-        // Generate unique order ID
-        $order_id = 'SPP-' . $pembayaran->id . '-' . time() . '-' . Str::random(5);
+        $pembayaran = PembayaranSpp::findOrFail($validatedData['tagihan_id']);
+
+        // Generate unique order ID using UUID
+        $order_id = Str::uuid();
 
         // Update pembayaran dengan order_id baru
         $pembayaran->update([
@@ -50,9 +55,9 @@ class PembayaranController extends Controller
             ],
             // Tambahkan callback URLs
             'callbacks' => [
-                'finish' => route('wali.tagihan'),
-                'error' => route('wali.tagihan'),
-                'cancel' => route('wali.tagihan')
+                'finish' => route('wali.pembayaran.success'),
+                'error' => route('wali.pembayaran.error'),
+                'cancel' => route('wali.tagihan') // Tetap ke halaman tagihan jika dibatalkan
             ],
             // Tambahkan notification URL
             'notification_url' => config('midtrans.notification_url')
@@ -72,6 +77,11 @@ class PembayaranController extends Controller
                 'message' => 'Berhasil membuat transaksi'
             ]);
         } catch (\Exception $e) {
+            Log::error('Gagal membuat transaksi Midtrans: ' . $e->getMessage(), [
+                'exception' => $e,
+                'pembayaran_id' => $request->tagihan_id,
+                'order_id' => $order_id ?? null
+            ]);
             return response()->json([
                 'message' => 'Gagal membuat transaksi: ' . $e->getMessage()
             ], 500);
@@ -81,6 +91,10 @@ class PembayaranController extends Controller
     public function notification(Request $request)
     {
         $payload = $request->all();
+
+        // Log payload notifikasi yang diterima dari Midtrans
+        Log::info('Midtrans Notification Payload:', $payload);
+
         $signatureKey = $payload['signature_key'] ?? '';
         $orderId = $payload['order_id'] ?? '';
         $statusCode = $payload['status_code'] ?? '';
@@ -90,6 +104,12 @@ class PembayaranController extends Controller
         $mySignatureKey = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
 
         if ($signatureKey !== $mySignatureKey) {
+            // Log error validasi signature key gagal
+            Log::error('Midtrans Notification Signature Key Validation Failed:', [
+                'payload' => $payload,
+                'signatureKey' => $signatureKey,
+                'mySignatureKey' => $mySignatureKey
+            ]);
             return response()->json(['message' => 'Invalid signature'], 400);
         }
 
@@ -135,7 +155,15 @@ class PembayaranController extends Controller
                 break;
         }
 
-        return response()->json(['message' => 'Notifikasi berhasil diproses']);
+        try {
+            return response()->json(['message' => 'Notifikasi berhasil diproses']);
+        } catch (\Exception $e) {
+            Log::error('Gagal memproses notifikasi Midtrans: ' . $e->getMessage(), [
+                'exception' => $e,
+                'payload' => $payload
+            ]);
+            return response()->json(['message' => 'Gagal memproses notifikasi'], 500);
+        }
     }
 
     private function updateSantriSppStatus($santri_id)

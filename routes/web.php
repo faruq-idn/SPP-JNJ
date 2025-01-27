@@ -68,7 +68,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Laporan routes
         Route::prefix('laporan')->name('laporan.')->group(function () {
-            Route::get('/', [LaporanController::class, 'index'])->name('index');
+            Route::get('/', [LaporanController::class, 'index'])->name('laporan.index');
             Route::get('/pembayaran', [LaporanController::class, 'pembayaran'])->name('pembayaran');
             Route::get('/tunggakan', [LaporanController::class, 'tunggakan'])->name('tunggakan');
             Route::get('/pembayaran/export', [LaporanController::class, 'exportPembayaran'])->name('export.pembayaran');
@@ -123,6 +123,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/pembayaran/notification', [WaliPembayaranController::class, 'notification'])
             ->name('pembayaran.notification')
             ->withoutMiddleware(['auth', 'role:wali']);
+
+        Route::get('/pembayaran/success', function () {
+            return view('wali.pembayaran.success');
+        })->name('pembayaran.success');
+
+        Route::get('/pembayaran/error', function () {
+            return view('wali.pembayaran.error');
+        })->name('pembayaran.error');
+
 
         // Profil routes
         Route::get('/profil', [ProfilController::class, 'edit'])->name('profil.edit');

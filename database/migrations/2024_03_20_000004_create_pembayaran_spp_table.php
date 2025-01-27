@@ -21,7 +21,7 @@ return new class extends Migration
 
             // Kolom untuk Midtrans
             $table->string('snap_token')->nullable();
-            $table->string('order_id')->nullable()->unique();
+            $table->char('order_id', 36)->nullable()->unique();
             $table->string('payment_type')->nullable();
             $table->string('transaction_id')->nullable();
             $table->json('payment_details')->nullable();

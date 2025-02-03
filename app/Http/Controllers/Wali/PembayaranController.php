@@ -118,6 +118,7 @@ class PembayaranController extends Controller
                     'transaction_id' => $payload['transaction_id'] ?? null,
                     'payment_details' => $payload
                 ]);
+                $this->updateSantriSppStatus($pembayaran->santri_id);
                 break;
 
             case 'pending':

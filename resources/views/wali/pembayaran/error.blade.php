@@ -8,9 +8,15 @@
                     <div class="card-header">Pembayaran Gagal</div>
 
                     <div class="card-body">
-                        <div class="alert alert-danger" role="alert">
-                            Maaf, pembayaran SPP Anda gagal diproses. Silakan coba lagi atau hubungi administrator.
-                        </div>
+                        @if(session('error'))
+                            <div class="alert alert-danger">
+                                {{ session('error') }}
+                            </div>
+                        @else
+                            <div class="alert alert-danger">
+                                Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi atau hubungi administrator.
+                            </div>
+                        @endif
                         <a href="{{ route('wali.tagihan') }}" class="btn btn-primary">Kembali ke Tagihan</a>
                     </div>
                 </div>

@@ -179,7 +179,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             },
                             onError: function(result) {
                                 console.error('Payment Error:', result);
-                                Swal.fire('Error', 'Pembayaran gagal', 'error');
+                                let errorMessage = 'Pembayaran gagal';
+                                if (result.status_message) {
+                                    errorMessage += ': ' + result.status_message;
+                                }
+                                Swal.fire('Error', errorMessage, 'error');
                             },
                             onClose: function() {
                                 Swal.fire('Info', 'Pembayaran dibatalkan', 'info');

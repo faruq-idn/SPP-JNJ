@@ -12,7 +12,6 @@ use App\Http\Controllers\Petugas\DashboardController as PetugasDashboard;
 use App\Http\Controllers\Wali\WaliDashboard;
 use App\Http\Controllers\Wali\TagihanController;
 use App\Http\Controllers\Wali\PembayaranController as WaliPembayaranController;
-use App\Models\User;
 use App\Http\Controllers\Wali\ProfilController;
 use App\Http\Controllers\Wali\DashboardController;
 
@@ -68,7 +67,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Laporan routes
         Route::prefix('laporan')->name('laporan.')->group(function () {
-            Route::get('/', [LaporanController::class, 'index'])->name('laporan.index');
+            Route::get('/', [LaporanController::class, 'index'])->name('index');
             Route::get('/pembayaran', [LaporanController::class, 'pembayaran'])->name('pembayaran');
             Route::get('/tunggakan', [LaporanController::class, 'tunggakan'])->name('tunggakan');
             Route::get('/pembayaran/export', [LaporanController::class, 'exportPembayaran'])->name('export.pembayaran');
@@ -132,22 +131,9 @@ Route::middleware(['auth'])->group(function () {
             return view('wali.pembayaran.error');
         })->name('pembayaran.error');
 
-
         // Profil routes
         Route::get('/profil', [ProfilController::class, 'edit'])->name('profil.edit');
         Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
     });
 
-    // Midtrans Notification Handler
-    Route::post('payment-notification', [PembayaranController::class, 'notification'])
-        ->name('payment.notification')
-        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-
-    // Midtrans Notification Handler (tanpa middleware auth dan csrf)
-    Route::post('payment/notification', [WaliPembayaranController::class, 'notification'])
-        ->name('payment.notification')
-        ->withoutMiddleware([
-            \App\Http\Middleware\VerifyCsrfToken::class,
-            \App\Http\Middleware\Authenticate::class
-        ]);
 });

@@ -55,75 +55,91 @@ Aplikasi manajemen pembayaran SPP berbasis web dengan integrasi payment gateway 
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white)
 ![jQuery](https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white)
 
-## 🛠️ Instalasi
+### 🛠️ Instalasi
 
-### Prasyarat
+#### Prasyarat
 - PHP >= 8.1
 - Composer
 - MySQL/MariaDB
 - Node.js & NPM
 - Git
+- Ekstensi PHP: BCMath, Ctype, Fileinfo, JSON, Mbstring, OpenSSL, PDO, Tokenizer, XML
 
-### Langkah Instalasi
+#### Langkah Instalasi
 
-1. Clone repository
-```bash
-git clone https://github.com/username/repo.git
-cd repo
-```
+1.  **Clone repository dari GitHub:**
+    ```bash
+    git clone [URL REPOSITORY GITHUB]
+    cd [NAMA DIREKTORI REPOSITORY]
+    ```
+    *Ganti `[URL REPOSITORY GITHUB]` dan `[NAMA DIREKTORI REPOSITORY]` dengan URL dan nama direktori repository proyek Anda.*
 
-2. Install dependencies PHP
-```bash
-composer install
-```
+2.  **Konfigurasi Aplikasi:**
+    *   Copy file `.env.example` menjadi `.env`:
+        ```bash
+        cp .env.example .env
+        ```
+    *   Generate application key:
+        ```bash
+        php artisan key:generate
+        ```
+    *   Buka file `.env` dan konfigurasi pengaturan database, Midtrans, dan lainnya sesuai kebutuhan.
 
-3. Install dependencies JavaScript
-```bash
-npm install
-npm run build
-```
+3.  **Konfigurasi Database:**
+    *   Pastikan server MySQL/MariaDB sudah berjalan.
+    *   Buat database baru dengan nama `spp_jnj` (atau nama lain sesuai konfigurasi `.env`).
+    *   Sesuaikan konfigurasi database di file `.env`:
+        ```env
+        DB_CONNECTION=mysql
+        DB_HOST=127.0.0.1
+        DB_PORT=3306
+        DB_DATABASE=spp_jnj
+        DB_USERNAME=root
+        DB_PASSWORD=
+        ```
+        *Sesuaikan `DB_USERNAME` dan `DB_PASSWORD` dengan kredensial database Anda.*
 
-4. Setup environment
-```bash
-# Copy file environment
-cp .env.example .env
+4.  **Konfigurasi Midtrans:**
+    *   Dapatkan `MIDTRANS_MERCHANT_ID`, `MIDTRANS_CLIENT_KEY`, dan `MIDTRANS_SERVER_KEY` dari dashboard Midtrans Sandbox (untuk testing) atau Production (untuk aplikasi live).
+    *   Konfigurasi Midtrans di file `.env`:
+        ```env
+        MIDTRANS_MERCHANT_ID=your-merchant-id
+        MIDTRANS_CLIENT_KEY=your-client-key
+        MIDTRANS_SERVER_KEY=your-server-key
+        MIDTRANS_IS_PRODUCTION=false # Set to true for production
+        ```
+        *Ganti `your-merchant-id`, `your-client-key`, dan `your-server-key` dengan kredensial Midtrans Anda.*
 
-# Generate app key
-php artisan key:generate
-```
+5.  **Install Dependencies PHP:**
+    ```bash
+    composer install
+    ```
 
-5. Konfigurasi database di file `.env`
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=nama_database
-DB_USERNAME=username
-DB_PASSWORD=password
-```
+6.  **Install Dependencies JavaScript dan Build Assets:**
+    ```bash
+    npm install
+    npm run build
+    ```
 
-6. Konfigurasi Midtrans di file `.env`
-```env
-MIDTRANS_MERCHANT_ID=your-merchant-id
-MIDTRANS_CLIENT_KEY=your-client-key
-MIDTRANS_SERVER_KEY=your-server-key
-MIDTRANS_IS_PRODUCTION=false
-```
+7.  **Migrasi dan Seeding Database:**
+    ```bash
+    php artisan migrate --seed
+    ```
 
-7. Migrasi dan seeding database
-```bash
-php artisan migrate --seed
-```
+8.  **Jalankan Development Server:**
+    ```bash
+    php artisan serve
+    ```
 
-8. Jalankan development server
-```bash
-php artisan serve
-```
+9.  **Akses Aplikasi di Browser:**
+    Buka browser dan akses aplikasi di URL yang diberikan oleh `php artisan serve` (biasanya `http://localhost:8000`).
 
-9. Buka aplikasi di browser
-```
-http://localhost:8000
-```
+#### Akun Default
+| Role    | Email               | Password   |
+|---------|---------------------|------------|
+| Admin   | admin@example.com   | password   |
+| Petugas | petugas@example.com | password   |
+| Wali    | wali@example.com    | password   |
 
 ### Akun Default
 | Role | Email | Password |

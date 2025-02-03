@@ -99,9 +99,7 @@
                                         <i class="fas fa-money-bill me-1"></i>Bayar Online
                                     </button>
                                     @elseif($pembayaran->status == 'success')
-                                    <button class="btn btn-success btn-sm" onclick="lihatBukti({{ $pembayaran->id }})">
-                                        <i class="fas fa-receipt me-1"></i>Bukti
-                                    </button>
+                                    
                                     @elseif($pembayaran->status == 'pending')
                                     <button class="btn btn-warning btn-sm" onclick="bayarSPP({{ $pembayaran->id }})">
                                         <i class="fas fa-clock me-1"></i>Lanjutkan Pembayaran
@@ -150,7 +148,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: JSON.stringify({
                         tagihan_id: id
-                    })
+                    }),
+                    credentials: 'same-origin'
                 })
                 .then(async response => {
                     const data = await response.json();
@@ -185,13 +184,17 @@ document.addEventListener('DOMContentLoaded', function() {
                            onError: function(result) {
                                Swal.close(); // Tutup loading state
                                console.error('Payment Error:', result);
-                               Swal.fire('Error', 'Pembayaran gagal', 'error');
+                               let errorMessage = 'Pembayaran gagal';
+                               if (result.status_message) {
+                                   errorMessage += ': ' + result.status_message;
+                               }
+                               Swal.fire('Error', errorMessage, 'error');
                            },
                            onClose: function() {
                                Swal.close(); // Tutup loading state
                                Swal.fire('Info', 'Pembayaran dibatalkan', 'info');
                            },
-                       
+
                    });
                    } else {
                        Swal.close(); // Tutup loading state jika snap_token tidak ada
@@ -199,7 +202,12 @@ document.addEventListener('DOMContentLoaded', function() {
                })
                 .catch(error => {
                     console.error('Error:', error);
-                    Swal.fire('Error', error.message, 'error');
+                    Swal.close(); // Tutup loading state
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Gagal terhubung ke server. Silakan coba lagi.'
+                    });
                 });
             }
         });

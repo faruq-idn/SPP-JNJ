@@ -7,15 +7,80 @@ use App\Models\PembayaranSpp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
+use Midtrans\Snap;
 
 class PembayaranController extends Controller
 {
+    public function __construct()
+    {
+        // Set konfigurasi midtrans
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
+        Config::$isSanitized = config('midtrans.is_sanitized');
+        Config::$is3ds = config('midtrans.is_3ds');
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            // Validasi konfigurasi Midtrans
+            if (empty(config('midtrans.server_key'))) {
+                throw new \Exception('Konfigurasi Midtrans tidak ditemukan');
+            }
+
+            $validatedData = $request->validate([
+                'tagihan_id' => 'required|exists:pembayaran_spp,id',
+            ]);
+
+            $pembayaran = PembayaranSpp::findOrFail($validatedData['tagihan_id']);
+
+            $order_id = 'SPP-' . time();
+
+            $params = [
+                'transaction_details' => [
+                    'order_id' => $order_id,
+                    'gross_amount' => (int) $pembayaran->nominal,
+                ],
+                'customer_details' => [
+                    'first_name' => $pembayaran->santri->nama,
+                    'email' => auth('wali')->user()->email,
+                    'phone' => auth('wali')->user()->no_hp,
+                ],
+                'callbacks' => [
+                    'finish' => route('wali.pembayaran.success'),
+                    'error' => route('wali.pembayaran.error'),
+                    'cancel' => route('wali.tagihan'),
+                ],
+            ];
+
+            $snapToken = Snap::getSnapToken($params);
+
+            // Update order_id di database
+            $pembayaran->update([
+                'order_id' => $order_id
+            ]);
+
+            return response()->json([
+                'snap_token' => $snapToken,
+                'order_id' => $order_id
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Payment Error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'Gagal membuat transaksi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function notification(Request $request)
     {
         $payload = $request->all();
-
-        // Log payload notifikasi yang diterima dari Midtrans
-        Log::info('Midtrans Notification Payload:', $payload);
+        Log::info('Midtrans Notification:', $payload);
 
         $signatureKey = $payload['signature_key'] ?? '';
         $orderId = $payload['order_id'] ?? '';
@@ -23,15 +88,12 @@ class PembayaranController extends Controller
         $grossAmount = $payload['gross_amount'] ?? '';
         $serverKey = config('midtrans.server_key');
 
-        // Validasi signature menggunakan HMAC-SHA512 sesuai dokumentasi Midtrans
-        $mySignatureKey = hash_hmac('sha512', $orderId . $statusCode . $grossAmount, $serverKey);
+        $mySignatureKey = hash_hmac('sha512', $orderId . $statusCode . $grossAmount . $serverKey, $serverKey);
 
         if ($signatureKey !== $mySignatureKey) {
-            // Log error validasi signature key gagal
-            Log::error('Midtrans Notification Signature Key Validation Failed:', [
-                'payload' => $payload,
-                'signatureKey' => $signatureKey,
-                'mySignatureKey' => $mySignatureKey
+            Log::error('Invalid Signature Key', [
+                'received' => $signatureKey,
+                'calculated' => $mySignatureKey
             ]);
             return response()->json(['message' => 'Invalid signature'], 400);
         }
@@ -41,20 +103,10 @@ class PembayaranController extends Controller
             return response()->json(['message' => 'Pembayaran tidak ditemukan'], 404);
         }
 
-        // Validasi amount sesuai dengan database
-        if ((int)$grossAmount !== (int)$pembayaran->nominal) {
-            Log::error('Jumlah pembayaran tidak sesuai: ' . $grossAmount . ' vs ' . $pembayaran->nominal, [
-                'payload' => $payload,
-                'pembayaran' => $pembayaran
-            ]);
-            return response()->json(['message' => 'Invalid payment amount'], 400);
-        }
-
         $transactionStatus = $payload['transaction_status'] ?? '';
         $type = $payload['payment_type'] ?? '';
         $fraudStatus = $payload['fraud_status'] ?? '';
 
-        // Update status pembayaran
         switch ($transactionStatus) {
             case 'capture':
             case 'settlement':
@@ -62,13 +114,10 @@ class PembayaranController extends Controller
                     'status' => 'success',
                     'tanggal_bayar' => now(),
                     'payment_type' => $type,
-                'fraud_status' => $fraudStatus,
+                    'fraud_status' => $fraudStatus,
                     'transaction_id' => $payload['transaction_id'] ?? null,
                     'payment_details' => $payload
                 ]);
-
-                // Update status SPP santri
-                $this->updateSantriSppStatus($pembayaran->santri_id);
                 break;
 
             case 'pending':
@@ -89,15 +138,7 @@ class PembayaranController extends Controller
                 break;
         }
 
-        try {
-            return response()->json(['message' => 'Notifikasi berhasil diproses']);
-        } catch (\Exception $e) {
-            Log::error('Gagal memproses notifikasi Midtrans: ' . $e->getMessage(), [
-                'exception' => $e,
-                'payload' => $payload
-            ]);
-            return response()->json(['message' => 'Gagal memproses notifikasi'], 500);
-        }
+        return response()->json(['message' => 'Notification processed']);
     }
 
     private function updateSantriSppStatus($santri_id)

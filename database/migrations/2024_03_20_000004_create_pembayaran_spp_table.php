@@ -13,6 +13,7 @@ return new class extends Migration
         Schema::create('pembayaran_spp', function (Blueprint $table) {
             $table->id();
             $table->foreignId('santri_id')->constrained('santri')->onDelete('cascade');
+            $table->foreignId('metode_pembayaran_id')->nullable()->constrained('metode_pembayaran')->nullOnDelete();
             $table->string('bulan');
             $table->year('tahun');
             $table->decimal('nominal', 10, 0);

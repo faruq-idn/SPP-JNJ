@@ -6,16 +6,18 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\Santri;
+use App\Models\PembayaranSpp;
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
-        'nama',
+        'name',
         'email',
-        'no_hp',
         'password',
+        'no_hp',
         'role'
     ];
 

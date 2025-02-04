@@ -28,12 +28,19 @@
                             <input type="password" class="form-control @error('password') is-invalid @enderror"
                                 id="password" name="password" placeholder="Password" required>
                             <label for="password">Password</label>
-                            <div class="position-absolute end-0 top-50 translate-middle-y pe-3">
-                                <i class="far fa-eye-slash toggle-password" style="cursor: pointer;"></i>
+                            <div class="position-absolute end-0 top-50 translate-middle-y pe-3" style="z-index: 2; right: 2.5rem;">
+                                <i id="passwordSuccessCheck" class="fas fa-check text-success me-2 d-none"></i>
+                                <i class="far fa-eye-slash toggle-password" style="cursor: pointer; right: -2.5rem;"></i>
                             </div>
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                        </div>
+                        <div class="password-strength mb-3">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="4"></div>
+                            </div>
+                            <p class="password-strength-text mt-2 small text-muted">Kekuatan Password: Belum diuji</p>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -48,8 +55,9 @@
                             @endif
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
-                            <i class="fas fa-sign-in-alt me-2"></i> Masuk
+                        <button type="submit" class="btn btn-primary w-100 py-2 mb-3" id="loginButton">
+                            <i class="fas fa-sign-in-alt me-2"></i> <span id="buttonText">Masuk</span>
+                            <span id="loadingSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
                         </button>
                     </form>
                 </div>
@@ -66,6 +74,7 @@
 </div>
 
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
 <script>
 $(document).ready(function() {
     // Toggle password visibility
@@ -104,6 +113,46 @@ $(document).ready(function() {
         if (!$(this).val()) {
             $(this).parent().removeClass('focused');
         }
+    });
+
+    // Password strength check
+    $('#password').on('input', function() {
+        const password = $(this).val();
+        const result = zxcvbn(password);
+        const progressBar = $('.progress-bar');
+        const strengthText = $('.password-strength-text');
+        const strengthPercentage = (result.score / 4) * 100;
+
+        progressBar.attr('aria-valuenow', result.score);
+        progressBar.width(strengthPercentage + '%');
+
+        if (result.score === 0) {
+            progressBar.removeClass('bg-success bg-warning bg-danger').addClass('bg-danger');
+            strengthText.text('Kekuatan Password: Sangat Lemah');
+        } else if (result.score === 1) {
+            progressBar.removeClass('bg-success bg-warning bg-danger').addClass('bg-danger');
+            strengthText.text('Kekuatan Password: Lemah');
+        } else if (result.score === 2) {
+            progressBar.removeClass('bg-success bg-warning bg-danger').addClass('bg-warning');
+            strengthText.text('Kekuatan Password: Cukup');
+        } else if (result.score === 3) {
+            progressBar.removeClass('bg-success bg-warning bg-danger').addClass('bg-success');
+            strengthText.text('Kekuatan Password: Kuat');
+        } else if (result.score === 4) {
+            progressBar.removeClass('bg-success bg-warning bg-danger').addClass('bg-success');
+            strengthText.text('Kekuatan Password: Sangat Kuat');
+        }
+    });
+
+    // Handle login button loading state
+    $('form').submit(function() {
+        const loginButton = $('#loginButton');
+        const buttonText = $('#buttonText');
+        const loadingSpinner = $('#loadingSpinner');
+
+        loginButton.prop('disabled', true);
+        buttonText.text('Memproses');
+        loadingSpinner.removeClass('d-none');
     });
 });
 </script>

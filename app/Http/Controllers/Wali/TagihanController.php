@@ -6,53 +6,68 @@ use App\Http\Controllers\Controller;
 use App\Models\Santri;
 use App\Models\PembayaranSpp;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 
 class TagihanController extends Controller
 {
     public function index()
     {
-        // Ambil santri yang sedang dipilih
-        $selected_santri_id = Session::get('selected_santri_id');
-
         // Ambil daftar santri yang terhubung dengan wali
         $santri_list = Santri::where('wali_id', Auth::id())
-            ->select('id', 'nama', 'nisn', 'kelas', 'kategori_id', 'status_spp')
-            ->with(['kategori:id,nama', 'kategori.tarifTerbaru:id,kategori_id,nominal,berlaku_mulai'])
+            ->with(['kategori'])
             ->get();
 
-        // Jika tidak ada santri yang dipilih, gunakan santri pertama
-        if (!$selected_santri_id && $santri_list->isNotEmpty()) {
-            $selected_santri_id = $santri_list->first()->id;
-            Session::put('selected_santri_id', $selected_santri_id);
+        // Ambil santri aktif dari session atau ambil yang pertama
+        $santri = null;
+        if (session()->has('santri_aktif')) {
+            $santri = $santri_list->where('id', session('santri_aktif'))->first();
         }
 
-        // Ambil data santri yang dipilih
-        $santri = $santri_list->where('id', $selected_santri_id)->first();
+        if (!$santri && $santri_list->isNotEmpty()) {
+            $santri = $santri_list->first();
+        }
 
-        if (!$santri) {
+        if (!$santri || $santri_list->isEmpty()) {
             return redirect()->route('wali.hubungkan')
-                ->with('error', 'Silakan hubungkan santri terlebih dahulu');
+                ->with('error', 'Silakan hubungkan akun dengan santri terlebih dahulu');
         }
 
         // Ambil pembayaran dan kelompokkan per tahun
         $pembayaranPerTahun = PembayaranSpp::where('santri_id', $santri->id)
+            ->select('id', 'bulan', 'tahun', 'nominal', 'status', 'tanggal_bayar')
             ->orderBy('tahun', 'desc')
             ->orderBy('bulan', 'asc')
             ->get()
             ->groupBy('tahun');
 
         // Hitung total tunggakan
-        $total_tunggakan = PembayaranSpp::where('santri_id', $santri->id)
+        $totalTunggakan = PembayaranSpp::where('santri_id', $santri->id)
             ->where('status', 'unpaid')
             ->sum('nominal');
+
+        // Tentukan status SPP
+        // Hitung status SPP
+        $tahunIni = date('Y');
+        $pembayaranTahunIni = $pembayaranPerTahun->get($tahunIni) ?? collect();
+        
+        if ($pembayaranTahunIni->isEmpty()) {
+            $statusSpp = 'Belum Lunas';
+        } else {
+            $statusSpp = $pembayaranTahunIni->every(function ($pembayaran) {
+                return $pembayaran->status == 'success';
+            }) ? 'Lunas' : 'Belum Lunas';
+        }
+
+        // Update status SPP di database
+        $santri->status_spp = $statusSpp;
+        $santri->save();
 
         return response()
             ->view('wali.tagihan.index', compact(
                 'santri',
                 'santri_list',
                 'pembayaranPerTahun',
-                'total_tunggakan'
+                'totalTunggakan',
+                'statusSpp' // Tambahkan status_spp ke compact
             ))
             ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
             ->header('Pragma', 'no-cache')

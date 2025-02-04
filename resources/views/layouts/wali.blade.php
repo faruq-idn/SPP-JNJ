@@ -2,16 +2,27 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, private">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="-1">
     <title>@yield('title') - Wali Panel</title>
 
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuToggle = document.querySelector('.mobile-menu-toggle');
+        const bottomNav = document.querySelector('.bottom-nav');
+
+        menuToggle.addEventListener('click', function() {
+            bottomNav.classList.toggle('active');
+        });
+    });
+    </script>
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <!-- Midtrans -->
@@ -21,195 +32,71 @@
     </script>
 
     <style>
-        body {
-            background-color: #f8f9fa;
-            padding-top: 56px;
-        }
+           /* Responsive adjustments - handled by Bootstrap grid and utilities */
+           @media (max-width: 768px) {
+               .container-fluid {
+                   padding-left: 1rem;
+                   padding-right: 1rem;
+               }
 
-        .navbar {
-            box-shadow: 0 2px 4px rgba(0,0,0,.08);
-        }
+               .table-responsive {
+                   margin: 0;
+                   padding: 0.5rem;
+               }
 
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,.05);
-            transition: transform 0.2s;
-        }
+               .table td,
+               .table th {
+                   padding: 0.75rem;
+                   white-space: nowrap;
+               }
 
-        .card:hover {
-            transform: translateY(-2px);
-        }
+               .card-body {
+                   padding: 1.25rem;
+               }
 
-        @media (max-width: 768px) {
-            .container-fluid {
-                padding-left: 0.75rem;
-                padding-right: 0.75rem;
-            }
+               .card .table-responsive {
+                   margin: 0 0.5rem;
+               }
+           }
 
-            .card {
-                margin-bottom: 1rem;
-            }
+           @media (max-width: 480px) {
+               .table td,
+               .table th {
+                   min-width: 120px;
+               }
 
-            .table-responsive {
-                margin: 0 -0.75rem;
-            }
+               .card-body {
+                   padding: 1rem;
+               }
+           }
 
-            .table td, .table th {
-                white-space: nowrap;
-            }
+           @media (min-width: 768px) {
+               .container-fluid {
+                   padding-left: 1.5rem;
+                   padding-right: 1.5rem;
+               }
 
-            h2 {
-                font-size: 1.5rem;
-            }
+               .card .table-responsive {
+                   margin: 0;
+                   padding: 0 1rem;
+               }
 
-            .card-title {
-                font-size: 1.1rem;
-            }
-        }
-
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            box-shadow: 0 -2px 10px rgba(0,0,0,.1);
-            z-index: 1000;
-        }
-
-        .bottom-nav .nav-link {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0.5rem 0;
-            color: #6c757d;
-            text-decoration: none;
-            font-size: 0.8rem;
-        }
-
-        .bottom-nav .nav-link.active {
-            color: #0d6efd;
-        }
-
-        .bottom-nav i {
-            font-size: 1.2rem;
-            margin-bottom: 0.2rem;
-        }
-
-        /* Add padding to prevent content from being hidden behind bottom nav */
-        .content-wrapper {
-            padding-bottom: 70px;
-        }
-
-        /* Table Styles */
-        .table-responsive {
-            margin: 0;
-            border-radius: 0.5rem;
-            background: white;
-        }
-
-        .table {
-            margin-bottom: 0;
-        }
-
-        @media (max-width: 768px) {
-            .container-fluid {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-
-            .table-responsive {
-                margin: 0;
-                padding: 0.5rem;
-            }
-
-            .table td,
-            .table th {
-                padding: 0.75rem;
-                white-space: nowrap;
-            }
-
-            .card-body {
-                padding: 1.25rem;
-            }
-
-            .card .table-responsive {
-                margin: 0 0.5rem;
-            }
-        }
-
-        /* Card Styles */
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,.05);
-            transition: transform 0.2s;
-            margin-bottom: 1.5rem;
-        }
-
-        .card-header {
-            background-color: transparent;
-            border-bottom: 1px solid rgba(0,0,0,.125);
-            padding: 1.25rem;
-        }
-
-        .card-body {
-            padding: 1.25rem;
-        }
-
-        /* Table Header & Footer */
-        .table thead th {
-            border-top: 0;
-            background-color: #f8f9fa;
-            font-weight: 600;
-            padding: 1rem 0.75rem;
-        }
-
-        .table tbody td {
-            vertical-align: middle;
-            padding: 1rem 0.75rem;
-        }
-
-        /* Responsive padding adjustments */
-        @media (min-width: 768px) {
-            .container-fluid {
-                padding-left: 1.5rem;
-                padding-right: 1.5rem;
-            }
-
-            .card .table-responsive {
-                margin: 0;
-                padding: 0 1rem;
-            }
-
-            .table td,
-            .table th {
-                padding: 1rem;
-            }
-        }
-
-        /* Bottom Navigation adjustments */
-        .content-wrapper {
-            padding-bottom: calc(70px + 1rem);
-        }
-
-        /* Alert spacing */
-        .alert {
-            margin-bottom: 1.5rem;
-        }
-    </style>
+               .table td,
+               .table th {
+                   padding: 1rem;
+               }
+           }
+       </style>
     @stack('styles')
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="wali-layout">
+<body class="wali-layout bg-light pt-3"> <!-- Menambahkan bg-light dan pt-3 untuk body -->
     <!-- Top Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm"> <!-- Menambahkan shadow-sm untuk navbar -->
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" height="30">
+            <a class="navbar-brand" href="#" class="navbar-brand"> <!-- Menambahkan kelas navbar-brand -->
+                <img src="{{ asset('images/logo.png') }}" alt="Logo" height="30" class="d-inline-block align-top"> <!-- Menambahkan kelas d-inline-block dan align-top untuk logo -->
             </a>
             <div class="ms-auto d-flex align-items-center">
                 <div class="dropdown">
@@ -244,37 +131,41 @@
 
     <!-- Main Content -->
     <div class="content-wrapper">
-        @yield('content')
+        <div class="container"> <!-- Menambahkan container untuk content-wrapper -->
+           <main class="container pt-4"> <!-- Menambahkan container class dan padding top pada main content -->
+               @yield('content')
+           </main>
+        </div>
     </div>
 
     <!-- Bottom Navigation -->
-    <div class="bottom-nav">
+    <nav class="bottom-nav bg-white border-top fixed-bottom"> <!-- Mengganti div dengan nav untuk bottom-nav dan menambahkan border-top dan fixed-bottom -->
         <div class="container">
-            <div class="row g-0">
-                <div class="col-4">
+            <div class="row g-0 justify-content-around"> <!-- Menambahkan justify-content-around untuk bottom-nav -->
+                <div class="col-4 text-center"> <!-- Menambahkan text-center untuk memusatkan ikon dan teks -->
                     <a href="{{ route('wali.dashboard') }}"
                        class="nav-link {{ Route::is('wali.dashboard') ? 'active' : '' }}">
-                        <i class="fas fa-home"></i>
-                        <span>Home</span>
+                        <i class="fas fa-home fa-lg"></i> <!-- Memperbesar ikon dengan fa-lg -->
+                        <span class="d-block">Home</span> <!-- Menambahkan d-block untuk teks di bawah ikon -->
                     </a>
                 </div>
-                <div class="col-4">
+                <div class="col-4 text-center"> <!-- Menambahkan text-center untuk memusatkan ikon dan teks -->
                     <a href="{{ route('wali.tagihan') }}"
                        class="nav-link {{ Route::is('wali.tagihan') ? 'active' : '' }}">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span>Tagihan</span>
+                        <i class="fas fa-file-invoice-dollar fa-lg"></i> <!-- Memperbesar ikon dengan fa-lg -->
+                        <span class="d-block">Tagihan</span> <!-- Menambahkan d-block untuk teks di bawah ikon -->
                     </a>
                 </div>
-                <div class="col-4">
+                <div class="col-4 text-center"> <!-- Menambahkan text-center untuk memusatkan ikon dan teks -->
                     <a href="{{ route('wali.hubungkan') }}"
                        class="nav-link {{ Route::is('wali.hubungkan') ? 'active' : '' }}">
-                        <i class="fas fa-link"></i>
-                        <span>Hubungkan</span>
+                        <i class="fas fa-link fa-lg"></i> <!-- Memperbesar ikon dengan fa-lg -->
+                        <span class="d-block">Hubungkan</span> <!-- Menambahkan d-block untuk teks di bawah ikon -->
                     </a>
                 </div>
             </div>
         </div>
-    </div>
+    </nav>
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -307,9 +198,10 @@
     </script>
 
     <!-- Profile Modal -->
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal">Test Modal Button</button>
     <div class="modal fade" id="profileModal" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content">
+            <div class="modal-content" style="background-color: white;">
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="fas fa-user-edit me-2"></i>Edit Profil
@@ -390,30 +282,29 @@
 
     // Handle response after form submission
     @if(session('success'))
+        const profileModal = document.getElementById('profileModal');
+        const modalInstance = profileModal ? bootstrap.Modal.getInstance(profileModal) : null;
+
         Swal.fire({
             title: 'Berhasil',
             text: '{{ session('success') }}',
             icon: 'success'
         }).then(() => {
-            // Tutup modal setelah berhasil
-            bootstrap.Modal.getInstance(document.getElementById('profileModal')).hide();
+            // Tutup modal jika ada
+            if (modalInstance) {
+                modalInstance.hide();
+            }
         });
     @endif
 
+    // Tampilkan modal jika ada error validasi
     @if($errors->any())
-        // Tampilkan modal jika ada error validasi
-        new bootstrap.Modal(document.getElementById('profileModal')).show();
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal) {
+            const modal = new bootstrap.Modal(profileModal);
+            modal.show();
+        }
     @endif
-    </script>
-
-    </script>
-
-    <!-- Tambahkan error handling -->
-    <script>
-    // Cek apakah Midtrans SDK berhasil dimuat
-    if (typeof snap === 'undefined') {
-        console.error('Midtrans SDK tidak berhasil dimuat');
-    }
     </script>
 </body>
 </html>

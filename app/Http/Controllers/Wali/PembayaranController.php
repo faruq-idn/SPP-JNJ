@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PembayaranSpp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Midtrans\Config;
 use Midtrans\Snap;
 
@@ -28,6 +29,16 @@ class PembayaranController extends Controller
                 throw new \Exception('Konfigurasi Midtrans tidak ditemukan');
             }
 
+            // Validasi nomor HP wali santri
+            $user = Auth::user();
+            if (!$user->no_hp) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Anda harus menambahkan nomor HP terlebih dahulu',
+                    'redirect_url' => route('wali.profil')
+                ], 400);
+            }
+
             $validatedData = $request->validate([
                 'tagihan_id' => 'required|exists:pembayaran_spp,id',
             ]);
@@ -43,8 +54,8 @@ class PembayaranController extends Controller
                 ],
                 'customer_details' => [
                     'first_name' => $pembayaran->santri->nama,
-                    'email' => auth('wali')->user()->email,
-                    'phone' => auth('wali')->user()->no_hp,
+                    'email' => Auth::user()->email,
+                    'phone' => Auth::user()->no_hp,
                 ],
                 'callbacks' => [
                     'finish' => route('wali.pembayaran.success'),
@@ -147,9 +158,14 @@ class PembayaranController extends Controller
         $santri = \App\Models\Santri::find($santri_id);
         if (!$santri) return;
 
-        // Cek apakah ada pembayaran yang belum lunas
+        // Ambil semua pembayaran tahun ini
+        $currentYear = date('Y');
         $unpaidCount = PembayaranSpp::where('santri_id', $santri_id)
-            ->where('status', '!=', 'success')
+            ->whereYear('created_at', $currentYear)
+            ->where(function($query) {
+                $query->where('status', 'unpaid')
+                    ->orWhere('status', 'pending');
+            })
             ->count();
 
         // Update status SPP santri

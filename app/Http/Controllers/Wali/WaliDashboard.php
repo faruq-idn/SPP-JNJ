@@ -12,8 +12,17 @@ class WaliDashboard extends Controller
 {
     public function index()
     {
-        // Ambil semua santri yang dimiliki wali
-        $santri_list = Auth::user()->santri;
+        // Ambil semua santri yang dimiliki wali dengan kategori dan tarif
+        $santri_list = Santri::where('wali_id', Auth::id())
+            ->with([
+                'kategori.tarifTerbaru',
+                'kategori' => function($query) {
+                    $query->with(['tarifTerbaru' => function($q) {
+                        $q->whereNull('berlaku_sampai');
+                    }]);
+                }
+            ])
+            ->get();
 
         // Ambil santri aktif dari session atau ambil yang pertama
         $santri = null;
@@ -21,24 +30,53 @@ class WaliDashboard extends Controller
             $santri = $santri_list->where('id', session('santri_aktif'))->first();
         }
 
-        if (!$santri) {
+        if (!$santri && $santri_list->isNotEmpty()) {
             $santri = $santri_list->first();
         }
 
-        if (!$santri) {
+        if (!$santri || $santri_list->isEmpty()) {
             return redirect()->route('wali.hubungkan')
                 ->with('error', 'Silakan hubungkan data santri terlebih dahulu');
         }
 
-        // Ambil 5 pembayaran terbaru (semua status)
-        $pembayaran_terbaru = PembayaranSpp::with(['santri'])
-            ->where('santri_id', $santri->id)
-            ->orderBy('tahun', 'desc')
-            ->orderBy('bulan', 'desc')
-            ->take(5)
+        // Ambil pembayaran tahun ini untuk status SPP
+        $tahunIni = date('Y');
+        $pembayaranTahunIni = PembayaranSpp::where('santri_id', $santri->id)
+            ->where('tahun', $tahunIni)
+            ->get();
+        
+        // Hitung status SPP
+        if ($pembayaranTahunIni->isEmpty()) {
+            $statusSpp = 'Belum Lunas';
+        } else {
+            $statusSpp = $pembayaranTahunIni->every(function ($pembayaran) {
+                return $pembayaran->status == 'success';
+            }) ? 'Lunas' : 'Belum Lunas';
+        }
+
+        // Update status SPP santri
+        $santri->status_spp = $statusSpp;
+        $santri->save();
+
+        // Ambil pembayaran yang belum lunas
+        $pembayaran_terbaru = PembayaranSpp::where('santri_id', $santri->id)
+            ->where(function($query) {
+                $query->where('status', 'unpaid')
+                      ->orWhere('status', 'pending');
+            })
+            ->orderBy('tahun', 'asc')
+            ->orderByRaw("FIELD(bulan, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)")
             ->get();
 
-        return view('wali.dashboard', compact('santri', 'santri_list', 'pembayaran_terbaru'));
+        // Hitung total tunggakan (status unpaid dan pending)
+        $total_tunggakan = PembayaranSpp::where('santri_id', $santri->id)
+            ->where(function($query) {
+                $query->where('status', 'unpaid')
+                      ->orWhere('status', 'pending');
+            })
+            ->sum('nominal');
+
+        return view('wali.dashboard', compact('santri', 'santri_list', 'pembayaran_terbaru', 'total_tunggakan'));
     }
 
     public function changeSantri(Request $request)
@@ -53,7 +91,6 @@ class WaliDashboard extends Controller
 
         session(['santri_aktif' => $santri->id]);
 
-        return redirect()->back()
-            ->with('success', 'Berhasil mengubah santri aktif');
+        return redirect()->back();
     }
 }

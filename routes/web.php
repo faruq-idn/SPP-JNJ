@@ -132,7 +132,7 @@ Route::middleware(['auth'])->group(function () {
         })->name('pembayaran.error');
 
         // Profil routes
-        Route::get('/profil', [ProfilController::class, 'edit'])->name('profil.edit');
+        Route::get('/profil', [ProfilController::class, 'index'])->name('profil');
         Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
     });
 

@@ -159,8 +159,14 @@ class SantriController extends Controller
 
     public function show(Santri $santri)
     {
-        // Load relasi yang dibutuhkan
-        $santri->load(['wali', 'kategori']);
+        $santri->load([
+            'wali',
+            'kategori',
+            'pembayaran' => function ($query) {
+                $query->orderBy('tahun', 'desc')
+                    ->orderBy('bulan', 'desc');
+            },
+        ]);
 
         // Hitung total tunggakan
         $totalTunggakan = PembayaranSpp::where('santri_id', $santri->id)
@@ -206,7 +212,7 @@ class SantriController extends Controller
             $pembayaranPerTahun[$tahun] = $pembayaran;
         }
 
-        return view('admin.santri.show', compact('santri', 'totalTunggakan', 'pembayaranPerTahun'));
+        return view('admin.santri.show', compact('santri', 'totalTunggakan', 'pembayaranPerTahun', 'tahunPembayaran'));
     }
 
     public function search(Request $request)

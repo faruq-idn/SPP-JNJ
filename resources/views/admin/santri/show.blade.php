@@ -152,94 +152,98 @@
             </div>
 
             <!-- Tab tahun -->
-            <div class="card-header bg-light py-2 border-top">
+            <div class="card-header bg-white py-3 border-bottom">
                 <ul class="nav nav-tabs card-header-tabs">
-                    @foreach($pembayaranPerTahun as $tahun => $pembayaran)
-                        <li class="nav-item">
-                            <a class="nav-link {{ $loop->first ? 'active' : '' }}"
-                               data-bs-toggle="tab"
-                               href="#tahun-{{ $tahun }}">
-                                {{ $tahun }}
-                            </a>
-                        </li>
+                    @foreach($pembayaranPerTahun as $tahun => $pembayaranBulanan)
+                    <li class="nav-item">
+                        <a class="nav-link {{ $loop->first ? 'active' : '' }}"
+                           data-bs-toggle="tab"
+                           style="font-size: 1.1rem; font-weight: 500; background-color: #e0e7ff;"
+                           href="#tahun-{{ $tahun }}">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            {{ $tahun }}
+                        </a>
+                    </li>
                     @endforeach
                 </ul>
             </div>
 
+            <!-- Tampilkan tahun yang tidak aktif -->
+            
             <div class="tab-content">
                 @foreach($pembayaranPerTahun as $tahun => $pembayaranList)
-                    <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
-                         id="tahun-{{ $tahun }}">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th>Bulan</th>
-                                        <th>Tanggal Bayar</th>
-                                        <th>Nominal</th>
-                                        <th>Metode</th>
-                                        <th>Status</th>
-                                        <th class="text-center">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($pembayaranList as $p)
-                                        <tr>
-                                            <td>
-                                                @php
-                                                    $namaBulan = \Carbon\Carbon::createFromFormat('m', $p->bulan)->translatedFormat('F');
-                                                @endphp
-                                                {{ $namaBulan }}
-                                            </td>
-                                            <td>
-                                                @if($p->tanggal_bayar)
-                                                    {{ \Carbon\Carbon::parse($p->tanggal_bayar)->format('d/m/Y') }}
-                                                @else
-                                                    -
-                                                @endif
-                                            </td>
-                                            <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
-                                            <td>
-                                                @if($p->metode_pembayaran)
-                                                    <span class="badge bg-info">
-                                                        {{ $p->metode_pembayaran->nama }}
-                                                    </span>
-                                                @else
-                                                    <span class="badge bg-secondary">-</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-{{ $p->status == 'success' ? 'success' : ($p->status == 'pending' ? 'warning' : 'danger') }}">
-                                                    {{ ucfirst($p->status) }}
-                                                </span>
-                                            </td>
-                                            <td class="text-center">
-                                                @if(is_object($p) && isset($p->id))
-                                                    <div class="btn-group btn-group-sm">
-                                                        <button class="btn btn-info" onclick="showDetail('{{ $p->id }}')">
-                                                            <i class="fas fa-eye"></i>
-                                                        </button>
-                                                        @if($p->status != 'success')
-                                                            <button class="btn btn-success" onclick="verifikasiPembayaran('{{ $p->id }}')">
-                                                                <i class="fas fa-check"></i>
-                                                            </button>
-                                                        @endif
-                                                        <button class="btn btn-danger" onclick="hapusPembayaran('{{ $p->id }}')">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                @else
-                                                    <button class="btn btn-sm btn-primary" onclick="tambahPembayaran('{{ $tahun }}', '{{ $p->bulan }}')">
-                                                        <i class="fas fa-plus me-1"></i>Bayar
+                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                     id="tahun-{{ $tahun }}">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Bulan</th>
+                                    <th>Tanggal Bayar</th>
+                                    <th>Nominal</th>
+                                    <th>Metode</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($pembayaranList as $p)
+                                <tr>
+                                    <td>
+                                        @php
+                                            $namaBulan = \Carbon\Carbon::createFromFormat('m', $p->bulan)->translatedFormat('F');
+                                        @endphp
+                                        {{ $namaBulan }}
+                                    </td>
+                                    <td>
+                                        @if($p->tanggal_bayar)
+                                            {{ \Carbon\Carbon::parse($p->tanggal_bayar)->format('d/m/Y') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
+                                    <td>
+                                        @if($p->metode_pembayaran)
+                                            <span class="badge bg-info">
+                                                {{ $p->metode_pembayaran->nama }}
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary">-</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ $p->status == 'success' ? 'success' : ($p->status == 'pending' ? 'warning' : 'danger') }}">
+                                            {{ ucfirst($p->status) }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if(is_object($p) && isset($p->id))
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-info" onclick="showDetail('{{ $p->id }}')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                @if($p->status != 'success')
+                                                    <button class="btn btn-success" onclick="verifikasiPembayaran('{{ $p->id }}')">
+                                                        <i class="fas fa-check"></i>
                                                     </button>
                                                 @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                                                <button class="btn btn-danger" onclick="hapusPembayaran('{{ $p->id }}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        @else
+                                            <button class="btn btn-sm btn-primary" onclick="tambahPembayaran('{{ $tahun }}', '{{ $p->bulan }}')">
+                                                <i class="fas fa-plus me-1"></i>Bayar
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
+                </div>
                 @endforeach
             </div>
         </div>

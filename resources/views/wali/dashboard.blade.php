@@ -3,12 +3,12 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="container-fluid py-4">
-    <div class="row g-4">
-        <!-- Pilih Santri (jika memiliki lebih dari 1 santri) -->
+<div class="container-fluid p-3 p-md-4">
+    <div class="row gy-3">
+        
         @if($santri_list->count() > 1)
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
+            <div class="card shadow-sm rounded-3 border-0">
                 <div class="card-body">
                     <form action="{{ route('wali.change-santri') }}" method="POST" class="d-flex align-items-center">
                         @csrf
@@ -26,88 +26,154 @@
         </div>
         @endif
 
-        <!-- Info Santri -->
+        
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">Informasi Santri</h5>
-                    <div class="row g-3">
-                        <div class="col-sm-6">
-                            <p class="mb-1"><strong>Nama:</strong> {{ $santri->nama }}</p>
-                            <p class="mb-1"><strong>NIS:</strong> {{ str_pad($santri->nisn, 5, '0', STR_PAD_LEFT) }}</p>
-                            <p class="mb-0"><strong>Kelas:</strong> {{ $santri->kelas }}</p>
+            <div class="card shadow-sm rounded-3 border-0">
+                <div class="card-body p-3 p-md-4">
+                    <h5 class="card-title fw-bold text-primary mb-3">Informasi Santri</h5>
+                    <div class="vstack gap-3">
+                        
+                        <div class="bg-light rounded-3 p-3">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                                <div>
+                                    <h6 class="fw-bold mb-1">{{ $santri->nama }}</h6>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary">NIS: {{ str_pad($santri->nisn, 5, '0', STR_PAD_LEFT) }}</span>
+                                        <span class="badge bg-info">Jenjang: {{ $santri->jenjang }}</span>
+                                        <span class="badge bg-primary">Kelas {{ $santri->kelas }}</span>
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    Terdaftar: {{ $santri->tanggal_masuk->format('d F Y') }}
+                                </small>
+                            </div>
                         </div>
-                        <div class="col-sm-6">
-                            <p class="mb-1">
-                                <strong>Status SPP:</strong>
-                                <span class="badge bg-{{ $santri->status_spp == 'Lunas' ? 'success' : 'warning' }}">
-                                    {{ $santri->status_spp }}
-                                </span>
-                            </p>
-                            <p class="mb-1"><strong>Kategori:</strong> {{ $santri->kategori->nama }}</p>
-                            <p class="mb-0"><strong>Tarif SPP:</strong> Rp {{ number_format($santri->kategori->tarifTerbaru->nominal ?? 0, 0, ',', '.') }}</p>
+
+                        
+                        <div class="card shadow-sm rounded-3 border-0 bg-light p-3">
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <div class="vstack gap-1">
+                                        <small class="text-muted">Kategori Santri</small>
+                                        <div class="fw-bold">{{ $santri->kategori->nama }}</div>
+                                        <small class="text-muted">Tarif Bulanan</small>
+                                        <div class="fw-bold text-primary">
+                                            Rp {{ number_format($santri->kategori->tarifTerbaru()->nominal ?? 0, 0, ',', '.') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="vstack gap-1">
+                                        <small class="text-muted">Status Pembayaran</small>
+                                        <div>
+                                            <span class="badge bg-{{ $santri->status_spp == 'Lunas' ? 'success' : 'warning' }} badge-pill px-3 py-2">
+                                                <i class="fas fa-{{ $santri->status_spp == 'Lunas' ? 'check-circle' : 'exclamation-circle' }} me-1"></i>
+                                                {{ $santri->status_spp }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Pembayaran Terbaru -->
+        
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
+            <div class="row g-4">
+                
+                <div class="col-md-6">
+                    <div class="card shadow-sm rounded-3 border-0 h-100">
+                        <div class="card-body p-3 p-md-4">
+                            <div class="vstack gap-4">
+                                
+                                <div class="d-flex align-items-center gap-3 p-3 rounded-3 {{ $santri->status_spp == 'Lunas' ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10' }}">
+                                    <div>
+                                        <i class="fas fa-chart-pie fa-2x {{ $santri->status_spp == 'Lunas' ? 'text-success' : 'text-warning' }}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Status SPP</div>
+                                        <div class="fw-bold fs-5">{{ $santri->status_spp }}</div>
+                                    </div>
+                                </div>
+
+                                
+                                <div class="d-flex align-items-center gap-3 p-3 rounded-3 {{ $pembayaran_terbaru->isEmpty() ? 'bg-success bg-opacity-10' : 'bg-danger bg-opacity-10' }}">
+                                    <div>
+                                        <i class="fas fa-money-bill fa-2x {{ $pembayaran_terbaru->isEmpty() ? 'text-success' : 'text-danger' }}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Total Tunggakan</div>
+                                        <div class="fw-bold fs-5">Rp {{ number_format($total_tunggakan ?? 0, 0, ',', '.') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-12">
+            <div class="card shadow-sm rounded-3 border-0">
                 <div class="card-header bg-transparent">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Pembayaran Terbaru</h5>
+                        <div>
+                            <h5 class="card-title mb-0">Daftar Tunggakan</h5>
+                            @if($pembayaran_terbaru->isNotEmpty())
+                            <small class="text-muted">Segera lunasi pembayaran untuk menghindari denda</small>
+                            @endif
+                        </div>
                         <a href="{{ route('wali.tagihan') }}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-list me-1"></i>Lihat Semua
+                            <i class="fas fa-list me-1"></i>Lihat Semua Tagihan
                         </a>
                     </div>
                 </div>
-                <div class="card-body">
-                    @if($pembayaran_terbaru->count() > 0)
-                        <div class="table-responsive">
-                            <table class="table align-middle">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th>Bulan/Tahun</th>
-                                        <th>Nominal</th>
-                                        <th>Status</th>
-                                        <th>Tanggal Bayar</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($pembayaran_terbaru as $pembayaran)
-                                    <tr>
-                                        <td>{{ $pembayaran->nama_bulan }} {{ $pembayaran->tahun }}</td>
-                                        <td>Rp {{ number_format($pembayaran->nominal, 0, ',', '.') }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ $pembayaran->status == 'success' ? 'success' : ($pembayaran->status == 'pending' ? 'warning' : 'danger') }}">
-                                                {{ ucfirst($pembayaran->status) }}
-                                            </span>
-                                        </td>
-                                        <td>{{ $pembayaran->tanggal_bayar ? $pembayaran->tanggal_bayar->format('d/m/Y') : '-' }}</td>
-                                        <td>
-                                            @if($pembayaran->status == 'unpaid')
-                                            <button class="btn btn-primary btn-sm" onclick="bayarSPP({{ $pembayaran->id }})">
-                                                <i class="fas fa-money-bill me-1"></i>Bayar
-                                            </button>
-                                            @elseif($pembayaran->status == 'pending')
-                                            <button class="btn btn-warning btn-sm" onclick="bayarSPP({{ $pembayaran->id }})">
-                                                <i class="fas fa-clock me-1"></i>Lanjutkan
-                                            </button>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                <div class="card-body p-3 p-md-4">
+                    @if($pembayaran_terbaru->isNotEmpty())
+                    <div class="vstack gap-3">
+                        @foreach($pembayaran_terbaru as $pembayaran)
+                        <div class="bg-light rounded-3 p-3 border">
+                            <div class="row g-3 align-items-center">
+                                
+                                <div class="col-12 col-sm-4">
+                                    <div class="vstack">
+                                        <span class="fw-bold text-primary fs-5">{{ $pembayaran->nama_bulan }}</span>
+                                        <span class="text-muted">{{ $pembayaran->tahun }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12 col-sm-5">
+                                    <div class="vstack">
+                                        <span class="fw-bold">Rp {{ number_format($pembayaran->nominal, 0, ',', '.') }}</span>
+                                        <span class="text-danger small">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            Jatuh tempo: 10 {{ $pembayaran->nama_bulan }} {{ $pembayaran->tahun }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12 col-sm-3">
+                                    <button class="btn btn-primary w-100" onclick="bayarSPP({{ $pembayaran->id }})">
+                                        <i class="fas fa-money-bill me-1"></i>Bayar
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+                        @endforeach
+                    </div>
                     @else
-                        <div class="text-center text-muted py-3">
-                            <i class="fas fa-receipt fa-3x mb-3"></i>
-                            <p class="mb-0">Belum ada data pembayaran</p>
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-check-circle text-success fa-3x"></i>
                         </div>
+                        <h5 class="text-success mb-2">Tidak Ada Tunggakan</h5>
+                        <p class="text-muted small mb-0">Terima kasih atas ketepatan waktu Anda dalam pembayaran SPP.</p>
+                    </div>
                     @endif
                 </div>
             </div>
@@ -193,11 +259,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    Swal.fire('Error', error.message, 'error');
+                    Swal.close();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Gagal terhubung ke server. Silakan coba lagi.'
+                    });
                 });
             }
         });
-    }
+    };
 });
 </script>
 @endpush

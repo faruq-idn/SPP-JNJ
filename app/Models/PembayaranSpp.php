@@ -23,7 +23,8 @@ class PembayaranSpp extends Model
         'order_id',
         'payment_type',
         'transaction_id',
-        'payment_details'
+        'payment_details',
+        'fraud_status'
     ];
 
     protected $casts = [
@@ -34,6 +35,11 @@ class PembayaranSpp extends Model
     public function santri(): BelongsTo
     {
         return $this->belongsTo(Santri::class);
+    }
+
+    public function metode_pembayaran(): BelongsTo
+    {
+        return $this->belongsTo(MetodePembayaran::class);
     }
 
     public function getNamaBulanAttribute(): string

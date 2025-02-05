@@ -7,9 +7,14 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-gray-800">{{ $title ?? 'Data Santri' }}</h1>
         <div class="d-flex gap-2">
-            <button class="btn btn-success" onclick="kenaikanKelas()">
-                <i class="fas fa-graduation-cap me-1"></i>Kenaikan Kelas
-            </button>
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="kenaikanKelas()">
+                    <i class="fas fa-graduation-cap me-1"></i>Kenaikan Kelas
+                </button>
+                <button class="btn btn-danger" onclick="batalKenaikanKelas()">
+                    <i class="fas fa-undo me-1"></i>Batalkan Kenaikan
+                </button>
+            </div>
             <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i class="fas fa-file-excel"></i> Import Excel
             </button>
@@ -102,84 +107,7 @@
     </div>
 </div>
 
-<!-- Modal Import -->
-<div class="modal fade" id="importModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Import Data Santri</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="importForm" action="{{ route('admin.santri.import') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-body">
-                    <!-- Loading Spinner -->
-                    <div id="loadingSpinner" class="text-center my-3 d-none">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2" id="uploadStatus">Mempersiapkan upload...</p>
-                        <div class="progress mt-2">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                 role="progressbar"
-                                 style="width: 0%"
-                                 id="uploadProgress">0%</div>
-                        </div>
-                    </div>
-
-                    <!-- Alert Container -->
-                    <div id="alertContainer"></div>
-
-                    @if($errors->has('import_errors'))
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                @foreach($errors->get('import_errors') as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    <div class="mb-3">
-                        <label class="form-label">File Excel</label>
-                        <div class="file-upload-wrapper">
-                            <div class="file-upload-message">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p>Drag & drop file di sini atau klik untuk memilih</p>
-                                <small class="text-muted">Format: .xlsx atau .csv</small>
-                            </div>
-                            <input type="file" class="file-upload @error('file') is-invalid @enderror"
-                                name="file" accept=".xlsx,.csv" id="importFile">
-                            <div class="file-upload-preview d-none">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-file-excel me-2 text-success"></i>
-                                    <span class="file-name"></span>
-                                    <button type="button" class="btn-close ms-auto" id="removeFile"></button>
-                                </div>
-                            </div>
-                        </div>
-                        @error('file')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                        <div class="form-text">
-                            <a href="{{ route('admin.santri.template') }}">
-                                Download template di sini
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="uploadButton">
-                        <i class="fas fa-upload"></i> Upload
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Tambahkan modal konfirmasi -->
+<!-- Modal Konfirmasi Kenaikan Kelas -->
 <div class="modal fade" id="modalKenaikanKelas" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -194,7 +122,6 @@
                     <ul class="mb-0">
                         <li>Menaikkan kelas semua santri (7A→8A, 7B→8B, dst)</li>
                         <li>Menonaktifkan santri kelas 9 SMP dan 12 SMA</li>
-                        <li>Proses ini tidak dapat dibatalkan</li>
                     </ul>
                 </div>
             </div>
@@ -208,6 +135,8 @@
     </div>
 </div>
 
+@include('admin.santri.partials.modal-import')
+
 @push('scripts')
 <script>
 $(document).ready(function() {
@@ -215,8 +144,22 @@ $(document).ready(function() {
         dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
              "<'row'<'col-sm-12'tr>>" +
              "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-        language: {
-            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
+        oLanguage: {
+            sEmptyTable: "Tidak ada data yang tersedia",
+            sInfo: "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+            sInfoEmpty: "Menampilkan 0 sampai 0 dari 0 entri",
+            sInfoFiltered: "(disaring dari _MAX_ entri keseluruhan)",
+            sLengthMenu: "Tampilkan _MENU_ entri",
+            sLoadingRecords: "Sedang memuat...",
+            sProcessing: "Sedang memproses...",
+            sSearch: "Cari:",
+            sZeroRecords: "Tidak ditemukan data yang sesuai",
+            oPaginate: {
+                sFirst: "Pertama",
+                sLast: "Terakhir",
+                sNext: "Selanjutnya",
+                sPrevious: "Sebelumnya"
+            }
         },
         processing: true,
         order: [[1, 'asc']],
@@ -231,204 +174,6 @@ $(document).ready(function() {
 
     // Hide default search box
     $('.dataTables_filter').hide();
-
-    // Handler untuk konfirmasi hapus
-    $('.delete-form').on('submit', function(e) {
-        e.preventDefault();
-        const form = this;
-
-        // Konfirmasi pertama
-        Swal.fire({
-            title: 'Konfirmasi Hapus',
-            text: "Apakah Anda yakin ingin menghapus data santri ini?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, lanjutkan',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Konfirmasi kedua
-                Swal.fire({
-                    title: 'Konfirmasi Terakhir',
-                    text: "Menghapus data santri akan menghapus semua data terkait dan tidak dapat dikembalikan!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Ya, Hapus Sekarang!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
-                });
-            }
-        });
-    });
-
-    // Handle form submission
-    $('#importForm').on('submit', function(e) {
-        e.preventDefault();
-
-        // Validasi file
-        const fileInput = $('#importFile')[0];
-        if (!fileInput.files || fileInput.files.length === 0) {
-            $('#alertContainer').html(`
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    Pilih file Excel/CSV terlebih dahulu
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `);
-            return;
-        }
-
-        // Validasi ukuran file (max 5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB dalam bytes
-        if (fileInput.files[0].size > maxSize) {
-            $('#alertContainer').html(`
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    Ukuran file terlalu besar. Maksimal 5MB
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `);
-            return;
-        }
-
-        // Create FormData
-        const formData = new FormData(this);
-
-        // Disable form elements
-        $('#uploadButton').prop('disabled', true);
-        $('#importFile').prop('disabled', true);
-        $('#removeFile').prop('disabled', true);
-
-        // Send AJAX request
-        $.ajax({
-            url: $(this).attr('action'),
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                // Hide loading spinner
-                $('#loadingSpinner').addClass('d-none');
-                $('#uploadStatus').text('Upload selesai!');
-                $('#uploadProgress').removeClass('progress-bar-animated');
-
-                // Show success message
-                $('#alertContainer').html(`
-                    <div class="alert alert-${response.status} alert-dismissible fade show" role="alert">
-                        ${response.message || 'Data berhasil diimport'}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `);
-
-                // Reload table after short delay
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            },
-            error: function(xhr) {
-                // Hide loading spinner
-                $('#loadingSpinner').addClass('d-none');
-                $('#uploadStatus').text('Upload gagal!');
-                $('#uploadProgress')
-                    .removeClass('progress-bar-animated bg-primary')
-                    .addClass('bg-danger');
-
-                // Enable form elements
-                $('#uploadButton').prop('disabled', false);
-                $('#importFile').prop('disabled', false);
-                $('#removeFile').prop('disabled', false);
-
-                // Show error message
-                const errors = xhr.responseJSON;
-                let errorMessage = 'Terjadi kesalahan saat mengimport data';
-
-                if (errors && errors.message) {
-                    errorMessage = errors.message;
-                    if (errors.detail) {
-                        errorMessage += '<br><br><strong>Detail error:</strong><br>' + errors.detail;
-                    }
-                } else if (errors && errors.errors) {
-                    errorMessage = Object.values(errors.errors).flat().join('<br>');
-                }
-
-                // Tampilkan pesan error yang lebih detail
-                if (xhr.status === 422) {
-                    errorMessage = 'Validasi gagal: ' + errorMessage;
-                } else if (xhr.status === 413) {
-                    errorMessage = 'File terlalu besar untuk diupload';
-                } else if (xhr.status === 0) {
-                    errorMessage = 'Koneksi terputus. Periksa koneksi internet Anda';
-                }
-
-                $('#alertContainer').html(`
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <div>${errorMessage}</div>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `);
-            }
-        });
-    });
-
-    // Reset form when modal is closed
-    $('#importModal').on('hidden.bs.modal', function() {
-        $('#importForm')[0].reset();
-        $('#alertContainer').empty();
-        $('#loadingSpinner').addClass('d-none');
-        $('#uploadButton').prop('disabled', false);
-        $('#importFile').prop('disabled', false);
-        // Reset progress bar
-        $('#uploadProgress')
-            .css('width', '0%')
-            .text('0%')
-            .addClass('progress-bar-animated bg-primary')
-            .removeClass('bg-danger');
-        $('#uploadStatus').text('Mempersiapkan upload...');
-    });
-
-    // File Upload Handling
-    let fileUpload = $('#importFile');
-    const wrapper = $('.file-upload-wrapper');
-    const preview = $('.file-upload-preview');
-    const message = $('.file-upload-message');
-
-    // Drag & Drop events
-    wrapper.on('dragover dragenter', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(this).addClass('dragover');
-    });
-
-    wrapper.on('dragleave dragend drop', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(this).removeClass('dragover');
-    });
-
-    // File selection handling
-    $(document).on('change', '#importFile', function(e) {
-        const file = this.files[0];
-        if (file) {
-            message.hide();
-            preview.removeClass('d-none');
-            preview.find('.file-name').text(file.name);
-        }
-    });
-
-    // Remove file
-    $('#removeFile').on('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        message.show();
-        preview.addClass('d-none');
-        // Reset input file
-        $('#importFile').val('');
-    });
 });
 
 function kenaikanKelas() {
@@ -438,7 +183,6 @@ function kenaikanKelas() {
 function prosesKenaikanKelas() {
     Swal.fire({
         title: 'Yakin Proses Kenaikan Kelas?',
-        text: "Tindakan ini tidak dapat dibatalkan!",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#28a745',
@@ -467,73 +211,39 @@ function prosesKenaikanKelas() {
         }
     });
 }
+
+function batalKenaikanKelas() {
+    Swal.fire({
+        title: 'Batalkan Kenaikan Kelas?',
+        text: "Tindakan ini akan mengembalikan semua santri ke kelas sebelumnya.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Batalkan!',
+        cancelButtonText: 'Tidak'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.post('{{ route("admin.santri.batal-kenaikan-kelas") }}', {
+                _token: '{{ csrf_token() }}'
+            })
+            .done(response => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: response.message,
+                }).then(() => window.location.reload());
+            })
+            .fail(xhr => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON?.message || 'Terjadi kesalahan saat membatalkan kenaikan kelas'
+                });
+            });
+        }
+    });
+}
 </script>
 @endpush
-
-<style>
-    .file-upload-wrapper {
-        position: relative;
-        width: 100%;
-        height: 150px;
-        border: 2px dashed #ddd;
-        border-radius: 8px;
-        background: #f8f9fa;
-        transition: all 0.3s ease;
-        overflow: hidden;
-    }
-
-    .file-upload-wrapper:hover,
-    .file-upload-wrapper.dragover {
-        background: #fff;
-        border-color: #0d6efd;
-    }
-
-    .file-upload-message {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 15px;
-        text-align: center;
-    }
-
-    .file-upload-message i {
-        font-size: 2.5rem;
-        color: #6c757d;
-        margin-bottom: 10px;
-    }
-
-    .file-upload {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        opacity: 0;
-        cursor: pointer;
-        z-index: 1;
-    }
-
-    .file-upload-preview {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: #fff;
-        padding: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .file-upload-preview i {
-        font-size: 1.5rem;
-    }
-</style>
 @endsection

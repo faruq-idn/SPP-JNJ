@@ -15,15 +15,19 @@ class DashboardController extends Controller
     public function index()
     {
         // Ambil semua santri yang terhubung dengan wali
-        $santri_list = Santri::where('wali_id', Auth::id())->get();
+        $santri_list = Santri::with(['kategori.tarifTerbaru'])
+            ->where('wali_id', Auth::id())
+            ->get();
 
         // Ambil santri yang belum terhubung tapi memiliki nama wali yang sama
-        $unlinked_santri = Santri::whereNull('wali_id')
+        $unlinked_santri = Santri::with(['kategori.tarifTerbaru'])
+            ->whereNull('wali_id')
             ->where('nama_wali', Auth::user()->name)
             ->get();
 
         // Ambil santri yang belum terhubung dan belum ada nama wali
-        $available_santri = Santri::whereNull('wali_id')
+        $available_santri = Santri::with(['kategori.tarifTerbaru'])
+            ->whereNull('wali_id')
             ->whereNull('nama_wali')
             ->get();
 

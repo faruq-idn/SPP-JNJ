@@ -38,12 +38,13 @@ class LoginController extends Controller
                     'role' => $user->role
                 ]);
 
+                // Redirect langsung ke dashboard sesuai role tanpa memperhatikan intended URL
                 if ($user->role === 'admin') {
-                    return redirect()->intended(route('admin.dashboard'));
+                    return redirect()->route('admin.dashboard');
                 } elseif ($user->role === 'petugas') {
-                    return redirect()->intended(route('petugas.dashboard'));
+                    return redirect()->route('petugas.dashboard');
                 } elseif ($user->role === 'wali') {
-                    return redirect()->intended(route('wali.dashboard'));
+                    return redirect()->route('wali.dashboard');
                 }
             } else {
                 RateLimiter::hit($request->email);

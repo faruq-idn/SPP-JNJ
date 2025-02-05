@@ -116,51 +116,60 @@ function generateTagihan() {
     $('#modalGenerateTagihan').modal('show');
 }
 
-function prosesGenerateTagihan() {
+function prosesGenerateTagihan(force = false) {
     const bulan = $('#bulanGenerate').val();
     const tahun = $('#tahunGenerate').val();
     const period = `${tahun}-${bulan}`;
     const namaBulan = $('#bulanGenerate option:selected').text();
 
+    // Tampilkan loading
     Swal.fire({
-        title: 'Konfirmasi Generate',
-        text: `Anda yakin ingin generate tagihan untuk bulan ${namaBulan} ${tahun}?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Ya, Generate!',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Tampilkan loading
-            Swal.fire({
-                title: 'Memproses...',
-                html: 'Sedang generate tagihan',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
+        title: 'Memproses...',
+        html: 'Sedang generate tagihan',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
 
-            // Proses generate
-            $.post('{{ route('admin.pembayaran.generate-tagihan') }}', {
-                _token: '{{ csrf_token() }}',
-                period: period
-            })
-            .done(response => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil',
-                    text: response.message,
-                }).then(() => window.location.reload());
-            })
-            .fail(xhr => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: xhr.responseJSON?.message || 'Terjadi kesalahan saat generate tagihan'
-                });
+    // Proses generate
+    $.post('{{ route('admin.pembayaran.generate-tagihan') }}', {
+        _token: '{{ csrf_token() }}',
+        period: period,
+        force: force
+    })
+    .done(response => {
+        if (response.status === 'warning' && response.needsConfirmation) {
+            Swal.fire({
+                title: 'Tagihan Sudah Ada',
+                text: response.message + '\n\nApakah Anda ingin melanjutkan generate tagihan hanya untuk santri yang belum memiliki tagihan?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Lanjutkan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    prosesGenerateTagihan(true);
+                }
+            });
+        } else {
+            Swal.fire({
+                icon: response.status,
+                title: response.status === 'success' ? 'Berhasil' : 'Peringatan',
+                text: response.message,
+            }).then(() => {
+                if (response.status === 'success') {
+                    window.location.reload();
+                }
             });
         }
+    })
+    .fail(xhr => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: xhr.responseJSON?.message || 'Terjadi kesalahan saat generate tagihan'
+        });
     });
 }
 

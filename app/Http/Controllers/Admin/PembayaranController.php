@@ -121,16 +121,39 @@ class PembayaranController extends Controller
     {
         try {
             $period = $request->input('period');
+            $date = \Carbon\Carbon::createFromFormat('Y-m', $period);
+            $bulan = str_pad($date->format('n'), 2, '0', STR_PAD_LEFT);
+            $tahun = $date->format('Y');
 
-            // Jalankan artisan command
+            // Cek santri yang sudah memiliki tagihan
+            $existingCount = PembayaranSpp::where([
+                'bulan' => $bulan,
+                'tahun' => $tahun
+            ])->count();
+
+            // Jika ditemukan tagihan yang sudah ada
+            if ($existingCount > 0 && !$request->input('force')) {
+                return response()->json([
+                    'status' => 'warning',
+                    'message' => "Ditemukan {$existingCount} tagihan yang sudah ada untuk periode " . $date->translatedFormat('F Y'),
+                    'needsConfirmation' => true
+                ]);
+            }
+
+            // Jalankan artisan command dengan parameter force jika diperlukan
             $exitCode = Artisan::call('tagihan:generate', [
-                '--bulan' => $period
+                '--bulan' => $period,
+                '--force' => $request->input('force', false)
             ]);
 
             if ($exitCode === 0) {
+                $message = $request->input('force') 
+                    ? 'Berhasil generate tagihan untuk santri yang belum memiliki tagihan'
+                    : 'Berhasil generate tagihan';
+
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Berhasil generate tagihan'
+                    'message' => $message
                 ]);
             }
 

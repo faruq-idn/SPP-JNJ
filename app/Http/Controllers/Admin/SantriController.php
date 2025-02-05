@@ -8,10 +8,9 @@ use App\Models\User;
 use App\Models\KategoriSantri;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Rap2hpoutre\FastExcel\FastExcel;
-use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 use App\Models\PembayaranSpp;
+use App\Models\KenaikanKelasHistory;
+use Illuminate\Support\Facades\Auth;
 
 class SantriController extends Controller
 {
@@ -22,6 +21,26 @@ class SantriController extends Controller
             ->get();
 
         return view('admin.santri.index', compact('santri'));
+    }
+
+    public function kelas($jenjang, $kelas)
+    {
+        $jenjang = strtoupper($jenjang);
+        $santri = Santri::with(['kategori', 'wali'])
+            ->where('jenjang', $jenjang)
+            ->where('kelas', $kelas)
+            ->where('status', 'aktif')
+            ->orderBy('nama')
+            ->get();
+
+        $currentKelas = [
+            'jenjang' => $jenjang,
+            'kelas' => $kelas
+        ];
+
+        $title = "Data Santri Kelas {$kelas} {$jenjang}";
+
+        return view('admin.santri.index', compact('santri', 'currentKelas', 'title'));
     }
 
     public function create()
@@ -68,18 +87,6 @@ class SantriController extends Controller
             ],
             'kategori_id' => 'required|exists:kategori_santri,id',
             'status' => 'required|in:aktif,non-aktif'
-        ], [
-            'nisn.required' => 'NISN wajib diisi',
-            'nisn.unique' => 'NISN sudah digunakan',
-            'nama.required' => 'Nama wajib diisi',
-            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih',
-            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi',
-            'alamat.required' => 'Alamat wajib diisi',
-            'wali_id.required' => 'Wali santri wajib dipilih',
-            'tanggal_masuk.required' => 'Tanggal masuk wajib diisi',
-            'jenjang.required' => 'Jenjang wajib dipilih',
-            'kelas.required' => 'Kelas wajib dipilih',
-            'kategori_id.required' => 'Kategori wajib dipilih'
         ]);
 
         $santri = Santri::create($validated);
@@ -170,7 +177,7 @@ class SantriController extends Controller
 
         // Hitung total tunggakan
         $totalTunggakan = PembayaranSpp::where('santri_id', $santri->id)
-            ->where('status', 'pending')
+            ->whereIn('status', ['unpaid', 'pending'])
             ->sum('nominal');
 
         // Ambil tahun-tahun yang memiliki pembayaran
@@ -215,12 +222,148 @@ class SantriController extends Controller
         return view('admin.santri.show', compact('santri', 'totalTunggakan', 'pembayaranPerTahun', 'tahunPembayaran'));
     }
 
+    public function kenaikanKelas()
+    {
+        try {
+            DB::beginTransaction();
+
+                // Data kelas selanjutnya dan urutan kelas
+            $nextClass = [
+                'SMP' => [
+                    '7A' => '8A', '7B' => '8B',
+                    '8A' => '9A', '8B' => '9B',
+                    '9A' => null, '9B' => null
+                ],
+                'SMA' => [
+                    '10A' => '11A', '10B' => '11B',
+                    '11A' => '12A', '11B' => '12B',
+                    '12A' => null, '12B' => null
+                ]
+            ];
+
+            $kelasOrder = [
+                'SMP' => ['7A', '7B', '8A', '8B', '9A', '9B'],
+                'SMA' => ['10A', '10B', '11A', '11B', '12A', '12B']
+            ];
+
+            // Proses kenaikan kelas dari kelas terendah ke tertinggi
+            $santriUpdated = 0;
+            $santriGraduated = 0;
+
+            foreach (['SMP', 'SMA'] as $jenjang) {
+                // Proses dari kelas terendah ke tertinggi
+                foreach ($kelasOrder[$jenjang] as $currentKelas) {
+                    // Jika kelas akhir (9 atau 12), tandai untuk lulus
+                    $isKelasAkhir = in_array($currentKelas, ['9A', '9B', '12A', '12B']);
+                    $nextKelas = $isKelasAkhir ? null : $nextClass[$jenjang][$currentKelas];
+                    
+                    $santriKelas = Santri::where('jenjang', $jenjang)
+                        ->where('kelas', $currentKelas)
+                        ->where('status', 'aktif')
+                        ->get();
+
+                    foreach ($santriKelas as $santri) {
+                        // Simpan data awal sebelum update
+                        $history = [
+                            'santri_id' => $santri->id,
+                            'jenjang_awal' => $santri->jenjang,
+                            'kelas_awal' => $santri->kelas,
+                            'status_awal' => $santri->status,
+                            'jenjang_akhir' => $santri->jenjang,
+                            'kelas_akhir' => $nextKelas ?? $santri->kelas,
+                            'status_akhir' => $nextKelas === null ? 'non-aktif' : 'aktif',
+                            'created_by' => Auth::id()
+                        ];
+
+                        // Update status berdasarkan kelas
+                        if ($isKelasAkhir) {
+                            $santri->update(['status' => 'non-aktif']);
+                            $santriGraduated++;
+                        } elseif ($nextKelas !== null) {
+                            $santri->update(['kelas' => $nextKelas]);
+                            $santriUpdated++;
+                        }
+
+                        // Simpan history
+                        KenaikanKelasHistory::create($history);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Berhasil memproses kenaikan kelas: {$santriUpdated} santri naik kelas, {$santriGraduated} santri lulus"
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal memproses kenaikan kelas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function batalKenaikanKelas()
+    {
+        try {
+            DB::beginTransaction();
+
+            // Ambil history kenaikan kelas terakhir
+            $lastHistory = KenaikanKelasHistory::orderBy('created_at', 'desc')
+                ->get()
+                ->groupBy('santri_id');
+
+            if ($lastHistory->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Tidak ada history kenaikan kelas yang bisa dibatalkan'
+                ], 404);
+            }
+
+            $santriRestored = 0;
+
+            foreach ($lastHistory as $santriHistories) {
+                $latestHistory = $santriHistories->first();
+                
+                // Kembalikan data santri ke kondisi awal
+                Santri::where('id', $latestHistory->santri_id)->update([
+                    'jenjang' => $latestHistory->jenjang_awal,
+                    'kelas' => $latestHistory->kelas_awal,
+                    'status' => $latestHistory->status_awal
+                ]);
+
+                // Hapus history
+                $latestHistory->delete();
+                $santriRestored++;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Berhasil membatalkan kenaikan kelas untuk {$santriRestored} santri"
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal membatalkan kenaikan kelas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function search(Request $request)
     {
         $keyword = $request->get('q');
 
         return Santri::with(['kategori.tarifTerbaru', 'pembayaran' => function($query) {
-                $query->where('status', 'pending')
+                $query->whereIn('status', ['unpaid', 'pending'])
                       ->orderBy('tahun')
                       ->orderBy('bulan');
             }])
@@ -247,240 +390,5 @@ class SantriController extends Controller
                     'tunggakan' => $tunggakan
                 ];
             });
-    }
-
-    public function importExcel(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|mimes:xlsx,csv'
-        ]);
-
-        try {
-            // Ambil ID kategori reguler
-            $kategoriReguler = KategoriSantri::where('nama', 'Reguler')->first();
-            if (!$kategoriReguler) {
-                throw new \Exception('Kategori Reguler tidak ditemukan');
-            }
-
-            $collection = (new FastExcel)->import($request->file('file'));
-
-            $imported = 0;
-            $errors = [];
-
-            foreach ($collection as $line => $row) {
-                try {
-                    // Validasi data
-                    $validated = $this->validateImportRow($row);
-
-                    // Import data
-                    Santri::create([
-                        'nisn' => $validated['nisn'],
-                        'nama' => $validated['nama'],
-                        'jenis_kelamin' => $validated['jenis_kelamin'],
-                        'tanggal_lahir' => $validated['tanggal_lahir'],
-                        'alamat' => $validated['alamat'],
-                        'nama_wali' => $validated['nama_wali'],
-                        'wali_id' => DB::raw('NULL'),
-                        'tanggal_masuk' => $validated['tanggal_masuk'],
-                        'jenjang' => $validated['jenjang'],
-                        'kelas' => $validated['kelas'],
-                        'kategori_id' => $kategoriReguler->id,
-                        'status' => $validated['status'] ?? 'aktif'
-                    ]);
-
-                    $imported++;
-                } catch (\Exception $e) {
-                    $errors[] = "Baris " . ($line + 2) . ": " . $e->getMessage();
-                }
-            }
-
-            if (count($errors) > 0) {
-                return response()->json([
-                    'status' => 'warning',
-                    'message' => "Berhasil import {$imported} data. Terdapat " . count($errors) . " data yang gagal.",
-                    'errors' => $errors,
-                    'detail' => implode('<br>', $errors)  // Tambahkan detail error
-                ], 422);
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'message' => "Berhasil import {$imported} data santri"
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Import failed: ' . $e->getMessage());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gagal import data: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    private function validateImportRow($row)
-    {
-        // Konversi format tanggal jika ada
-        if (!empty($row['tanggal_lahir'])) {
-            try {
-                $row['tanggal_lahir'] = Carbon::parse($row['tanggal_lahir'])->format('Y-m-d');
-            } catch (\Exception $e) {
-                throw new \Exception('Format tanggal lahir tidak valid');
-            }
-        }
-
-        if (!empty($row['tanggal_masuk'])) {
-            try {
-                $row['tanggal_masuk'] = Carbon::parse($row['tanggal_masuk'])->format('Y-m-d');
-            } catch (\Exception $e) {
-                throw new \Exception('Format tanggal masuk tidak valid');
-            }
-        }
-
-        $rules = [
-            'nisn' => 'required|unique:santri,nisn',
-            'nama' => 'required|string',
-            'jenis_kelamin' => 'required|in:L,P',
-            'tanggal_lahir' => 'required|date',
-            'tanggal_masuk' => 'required|date',
-            'alamat' => 'required',
-            'nama_wali' => 'required|string',
-            'jenjang' => 'required|in:SMP,SMA',
-            'kelas' => 'required',
-            'status' => 'nullable|in:aktif,non-aktif'
-        ];
-
-        return validator($row, $rules)->validate();
-    }
-
-    public function downloadTemplate()
-    {
-        $data = collect([
-            [
-                'nisn' => 'NISN (8-10 digit)',
-                'nama' => 'Nama Lengkap',
-                'jenis_kelamin' => 'L/P',
-                'tanggal_lahir' => 'Format: 2024-01-31',
-                'alamat' => 'Alamat Lengkap',
-                'nama_wali' => 'Nama Wali Santri',
-                'tanggal_masuk' => 'YYYY-MM-DD',
-                'jenjang' => 'SMP/SMA',
-                'kelas' => 'Contoh: 7A, 8B, 9A, 10A, 11B, 12A',
-                'status' => 'aktif/non-aktif'
-            ],
-            // Baris kosong untuk diisi
-            [
-                'nisn' => null,
-                'nama' => null,
-                'jenis_kelamin' => null,
-                'tanggal_lahir' => null,
-                'alamat' => null,
-                'nama_wali' => null,
-                'tanggal_masuk' => null,
-                'jenjang' => null,
-                'kelas' => null,
-                'status' => null
-            ]
-        ]);
-
-        return (new FastExcel($data))->download('template_import_santri.xlsx');
-    }
-
-    public function kelas($jenjang, $kelas)
-    {
-        $jenjang = strtoupper($jenjang);
-        $santri = Santri::with(['kategori', 'wali'])
-            ->where('jenjang', $jenjang)
-            ->where('kelas', $kelas)
-            ->latest()
-            ->get();
-
-        // Tambahkan informasi kelas untuk tampilan
-        $title = "Data Santri Kelas {$kelas} {$jenjang}";
-        $currentKelas = [
-            'jenjang' => $jenjang,
-            'kelas' => $kelas
-        ];
-
-        return view('admin.santri.index', compact('santri', 'title', 'currentKelas'));
-    }
-
-    public function pembayaran(Santri $santri)
-    {
-        $pembayaran = $santri->pembayaran()
-            ->select('id', 'bulan', 'tahun', 'nominal', 'status', 'tanggal_bayar')
-            ->orderBy('tahun', 'desc')
-            ->orderBy('bulan', 'desc')
-            ->get()
-            ->map(function($p) {
-                $bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                return [
-                    'bulan_nama' => $bulan[$p->bulan - 1],
-                    'tahun' => $p->tahun,
-                    'nominal' => $p->nominal,
-                    'status' => $p->status,
-                    'tanggal_bayar' => $p->tanggal_bayar ? $p->tanggal_bayar->format('d/m/Y') : null
-                ];
-            });
-
-        return response()->json([
-            'santri' => [
-                'nama' => $santri->nama,
-                'nisn' => $santri->nisn,
-                'kelas' => $santri->jenjang . ' ' . $santri->kelas,
-                'kategori' => $santri->kategori->nama
-            ],
-            'pembayaran' => $pembayaran
-        ]);
-    }
-
-    public function kenaikanKelas()
-    {
-        try {
-            DB::beginTransaction();
-
-            // Nonaktifkan santri kelas akhir (9 SMP dan 12 SMA)
-            Santri::where('status', 'aktif')
-                ->where(function($query) {
-                    $query->where(function($q) {
-                        $q->where('jenjang', 'SMP')
-                          ->where('kelas', 'LIKE', '9%');
-                    })->orWhere(function($q) {
-                        $q->where('jenjang', 'SMA')
-                          ->where('kelas', 'LIKE', '12%');
-                    });
-                })
-                ->update(['status' => 'non-aktif']);
-
-            // Kenaikan kelas untuk SMP
-            foreach(['7A' => '8A', '7B' => '8B', '8A' => '9A', '8B' => '9B'] as $dari => $ke) {
-                Santri::where('status', 'aktif')
-                    ->where('jenjang', 'SMP')
-                    ->where('kelas', $dari)
-                    ->update(['kelas' => $ke]);
-            }
-
-            // Kenaikan kelas untuk SMA
-            foreach(['10A' => '11A', '10B' => '11B', '11A' => '12A', '11B' => '12B'] as $dari => $ke) {
-                Santri::where('status', 'aktif')
-                    ->where('jenjang', 'SMA')
-                    ->where('kelas', $dari)
-                    ->update(['kelas' => $ke]);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Berhasil memproses kenaikan kelas'
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gagal memproses kenaikan kelas: ' . $e->getMessage()
-            ], 500);
-        }
     }
 }

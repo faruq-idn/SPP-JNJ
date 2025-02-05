@@ -13,7 +13,9 @@ class TagihanController extends Controller
     {
         // Ambil daftar santri yang terhubung dengan wali
         $santri_list = Santri::where('wali_id', Auth::id())
-            ->with(['kategori'])
+            ->with(['kategori.riwayatTarif' => function ($query) {
+                $query->latest();
+            }])
             ->get();
 
         // Ambil santri aktif dari session atau ambil yang pertama
@@ -31,6 +33,9 @@ class TagihanController extends Controller
                 ->with('error', 'Silakan hubungkan akun dengan santri terlebih dahulu');
         }
 
+        // Ambil tarif terbaru
+        $tarif = $santri->kategori->riwayatTarif()->latest()->first();
+
         // Ambil pembayaran dan kelompokkan per tahun
         $pembayaranPerTahun = PembayaranSpp::where('santri_id', $santri->id)
             ->select('id', 'bulan', 'tahun', 'nominal', 'status', 'tanggal_bayar')
@@ -39,9 +44,9 @@ class TagihanController extends Controller
             ->get()
             ->groupBy('tahun');
 
-        // Hitung total tunggakan
+        // Hitung total tunggakan (termasuk status unpaid dan pending)
         $totalTunggakan = PembayaranSpp::where('santri_id', $santri->id)
-            ->where('status', 'unpaid')
+            ->whereIn('status', ['unpaid', 'pending'])
             ->sum('nominal');
 
         // Tentukan status SPP
@@ -67,7 +72,8 @@ class TagihanController extends Controller
                 'santri_list',
                 'pembayaranPerTahun',
                 'totalTunggakan',
-                'statusSpp' // Tambahkan status_spp ke compact
+                'statusSpp',
+                'tarif'
             ))
             ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
             ->header('Pragma', 'no-cache')

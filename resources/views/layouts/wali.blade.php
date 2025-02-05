@@ -91,12 +91,12 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="wali-layout bg-light pt-3"> <!-- Menambahkan bg-light dan pt-3 untuk body -->
+<body class="wali-layout bg-light pt-3">
     <!-- Top Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm"> <!-- Menambahkan shadow-sm untuk navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#" class="navbar-brand"> <!-- Menambahkan kelas navbar-brand -->
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" height="30" class="d-inline-block align-top"> <!-- Menambahkan kelas d-inline-block dan align-top untuk logo -->
+            <a class="navbar-brand" href="#" class="navbar-brand">
+                <img src="{{ asset('images/logo.png') }}" alt="Logo" height="30" class="d-inline-block align-top">
             </a>
             <div class="ms-auto d-flex align-items-center">
                 <div class="dropdown">
@@ -131,36 +131,36 @@
 
     <!-- Main Content -->
     <div class="content-wrapper">
-        <div class="container"> <!-- Menambahkan container untuk content-wrapper -->
-           <main class="container pt-4"> <!-- Menambahkan container class dan padding top pada main content -->
+        <div class="container">
+           <main class="container pt-4">
                @yield('content')
            </main>
         </div>
     </div>
 
     <!-- Bottom Navigation -->
-    <nav class="bottom-nav bg-white border-top fixed-bottom"> <!-- Mengganti div dengan nav untuk bottom-nav dan menambahkan border-top dan fixed-bottom -->
+    <nav class="bottom-nav bg-white border-top fixed-bottom">
         <div class="container">
-            <div class="row g-0 justify-content-around"> <!-- Menambahkan justify-content-around untuk bottom-nav -->
-                <div class="col-4 text-center"> <!-- Menambahkan text-center untuk memusatkan ikon dan teks -->
+            <div class="row g-0 justify-content-around">
+                <div class="col-4 text-center">
                     <a href="{{ route('wali.dashboard') }}"
                        class="nav-link {{ Route::is('wali.dashboard') ? 'active' : '' }}">
-                        <i class="fas fa-home fa-lg"></i> <!-- Memperbesar ikon dengan fa-lg -->
-                        <span class="d-block">Home</span> <!-- Menambahkan d-block untuk teks di bawah ikon -->
+                        <i class="fas fa-home fa-lg"></i>
+                        <span class="d-block">Home</span>
                     </a>
                 </div>
-                <div class="col-4 text-center"> <!-- Menambahkan text-center untuk memusatkan ikon dan teks -->
+                <div class="col-4 text-center">
                     <a href="{{ route('wali.tagihan') }}"
                        class="nav-link {{ Route::is('wali.tagihan') ? 'active' : '' }}">
-                        <i class="fas fa-file-invoice-dollar fa-lg"></i> <!-- Memperbesar ikon dengan fa-lg -->
-                        <span class="d-block">Tagihan</span> <!-- Menambahkan d-block untuk teks di bawah ikon -->
+                        <i class="fas fa-file-invoice-dollar fa-lg"></i>
+                        <span class="d-block">Tagihan</span>
                     </a>
                 </div>
-                <div class="col-4 text-center"> <!-- Menambahkan text-center untuk memusatkan ikon dan teks -->
+                <div class="col-4 text-center">
                     <a href="{{ route('wali.hubungkan') }}"
                        class="nav-link {{ Route::is('wali.hubungkan') ? 'active' : '' }}">
-                        <i class="fas fa-link fa-lg"></i> <!-- Memperbesar ikon dengan fa-lg -->
-                        <span class="d-block">Hubungkan</span> <!-- Menambahkan d-block untuk teks di bawah ikon -->
+                        <i class="fas fa-link fa-lg"></i>
+                        <span class="d-block">Hubungkan</span>
                     </a>
                 </div>
             </div>
@@ -198,7 +198,6 @@
     </script>
 
     <!-- Profile Modal -->
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal">Test Modal Button</button>
     <div class="modal fade" id="profileModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content" style="background-color: white;">
@@ -219,6 +218,8 @@
                                    name="name"
                                    class="form-control @error('name') is-invalid @enderror"
                                    value="{{ Auth::user()->name }}"
+                                   pattern="[A-Za-z\s]+"
+                                   title="Gunakan huruf dan spasi saja"
                                    required>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -231,6 +232,8 @@
                                    name="email"
                                    class="form-control @error('email') is-invalid @enderror"
                                    value="{{ Auth::user()->email }}"
+                                   pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                                   title="Masukkan format email yang valid"
                                    required>
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -239,11 +242,15 @@
 
                         <div class="mb-3">
                             <label class="form-label">Nomor HP</label>
-                            <input type="text"
+                            <input type="tel"
                                    name="no_hp"
                                    class="form-control @error('no_hp') is-invalid @enderror"
                                    value="{{ Auth::user()->no_hp }}"
+                                   pattern="^[0-9\+\-\(\)\s]{10,15}$"
+                                   title="Masukkan nomor HP yang valid (10-15 digit)"
+                                   oninput="this.value = this.value.replace(/[^0-9\+\-\(\)\s]/g, '')"
                                    required>
+                            <small class="text-muted">Contoh: 081234567890 atau +62812-3456-7890</small>
                             @error('no_hp')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -260,10 +267,27 @@
         </div>
     </div>
 
-    <!-- Tambahkan script -->
+    <!-- Scripts untuk modal profil -->
     <script>
-    // Pindahkan fungsi submitProfile ke sini
     function submitProfile() {
+        const form = document.getElementById('profileForm');
+        const noHp = form.querySelector('input[name="no_hp"]');
+        const email = form.querySelector('input[name="email"]');
+        
+        // Validasi nomor HP
+        const noHpValue = noHp.value.replace(/[\s\-\(\)\+]/g, '');
+        if (noHpValue.length < 10 || noHpValue.length > 15) {
+            Swal.fire('Error', 'Nomor HP harus antara 10-15 digit', 'error');
+            return;
+        }
+        
+        // Validasi email
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(email.value)) {
+            Swal.fire('Error', 'Format email tidak valid', 'error');
+            return;
+        }
+
         Swal.fire({
             title: 'Konfirmasi Perubahan',
             text: 'Apakah Anda yakin ingin menyimpan perubahan profil?',
@@ -275,7 +299,7 @@
             cancelButtonColor: '#d33'
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('profileForm').submit();
+                form.submit();
             }
         });
     }
@@ -290,9 +314,11 @@
             text: '{{ session('success') }}',
             icon: 'success'
         }).then(() => {
-            // Tutup modal jika ada
             if (modalInstance) {
                 modalInstance.hide();
+            }
+            if (window.location.pathname === '/wali/profil') {
+                window.location.href = '{{ route("wali.dashboard") }}';
             }
         });
     @endif

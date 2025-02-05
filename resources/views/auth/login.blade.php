@@ -11,7 +11,7 @@
 
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
-                    <form method="POST" action="{{ route('login') }}" class="needs-validation" novalidate>
+                    <form method="POST" action="{{ route('login.submit') }}" class="needs-validation" novalidate>
                         @csrf
 
                         <div class="form-floating mb-3">

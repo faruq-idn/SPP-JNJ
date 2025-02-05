@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class GenerateTagihanBulanan extends Command
 {
-    protected $signature = 'tagihan:generate {--bulan= : Format YYYY-MM}';
+    protected $signature = 'tagihan:generate {--bulan= : Format YYYY-MM} {--force : Generate tagihan hanya untuk santri yang belum memiliki tagihan}';
     protected $description = 'Generate tagihan SPP bulanan untuk santri aktif';
 
     public function handle()
@@ -55,16 +55,22 @@ class GenerateTagihanBulanan extends Command
                     $nominal = $santri->kategori->tarifTerbaru->nominal;
                     $this->line("Nominal tarif: Rp " . number_format($nominal, 0, ',', '.'));
 
-                    // Cek tagihan yang sudah ada
-                    $tagihan_exists = PembayaranSpp::where('santri_id', $santri->id)
-                        ->where('bulan', $bulan)
-                        ->where('tahun', $tahun)
-                        ->exists();
+            // Cek tagihan yang sudah ada
+            $tagihan_exists = PembayaranSpp::where('santri_id', $santri->id)
+                ->where('bulan', $bulan)
+                ->where('tahun', $tahun)
+                ->exists();
 
-                    if ($tagihan_exists) {
-                        $this->line("Tagihan sudah ada untuk {$santri->nama} periode {$bulan}/{$tahun}");
-                        continue;
-                    }
+            // Jika tagihan sudah ada dan tidak force, skip
+            if ($tagihan_exists && !$this->option('force')) {
+                $this->line("Tagihan sudah ada untuk {$santri->nama} periode {$bulan}/{$tahun}");
+                continue;
+            }
+            // Jika tagihan sudah ada dan force, skip hanya jika santri sudah memiliki tagihan
+            else if ($tagihan_exists) {
+                $this->line("Skip santri {$santri->nama} karena sudah memiliki tagihan");
+                continue;
+            }
 
                     // Buat tagihan baru
                     $tagihan = PembayaranSpp::create([

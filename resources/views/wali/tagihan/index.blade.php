@@ -21,7 +21,7 @@
             @endif
 
             <h2 class="mb-3">
-                <i class="fas fa-file-invoice-dollar me-2"></i>Tagihan &amp; Riwayat SPP
+                <i class="fas fa-file-invoice-dollar me-2"></i>Tagihan & Riwayat SPP
             </h2>
 
             @if($santri_list->count() > 1)
@@ -42,51 +42,46 @@
             </div>
             @endif
 
-            <-- Info Santri -->
-            <div class="card shadow-sm rounded-3 border-0">
+            <!-- Ringkasan Pembayaran -->
+            <div class="card shadow-sm rounded-3 border-0 mb-4">
                 <div class="card-body p-3 p-md-4">
-                    <h5 class="card-title fw-bold text-primary mb-3">Informasi Santri</h5>
-                    <div class="vstack gap-3">
-                        <-- Identitas Santri -->
-                        <div class="bg-light rounded-3 p-3">
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-                                <div>
-                                    <h6 class="fw-bold mb-1">{{ $santri->nama }}</h6>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-secondary">NIS: {{ str_pad($santri->nisn, 5, '0', STR_PAD_LEFT) }}</span>
-                                        <span class="badge bg-info">Jenjang: {{ $santri->jenjang }}</span>
-                                        <span class="badge bg-primary">Kelas {{ $santri->kelas }}</span>
+                    <h5 class="card-title fw-bold text-primary mb-3">Ringkasan Pembayaran</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-light">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-primary bg-opacity-10 p-2 rounded">
+                                        <i class="fas fa-user-graduate text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">Santri</small>
+                                        <span class="fw-bold">{{ $santri->nama }}</span>
                                     </div>
                                 </div>
-                                <small class="text-muted">
-                                    <i class="fas fa-calendar-alt me-1"></i>
-                                    Terdaftar: {{ $santri->tanggal_masuk->format('d F Y') }}
-                                </small>
                             </div>
                         </div>
-
-                        <-- Info Kategori dan Pembayaran -->
-                        <div class="bg-light rounded-3 p-3">
-                            <div class="row g-3">
-                                <div class="col-sm-6">
-                                    <div class="vstack gap-1">
-                                        <small class="text-muted">Kategori Santri</small>
-                                        <div class="fw-bold">{{ $santri->kategori->nama }}</div>
-                                        <small class="text-muted">Tarif Bulanan</small>
-                                        <div class="fw-bold text-primary">
-                                            Rp {{ number_format($santri->kategori->tarifTerbaru()->nominal ?? 0, 0, ',', '.') }}
-                                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-light">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-info bg-opacity-10 p-2 rounded">
+                                        <i class="fas fa-tags text-info"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">Kategori</small>
+                                        <span class="fw-bold">{{ $santri->kategori->nama }}</span>
                                     </div>
                                 </div>
-                                <div class="col-sm-6">
-                                    <div class="vstack gap-1">
-                                        <small class="text-muted">Status Pembayaran</small>
-                                        <div>
-                                            <span class="badge bg-{{ $santri->status_spp == 'Lunas' ? 'success' : 'warning' }} badge-pill px-3 py-2">
-                                                <i class="fas fa-{{ $santri->status_spp == 'Lunas' ? 'check-circle' : 'exclamation-circle' }} me-1"></i>
-                                                {{ $santri->status_spp }}
-                                            </span>
-                                        </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-light">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-success bg-opacity-10 p-2 rounded">
+                                        <i class="fas fa-money-bill text-success"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">Tarif Bulanan</small>
+                                        <span class="fw-bold">Rp {{ number_format($tarif->nominal ?? 0, 0, ',', '.') }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -95,7 +90,30 @@
                 </div>
             </div>
 
-            <-- Riwayat Pembayaran per Tahun -->
+            <!-- Status SPP -->
+            <div class="card shadow-sm rounded-3 border-0 mb-4">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex align-items-center justify-content-between gap-3 p-3 rounded-3 {{ $statusSpp == 'Lunas' ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10' }}" style="border: 1px solid {{ $statusSpp == 'Lunas' ? '#19875414' : '#ffc10714' }}">
+                        <div class="d-flex align-items-center gap-3">
+                            <div>
+                                <i class="fas fa-chart-pie fa-2x {{ $statusSpp == 'Lunas' ? 'text-success' : 'text-warning' }}"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Status SPP</div>
+                                <div class="fw-bold fs-5">{{ $statusSpp }}</div>
+                            </div>
+                        </div>
+                        @if($statusSpp != 'Lunas')
+                        <div>
+                            <div class="text-muted small">Total Tunggakan</div>
+                            <div class="fw-bold fs-5 text-danger">Rp {{ number_format($totalTunggakan, 0, ',', '.') }}</div>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Riwayat Pembayaran per Tahun -->
             @foreach($pembayaranPerTahun as $tahun => $pembayaranBulanan)
             <div class="card shadow-sm rounded-3 border-0 mb-4">
                 <div class="card-header bg-transparent">

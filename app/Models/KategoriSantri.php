@@ -22,8 +22,9 @@ class KategoriSantri extends Model
     public function tarifTerbaru()
     {
         return $this->hasOne(RiwayatTarifSpp::class, 'kategori_id')
+            ->orderBy('berlaku_mulai', 'desc')
             ->whereNull('berlaku_sampai')
-            ->latest('berlaku_mulai');
+            ->whereDate('berlaku_mulai', '<=', now());
     }
 
     public function santri(): HasMany

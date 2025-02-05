@@ -59,18 +59,7 @@
                                         <div class="fw-bold">{{ $santri->kategori->nama }}</div>
                                         <small class="text-muted">Tarif Bulanan</small>
                                         <div class="fw-bold text-primary">
-                                            Rp {{ number_format($santri->kategori->tarifTerbaru()->nominal ?? 0, 0, ',', '.') }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="vstack gap-1">
-                                        <small class="text-muted">Status Pembayaran</small>
-                                        <div>
-                                            <span class="badge bg-{{ $santri->status_spp == 'Lunas' ? 'success' : 'warning' }} badge-pill px-3 py-2">
-                                                <i class="fas fa-{{ $santri->status_spp == 'Lunas' ? 'check-circle' : 'exclamation-circle' }} me-1"></i>
-                                                {{ $santri->status_spp }}
-                                            </span>
+                                            {{ is_numeric($santri->tarif_bulanan) ? 'Rp ' . number_format($santri->tarif_bulanan, 0, ',', '.') : '-' }}
                                         </div>
                                     </div>
                                 </div>
@@ -83,35 +72,24 @@
 
         
         <div class="col-12">
-            <div class="row g-4">
-                
-                <div class="col-md-6">
-                    <div class="card shadow-sm rounded-3 border-0 h-100">
-                        <div class="card-body p-3 p-md-4">
-                            <div class="vstack gap-4">
-                                
-                                <div class="d-flex align-items-center gap-3 p-3 rounded-3 {{ $santri->status_spp == 'Lunas' ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10' }}">
-                                    <div>
-                                        <i class="fas fa-chart-pie fa-2x {{ $santri->status_spp == 'Lunas' ? 'text-success' : 'text-warning' }}"></i>
-                                    </div>
-                                    <div>
-                                        <div class="text-muted small">Status SPP</div>
-                                        <div class="fw-bold fs-5">{{ $santri->status_spp }}</div>
-                                    </div>
-                                </div>
-
-                                
-                                <div class="d-flex align-items-center gap-3 p-3 rounded-3 {{ $pembayaran_terbaru->isEmpty() ? 'bg-success bg-opacity-10' : 'bg-danger bg-opacity-10' }}">
-                                    <div>
-                                        <i class="fas fa-money-bill fa-2x {{ $pembayaran_terbaru->isEmpty() ? 'text-success' : 'text-danger' }}"></i>
-                                    </div>
-                                    <div>
-                                        <div class="text-muted small">Total Tunggakan</div>
-                                        <div class="fw-bold fs-5">Rp {{ number_format($total_tunggakan ?? 0, 0, ',', '.') }}</div>
-                                    </div>
-                                </div>
+            <div class="card shadow-sm rounded-3 border-0">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex align-items-center justify-content-between gap-3 p-3 rounded-3 {{ $santri->status_spp == 'Lunas' ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10' }}">
+                        <div class="d-flex align-items-center gap-3">
+                            <div>
+                                <i class="fas fa-chart-pie fa-2x {{ $santri->status_spp == 'Lunas' ? 'text-success' : 'text-warning' }}"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Status SPP</div>
+                                <div class="fw-bold fs-5">{{ $santri->status_spp }}</div>
                             </div>
                         </div>
+                        @if($santri->status_spp != 'Lunas')
+                        <div>
+                            <div class="text-muted small">Total Tunggakan</div>
+                            <div class="fw-bold fs-5 text-danger">Rp {{ number_format($total_tunggakan ?? 0, 0, ',', '.') }}</div>
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>

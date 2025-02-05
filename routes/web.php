@@ -1,139 +1,87 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
-use App\Http\Controllers\Admin\SantriController;
-use App\Http\Controllers\Admin\KategoriSantriController;
 use App\Http\Controllers\Admin\PembayaranController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\KategoriSantriController;
 use App\Http\Controllers\Admin\LaporanController;
+use App\Http\Controllers\Admin\SantriController;
+use App\Http\Controllers\Admin\SantriExportController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Petugas\DashboardController as PetugasDashboard;
-use App\Http\Controllers\Wali\WaliDashboard;
-use App\Http\Controllers\Wali\TagihanController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Wali\DashboardController as WaliDashboardController;
 use App\Http\Controllers\Wali\PembayaranController as WaliPembayaranController;
 use App\Http\Controllers\Wali\ProfilController;
-use App\Http\Controllers\Wali\DashboardController;
+use App\Http\Controllers\Wali\TagihanController;
 
+// Public Routes
 Route::get('/', function () {
     return view('welcome');
+})->name('welcome');
+
+// Auth Routes
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login'])->name('login.submit');
 });
 
-// Authentication Routes
-require __DIR__.'/auth.php';
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
-// Dashboard Routes
-Route::middleware(['auth'])->group(function () {
-    // Default dashboard redirect (pindahkan ke atas)
-    Route::get('/dashboard', function() {
-        $user = Auth::user();
+// Generate Tagihan Route
+Route::post('/admin/pembayaran/generate-tagihan', [PembayaranController::class, 'generateTagihan'])
+    ->name('admin.pembayaran.generate-tagihan');
 
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        } elseif ($user->role === 'petugas') {
-            return redirect()->route('petugas.dashboard');
-        }
-        return redirect()->route('wali.dashboard');
-    })->name('dashboard');
+// Admin Routes
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
+    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    
+    // Kategori Santri
+    Route::resource('kategori', KategoriSantriController::class);
+    
+    // Santri
+    Route::resource('santri', SantriController::class);
+    Route::post('santri/update-status/{santri}', [SantriController::class, 'updateStatus'])->name('santri.update-status');
+    Route::post('santri/kenaikan-kelas', [SantriController::class, 'kenaikanKelas'])->name('santri.kenaikan-kelas');
+    Route::post('santri/batal-kenaikan-kelas', [SantriController::class, 'batalKenaikanKelas'])->name('santri.batal-kenaikan-kelas');
+    Route::get('santri/{jenjang}/{kelas}', [SantriController::class, 'kelas'])->name('santri.kelas');
+    Route::get('santri/search', [SantriController::class, 'search'])->name('santri.search');
+    
+    // Santri Import/Export
+    Route::post('santri/import', [SantriExportController::class, 'importExcel'])->name('santri.import');
+    Route::get('santri/template/download', [SantriExportController::class, 'downloadTemplate'])->name('santri.template.download');
+    
+    // User Management
+    Route::resource('users', UserController::class);
+    
+    // Pembayaran
+    Route::get('pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
+    Route::get('pembayaran/create', [PembayaranController::class, 'create'])->name('pembayaran.create');
+    Route::post('pembayaran', [PembayaranController::class, 'store'])->name('pembayaran.store');
+    Route::get('pembayaran/check-status', [PembayaranController::class, 'checkStatus'])->name('pembayaran.check-status');
+    Route::get('pembayaran/{pembayaran}', [PembayaranController::class, 'show'])->name('pembayaran.show');
+    Route::delete('pembayaran/hapus-tagihan', [PembayaranController::class, 'hapusTagihan'])->name('pembayaran.hapus-tagihan');
 
-    // Admin routes
-    Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
+    // Laporan
+    Route::get('laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    Route::get('laporan/pembayaran', [LaporanController::class, 'pembayaran'])->name('laporan.pembayaran');
+    Route::get('laporan/tunggakan', [LaporanController::class, 'tunggakan'])->name('laporan.tunggakan');
+    Route::get('laporan/export/pembayaran', [LaporanController::class, 'exportPembayaran'])->name('laporan.export.pembayaran');
+    Route::get('laporan/export/tunggakan', [LaporanController::class, 'exportTunggakan'])->name('laporan.export.tunggakan');
+});
 
-        // Santri routes
-        Route::get('/santri/search', [SantriController::class, 'search'])->name('santri.search');
-        Route::get('/santri/{santri}/pembayaran', [SantriController::class, 'pembayaran'])->name('santri.pembayaran');
-        Route::get('/santri/kelas/{jenjang}/{kelas}', [SantriController::class, 'kelas'])->name('santri.kelas');
-        Route::get('/santri/template', [SantriController::class, 'downloadTemplate'])->name('santri.template');
-        Route::post('/santri/import', [SantriController::class, 'importExcel'])->name('santri.import');
-        Route::resource('santri', SantriController::class);
-
-        // Kategori routes
-        Route::resource('kategori', KategoriSantriController::class);
-        Route::post('kategori/{kategori}/tarif', [KategoriSantriController::class, 'updateTarif'])
-            ->name('kategori.updateTarif');
-        Route::delete('/kategori/{kategori}', [KategoriSantriController::class, 'destroy'])
-            ->name('kategori.destroy');
-
-        // Pembayaran routes
-        Route::controller(PembayaranController::class)->prefix('pembayaran')->name('pembayaran.')->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-            Route::get('/{pembayaran}/print', 'print')->name('print');
-            Route::delete('/hapus-tagihan', 'hapusTagihan')->name('hapus-tagihan');
-            Route::get('/check-status', 'checkStatus')->name('check-status');
-        });
-
-        // Laporan routes
-        Route::prefix('laporan')->name('laporan.')->group(function () {
-            Route::get('/', [LaporanController::class, 'index'])->name('index');
-            Route::get('/pembayaran', [LaporanController::class, 'pembayaran'])->name('pembayaran');
-            Route::get('/tunggakan', [LaporanController::class, 'tunggakan'])->name('tunggakan');
-            Route::get('/pembayaran/export', [LaporanController::class, 'exportPembayaran'])->name('export.pembayaran');
-            Route::get('/tunggakan/export', [LaporanController::class, 'exportTunggakan'])->name('export.tunggakan');
-        });
-
-        // User management routes
-        Route::resource('users', UserController::class)->except(['show']);
-
-        // Ajax search routes
-        Route::get('/users/search', [UserController::class, 'search'])->name('users.search');
-
-        // Pembayaran routes
-        Route::get('/pembayaran/{pembayaran}', [PembayaranController::class, 'show'])->name('pembayaran.show');
-
-        // Generate tagihan routes
-        Route::post('/pembayaran/generate-tagihan', [PembayaranController::class, 'generateTagihan'])
-            ->name('pembayaran.generate-tagihan');
-
-        // Kenaikan kelas routes
-        Route::post('/santri/kenaikan-kelas', [SantriController::class, 'kenaikanKelas'])
-            ->name('santri.kenaikan-kelas');
-    });
-
-    // Petugas routes
-    Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->name('petugas.')->group(function () {
-        Route::get('/dashboard', [PetugasDashboard::class, 'index'])->name('dashboard');
-
-        // Data Santri
-        Route::get('/santri', [SantriController::class, 'index'])->name('santri.index');
-        Route::get('/santri/{santri}', [SantriController::class, 'show'])->name('santri.show');
-
-        // Pembayaran routes untuk petugas
-        Route::controller(PembayaranController::class)->group(function () {
-            Route::get('/pembayaran', 'index')->name('pembayaran.index');
-            Route::get('/pembayaran/create', 'create')->name('pembayaran.create');
-            Route::post('/pembayaran', 'store')->name('pembayaran.store');
-        });
-
-        // Laporan
-        Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
-    });
-
-    // Wali routes
-    Route::middleware(['auth', 'role:wali'])->prefix('wali')->name('wali.')->group(function () {
-        // Dashboard wali
-        Route::get('/dashboard', [WaliDashboard::class, 'index'])->name('dashboard');
-        Route::post('/change-santri', [WaliDashboard::class, 'changeSantri'])->name('change-santri');
-        Route::get('/tagihan', [TagihanController::class, 'index'])->name('tagihan');
-        Route::get('/hubungkan', [DashboardController::class, 'hubungkan'])->name('hubungkan');
-        Route::post('/pembayaran', [WaliPembayaranController::class, 'store'])->name('pembayaran.store');
-        Route::post('/pembayaran/notification', [WaliPembayaranController::class, 'notification'])
-            ->name('pembayaran.notification')
-            ->withoutMiddleware(['auth', 'role:wali']);
-
-        Route::get('/pembayaran/success', function () {
-            return view('wali.pembayaran.success');
-        })->name('pembayaran.success');
-
-        Route::get('/pembayaran/error', function () {
-            return view('wali.pembayaran.error');
-        })->name('pembayaran.error');
-
-        // Profil routes
-        Route::get('/profil', [ProfilController::class, 'index'])->name('profil');
-        Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
-    });
-
+// Wali Routes
+Route::prefix('wali')->middleware(['auth', 'role:wali'])->name('wali.')->group(function () {
+    Route::get('dashboard', [WaliDashboardController::class, 'index'])->name('dashboard');
+    Route::post('change-santri', [WaliDashboardController::class, 'changeSantri'])->name('change-santri');
+    
+    // Profil
+    Route::put('profil', [ProfilController::class, 'update'])->name('profil.update');
+    
+    // Tagihan & Pembayaran
+    Route::get('tagihan', [TagihanController::class, 'index'])->name('tagihan');
+    Route::post('pembayaran', [WaliPembayaranController::class, 'store'])->name('pembayaran.store');
+    Route::get('pembayaran/{pembayaran}', [WaliPembayaranController::class, 'show'])->name('pembayaran.show');
+    
+    // Hubungkan Santri
+    Route::get('hubungkan', [WaliDashboardController::class, 'hubungkan'])->name('hubungkan');
 });

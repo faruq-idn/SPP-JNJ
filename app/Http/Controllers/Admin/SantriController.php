@@ -3,63 +3,121 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\KategoriSantri;
 use App\Models\Santri;
 use App\Models\User;
-use App\Models\KategoriSantri;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Models\PembayaranSpp;
-use App\Models\KenaikanKelasHistory;
-use Illuminate\Support\Facades\Auth;
+use League\Csv\Reader;
 
 class SantriController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $santri = Santri::with(['kategori', 'wali'])
-            ->latest()
-            ->get();
-
+        $santri = Santri::with(['kategori', 'wali'])->latest()->paginate(10);
         return view('admin.santri.index', compact('santri'));
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt|max:2048'
+        ]);
+
+        $file = $request->file('file');
+        $csv = Reader::createFromPath($file->getPathname());
+        $csv->setHeaderOffset(0);
+
+        $records = $csv->getRecords();
+        $imported = 0;
+        $errors = [];
+
+        foreach ($records as $offset => $record) {
+            try {
+                // Validasi data
+                if (empty($record['nisn']) || empty($record['nama'])) {
+                    $errors[] = "Baris " . ($offset + 2) . ": NISN dan Nama harus diisi";
+                    continue;
+                }
+
+                // Cek duplikat NISN
+                if (Santri::where('nisn', $record['nisn'])->exists()) {
+                    $errors[] = "Baris " . ($offset + 2) . ": NISN {$record['nisn']} sudah terdaftar";
+                    continue;
+                }
+
+                // Cek keberadaan kategori
+                $kategori = KategoriSantri::find($record['kategori_id']);
+                if (!$kategori) {
+                    $errors[] = "Baris " . ($offset + 2) . ": Kategori tidak ditemukan";
+                    continue;
+                }
+
+                // Cek keberadaan wali
+                $wali = User::where('role', 'wali')->find($record['wali_id']);
+                if (!$wali) {
+                    $errors[] = "Baris " . ($offset + 2) . ": Wali Santri tidak ditemukan";
+                    continue;
+                }
+
+                // Buat santri baru
+                Santri::create([
+                    'nisn' => $record['nisn'],
+                    'nama' => $record['nama'],
+                    'jenis_kelamin' => $record['jenis_kelamin'],
+                    'tanggal_lahir' => $record['tanggal_lahir'],
+                    'alamat' => $record['alamat'],
+                    'wali_id' => $record['wali_id'],
+                    'tanggal_masuk' => $record['tanggal_masuk'],
+                    'jenjang' => strtoupper($record['jenjang']),
+                    'kelas' => strtoupper($record['kelas']),
+                    'kategori_id' => $record['kategori_id'],
+                    'status' => 'aktif',
+                    'status_spp' => 'Belum Lunas'
+                ]);
+
+                $imported++;
+            } catch (\Exception $e) {
+                $errors[] = "Baris " . ($offset + 2) . ": " . $e->getMessage();
+            }
+        }
+
+        $message = "Berhasil mengimport {$imported} data santri.";
+        if (count($errors) > 0) {
+            $message .= "\nTerdapat " . count($errors) . " error:\n" . implode("\n", $errors);
+            return redirect()->route('admin.santri.index')->with('warning', $message);
+        }
+
+        return redirect()->route('admin.santri.index')->with('success', $message);
     }
 
     public function kelas($jenjang, $kelas)
     {
-        $jenjang = strtoupper($jenjang);
         $santri = Santri::with(['kategori', 'wali'])
-            ->where('jenjang', $jenjang)
-            ->where('kelas', $kelas)
+            ->where('jenjang', strtoupper($jenjang))
+            ->where('kelas', strtoupper($kelas))
             ->where('status', 'aktif')
-            ->orderBy('nama')
-            ->get();
+            ->latest()
+            ->paginate(10);
 
         $currentKelas = [
-            'jenjang' => $jenjang,
-            'kelas' => $kelas
+            'jenjang' => strtoupper($jenjang),
+            'kelas' => strtoupper($kelas)
         ];
 
-        $title = "Data Santri Kelas {$kelas} {$jenjang}";
-
-        return view('admin.santri.index', compact('santri', 'currentKelas', 'title'));
+        return view('admin.santri.index', compact('santri', 'currentKelas'));
     }
 
     public function create()
     {
-        $kategori = KategoriSantri::all();
-        $wali = User::where('role', 'wali')->get();
-        $jenjang = ['SMP', 'SMA'];
-        $kelas = [
-            'SMP' => ['7A', '7B', '8A', '8B', '9A', '9B'],
-            'SMA' => ['10A', '10B', '11A', '11B', '12A', '12B']
-        ];
-
-        return view('admin.santri.create', compact('kategori', 'wali', 'jenjang', 'kelas'));
+        $kategori_santri = KategoriSantri::all();
+        $wali_santri = User::where('role', 'wali')->get();
+        return view('admin.santri.create', compact('kategori_santri', 'wali_santri'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nisn' => 'required|string|unique:santri',
+            'nisn' => 'required|string|max:20|unique:santri',
             'nama' => 'required|string|max:255',
             'jenis_kelamin' => 'required|in:L,P',
             'tanggal_lahir' => 'required|date',
@@ -67,54 +125,36 @@ class SantriController extends Controller
             'wali_id' => 'required|exists:users,id',
             'tanggal_masuk' => 'required|date',
             'jenjang' => 'required|in:SMP,SMA',
-            'kelas' => [
-                'required',
-                function ($attribute, $value, $fail) use ($request) {
-                    $kelas = [
-                        'SMP' => ['7A', '7B', '8A', '8B', '9A', '9B'],
-                        'SMA' => ['10A', '10B', '11A', '11B', '12A', '12B']
-                    ];
-
-                    if (!isset($request->jenjang) || !isset($kelas[$request->jenjang])) {
-                        $fail('Pilih jenjang terlebih dahulu.');
-                        return;
-                    }
-
-                    if (!in_array($value, $kelas[$request->jenjang])) {
-                        $fail('Kelas tidak sesuai dengan jenjang yang dipilih.');
-                    }
-                },
-            ],
+            'kelas' => 'required|string|max:3',
             'kategori_id' => 'required|exists:kategori_santri,id',
-            'status' => 'required|in:aktif,non-aktif'
+            'status' => 'required|in:aktif,lulus,keluar'
         ]);
 
-        $santri = Santri::create($validated);
+        $validated['status_spp'] = 'Belum Lunas';
 
-        return redirect()->route('admin.santri.index')
+        Santri::create($validated);
+
+        return redirect()
+            ->route('admin.santri.index')
             ->with('success', 'Data santri berhasil ditambahkan');
+    }
+
+    public function show(Santri $santri)
+    {
+        $santri->load(['kategori', 'wali', 'pembayaran']);
+        return view('admin.santri.show', compact('santri'));
     }
 
     public function edit(Santri $santri)
     {
-        // Simpan URL sebelumnya ke session
-        session(['santri_previous_url' => url()->previous()]);
-
-        $kategori = KategoriSantri::all();
-        $wali = User::where('role', 'wali')->get();
-        $jenjang = ['SMP', 'SMA'];
-        $kelas = [
-            'SMP' => ['7A', '7B', '8A', '8B', '9A', '9B'],
-            'SMA' => ['10A', '10B', '11A', '11B', '12A', '12B']
-        ];
-
-        return view('admin.santri.edit', compact('santri', 'kategori', 'wali', 'jenjang', 'kelas'));
+        $kategori_santri = KategoriSantri::all();
+        return view('admin.santri.edit', compact('santri', 'kategori_santri'));
     }
 
     public function update(Request $request, Santri $santri)
     {
         $validated = $request->validate([
-            'nisn' => 'required|unique:santri,nisn,'.$santri->id,
+            'nisn' => 'required|string|max:20|unique:santri,nisn,' . $santri->id,
             'nama' => 'required|string|max:255',
             'jenis_kelamin' => 'required|in:L,P',
             'tanggal_lahir' => 'required|date',
@@ -122,273 +162,100 @@ class SantriController extends Controller
             'wali_id' => 'required|exists:users,id',
             'tanggal_masuk' => 'required|date',
             'jenjang' => 'required|in:SMP,SMA',
-            'kelas' => 'required',
+            'kelas' => 'required|string|max:3',
             'kategori_id' => 'required|exists:kategori_santri,id',
-            'status' => 'required|in:aktif,non-aktif'
+            'status' => 'required|in:aktif,lulus,keluar'
         ]);
 
         $santri->update($validated);
 
-        // Redirect ke URL sebelumnya jika ada
-        if ($previousUrl = session('santri_previous_url')) {
-            session()->forget('santri_previous_url');
-            return redirect($previousUrl)
-                ->with('success', 'Data santri berhasil diperbarui');
-        }
-
-        // Default: kembali ke index
-        return redirect()->route('admin.santri.index')
+        return redirect()
+            ->route('admin.santri.index')
             ->with('success', 'Data santri berhasil diperbarui');
     }
 
     public function destroy(Santri $santri)
     {
-        try {
-            DB::beginTransaction();
-
-            // Hapus semua pembayaran terkait
-            $santri->pembayaran()->delete();
-
-            // Hapus data santri
-            $santri->delete();
-
-            DB::commit();
-
-            return redirect()
-                ->route('admin.santri.index')
-                ->with('success', 'Data santri dan semua data terkait berhasil dihapus');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal menghapus data santri. Silakan coba lagi.');
+        if ($santri->pembayaran()->exists()) {
+            return back()->with('error', 'Santri tidak dapat dihapus karena memiliki riwayat pembayaran');
         }
+
+        $santri->delete();
+
+        return redirect()
+            ->route('admin.santri.index')
+            ->with('success', 'Data santri berhasil dihapus');
     }
 
-    public function show(Santri $santri)
+    public function kenaikanKelas(Request $request)
     {
-        $santri->load([
-            'wali',
-            'kategori',
-            'pembayaran' => function ($query) {
-                $query->orderBy('tahun', 'desc')
-                    ->orderBy('bulan', 'desc');
-            },
+        $request->validate([
+            'santri_ids' => 'required|array',
+            'santri_ids.*' => 'exists:santri,id',
+            'kelas_tujuan' => 'required|string|max:3'
         ]);
 
-        // Hitung total tunggakan
-        $totalTunggakan = PembayaranSpp::where('santri_id', $santri->id)
-            ->whereIn('status', ['unpaid', 'pending'])
-            ->sum('nominal');
+        $santriIds = $request->input('santri_ids');
+        $kelasTujuan = $request->input('kelas_tujuan');
 
-        // Ambil tahun-tahun yang memiliki pembayaran
-        $tahunPembayaran = PembayaranSpp::where('santri_id', $santri->id)
-            ->selectRaw('DISTINCT tahun')
-            ->orderBy('tahun', 'desc')
-            ->pluck('tahun')
-            ->toArray();
+        // Ambil data santri yang akan dinaikan kelasnya
+        $santri = Santri::whereIn('id', $santriIds)->get();
 
-        // Jika belum ada data tahun, gunakan tahun sekarang
-        if (empty($tahunPembayaran)) {
-            $tahunPembayaran = [date('Y')];
-        }
-
-        // Siapkan data pembayaran per tahun
-        $pembayaranPerTahun = [];
-        foreach ($tahunPembayaran as $tahun) {
-            $pembayaran = [];
-            // Data pembayaran yang sudah ada
-            $existingPembayaran = PembayaranSpp::with('metode_pembayaran')
-                ->where('santri_id', $santri->id)
-                ->where('tahun', $tahun)
-                ->get()
-                ->keyBy('bulan');
-
-            // Generate 12 bulan
-            for ($bulan = 1; $bulan <= 12; $bulan++) {
-                $bulanPadded = str_pad($bulan, 2, '0', STR_PAD_LEFT);
-                $pembayaran[] = $existingPembayaran->get($bulanPadded) ?? (object)[
-                    'bulan' => $bulanPadded,
-                    'tahun' => $tahun,
-                    'nominal' => $santri->kategori->tarifTerbaru->nominal ?? 0,
-                    'status' => 'pending',
-                    'tanggal_bayar' => null,
-                    'metode_pembayaran' => null
-                ];
-            }
-
-            $pembayaranPerTahun[$tahun] = $pembayaran;
-        }
-
-        return view('admin.santri.show', compact('santri', 'totalTunggakan', 'pembayaranPerTahun', 'tahunPembayaran'));
-    }
-
-    public function kenaikanKelas()
-    {
-        try {
-            DB::beginTransaction();
-
-                // Data kelas selanjutnya dan urutan kelas
-            $nextClass = [
-                'SMP' => [
-                    '7A' => '8A', '7B' => '8B',
-                    '8A' => '9A', '8B' => '9B',
-                    '9A' => null, '9B' => null
-                ],
-                'SMA' => [
-                    '10A' => '11A', '10B' => '11B',
-                    '11A' => '12A', '11B' => '12B',
-                    '12A' => null, '12B' => null
-                ]
-            ];
-
-            $kelasOrder = [
-                'SMP' => ['7A', '7B', '8A', '8B', '9A', '9B'],
-                'SMA' => ['10A', '10B', '11A', '11B', '12A', '12B']
-            ];
-
-            // Proses kenaikan kelas dari kelas terendah ke tertinggi
-            $santriUpdated = 0;
-            $santriGraduated = 0;
-
-            foreach (['SMP', 'SMA'] as $jenjang) {
-                // Proses dari kelas terendah ke tertinggi
-                foreach ($kelasOrder[$jenjang] as $currentKelas) {
-                    // Jika kelas akhir (9 atau 12), tandai untuk lulus
-                    $isKelasAkhir = in_array($currentKelas, ['9A', '9B', '12A', '12B']);
-                    $nextKelas = $isKelasAkhir ? null : $nextClass[$jenjang][$currentKelas];
-                    
-                    $santriKelas = Santri::where('jenjang', $jenjang)
-                        ->where('kelas', $currentKelas)
-                        ->where('status', 'aktif')
-                        ->get();
-
-                    foreach ($santriKelas as $santri) {
-                        // Simpan data awal sebelum update
-                        $history = [
-                            'santri_id' => $santri->id,
-                            'jenjang_awal' => $santri->jenjang,
-                            'kelas_awal' => $santri->kelas,
-                            'status_awal' => $santri->status,
-                            'jenjang_akhir' => $santri->jenjang,
-                            'kelas_akhir' => $nextKelas ?? $santri->kelas,
-                            'status_akhir' => $nextKelas === null ? 'non-aktif' : 'aktif',
-                            'created_by' => Auth::id()
-                        ];
-
-                        // Update status berdasarkan kelas
-                        if ($isKelasAkhir) {
-                            $santri->update(['status' => 'non-aktif']);
-                            $santriGraduated++;
-                        } elseif ($nextKelas !== null) {
-                            $santri->update(['kelas' => $nextKelas]);
-                            $santriUpdated++;
-                        }
-
-                        // Simpan history
-                        KenaikanKelasHistory::create($history);
-                    }
-                }
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => "Berhasil memproses kenaikan kelas: {$santriUpdated} santri naik kelas, {$santriGraduated} santri lulus"
+        foreach ($santri as $s) {
+            // Simpan riwayat kenaikan kelas
+            $s->riwayatKenaikanKelas()->create([
+                'jenjang_awal' => $s->jenjang,
+                'kelas_awal' => $s->kelas,
+                'status_awal' => $s->status,
+                'jenjang_akhir' => $s->jenjang,
+                'kelas_akhir' => $kelasTujuan,
+                'status_akhir' => 'aktif',
+                'created_by' => request()->user()->id
             ]);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gagal memproses kenaikan kelas: ' . $e->getMessage()
-            ], 500);
+            // Update kelas santri
+            $s->update(['kelas' => $kelasTujuan]);
         }
+
+        return response()->json([
+            'message' => 'Kenaikan kelas berhasil diproses'
+        ]);
     }
 
-    public function batalKenaikanKelas()
+    public function batalKenaikanKelas(Request $request)
     {
-        try {
-            DB::beginTransaction();
+        $request->validate([
+            'santri_ids' => 'required|array',
+            'santri_ids.*' => 'exists:santri,id'
+        ]);
 
-            // Ambil history kenaikan kelas terakhir
-            $lastHistory = KenaikanKelasHistory::orderBy('created_at', 'desc')
-                ->get()
-                ->groupBy('santri_id');
+        $santriIds = $request->input('santri_ids');
 
-            if ($lastHistory->isEmpty()) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Tidak ada history kenaikan kelas yang bisa dibatalkan'
-                ], 404);
-            }
-
-            $santriRestored = 0;
-
-            foreach ($lastHistory as $santriHistories) {
-                $latestHistory = $santriHistories->first();
-                
-                // Kembalikan data santri ke kondisi awal
-                Santri::where('id', $latestHistory->santri_id)->update([
-                    'jenjang' => $latestHistory->jenjang_awal,
-                    'kelas' => $latestHistory->kelas_awal,
-                    'status' => $latestHistory->status_awal
-                ]);
-
-                // Hapus history
-                $latestHistory->delete();
-                $santriRestored++;
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => "Berhasil membatalkan kenaikan kelas untuk {$santriRestored} santri"
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gagal membatalkan kenaikan kelas: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function search(Request $request)
-    {
-        $keyword = $request->get('q');
-
-        return Santri::with(['kategori.tarifTerbaru', 'pembayaran' => function($query) {
-                $query->whereIn('status', ['unpaid', 'pending'])
-                      ->orderBy('tahun')
-                      ->orderBy('bulan');
+        // Ambil data santri yang akan dibatalkan kenaikan kelasnya
+        $santri = Santri::whereIn('id', $santriIds)
+            ->with(['riwayatKenaikanKelas' => function($query) {
+                $query->latest();
             }])
-            ->where(function($query) use ($keyword) {
-                $query->where('nama', 'LIKE', "%{$keyword}%")
-                      ->orWhere('nisn', 'LIKE', "%{$keyword}%");
-            })
-            ->where('status', 'aktif')
-            ->limit(10)
-            ->get()
-            ->map(function($santri) {
-                $tunggakan = $santri->pembayaran->map(function($p) {
-                    return [
-                        'bulan' => $p->bulan,
-                        'tahun' => $p->tahun
-                    ];
-                });
+            ->get();
 
-                return [
-                    'id' => $santri->id,
-                    'nama' => $santri->nama,
-                    'nisn' => $santri->nisn,
-                    'nominal_spp' => $santri->kategori->tarifTerbaru->nominal ?? 0,
-                    'tunggakan' => $tunggakan
-                ];
-            });
+        foreach ($santri as $s) {
+            if ($s->riwayatKenaikanKelas->isNotEmpty()) {
+                $riwayatTerakhir = $s->riwayatKenaikanKelas->first();
+                
+                // Kembalikan ke kelas sebelumnya
+                $s->update([
+                    'kelas' => $riwayatTerakhir->kelas_awal,
+                    'jenjang' => $riwayatTerakhir->jenjang_awal,
+                    'status' => $riwayatTerakhir->status_awal
+                ]);
+                
+                // Hapus riwayat kenaikan kelas terakhir
+                $riwayatTerakhir->delete();
+            }
+        }
+
+        return response()->json([
+            'message' => 'Pembatalan kenaikan kelas berhasil diproses'
+        ]);
     }
 }

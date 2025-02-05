@@ -11,10 +11,12 @@
         "doctrine/dbal": "^4.2",
         "jolicode/jolinotif": "^3.0",
         "laravel/framework": "^11.31",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "league/csv": "^9.21",
         "midtrans/midtrans-php": "^2.6",
         "rap2hpoutre/fast-excel": "^5.5",
-        "spatie/laravel-permission": "^6.10"
+        "spatie/laravel-permission": "^6.12"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

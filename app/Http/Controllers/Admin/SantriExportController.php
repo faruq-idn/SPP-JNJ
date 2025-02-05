@@ -114,6 +114,33 @@ class SantriExportController extends Controller
         return (new FastExcel($data))->download('template_import_santri.xlsx');
     }
 
+    public function export()
+    {
+        $santri = Santri::with(['kategori', 'wali'])
+            ->orderBy('jenjang')
+            ->orderBy('kelas')
+            ->get()
+            ->map(function ($s) {
+                return [
+                    'NISN' => $s->nisn,
+                    'Nama' => $s->nama,
+                    'Jenis Kelamin' => $s->jenis_kelamin,
+                    'Tanggal Lahir' => $s->tanggal_lahir->format('Y-m-d'),
+                    'Alamat' => $s->alamat,
+                    'Jenjang' => $s->jenjang,
+                    'Kelas' => $s->kelas,
+                    'Kategori' => $s->kategori->nama ?? '-',
+                    'Nama Wali' => $s->nama_wali,
+                    'Wali Terdaftar' => $s->wali->name ?? '-',
+                    'Tanggal Masuk' => $s->tanggal_masuk->format('Y-m-d'),
+                    'Status' => ucfirst($s->status),
+                    'Status SPP' => $s->status_spp
+                ];
+            });
+
+        return (new FastExcel($santri))->download('data_santri.xlsx');
+    }
+
     private function validateImportRow($row)
     {
         // Format validation for dates

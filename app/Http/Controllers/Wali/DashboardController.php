@@ -37,7 +37,7 @@ class DashboardController extends Controller
                 'santri_list' => collect(),
                 'unlinked_santri' => collect(),
                 'available_santri' => $available_santri,
-                'pembayaran' => collect()
+                'pembayaran_terbaru' => collect()
             ]);
         }
 
@@ -55,9 +55,9 @@ class DashboardController extends Controller
         }
 
         // Ambil data pembayaran jika ada santri yang terhubung
-        $pembayaran = collect();
+        $pembayaran_terbaru = collect();
         if ($santri) {
-            $pembayaran = PembayaranSpp::where('santri_id', $santri->id)
+            $pembayaran_terbaru = PembayaranSpp::where('santri_id', $santri->id)
                 ->latest()
                 ->take(5)
                 ->get();
@@ -68,7 +68,7 @@ class DashboardController extends Controller
             'santri_list',
             'unlinked_santri',
             'available_santri',
-            'pembayaran'
+            'pembayaran_terbaru'
         ));
     }
 
@@ -92,7 +92,8 @@ class DashboardController extends Controller
         // Simpan santri_id yang dipilih ke session
         Session::put('selected_santri_id', $santri_id);
 
-        return back()->with('success', 'Berhasil mengubah santri yang dipilih');
+        // Kembali ke halaman sebelumnya
+        return back();
     }
 
     public function hubungkan()

@@ -20,8 +20,8 @@ class TagihanController extends Controller
 
         // Ambil santri aktif dari session atau ambil yang pertama
         $santri = null;
-        if (session()->has('santri_aktif')) {
-            $santri = $santri_list->where('id', session('santri_aktif'))->first();
+        if (session()->has('selected_santri_id')) {
+            $santri = $santri_list->where('id', session('selected_santri_id'))->first();
         }
 
         if (!$santri && $santri_list->isNotEmpty()) {

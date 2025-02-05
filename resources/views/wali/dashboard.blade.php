@@ -161,8 +161,7 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    window.bayarSPP = function(id) {
+function bayarSPP(id) {
         Swal.fire({
             title: 'Konfirmasi Pembayaran',
             text: 'Anda akan melanjutkan ke halaman pembayaran online?',
@@ -192,16 +191,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         tagihan_id: id
                     })
                 })
-                .then(async response => {
-                    const data = await response.json();
+                .then(response => {
                     if (!response.ok) {
-                        throw new Error(data.message || 'Terjadi kesalahan');
+                        return response.json().then(err => Promise.reject(err));
                     }
-                    return data;
+                    return response.json();
                 })
                 .then(response => {
                     Swal.close();
-                    if(response.snap_token) {
+                    if (response.redirect_url) {
+                        window.location.href = response.redirect_url;
+                    } else if (response.snap_token) {
                         snap.pay(response.snap_token, {
                             onSuccess: function(result) {
                                 Swal.fire({
@@ -235,19 +235,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 })
-                .catch(error => {
-                    console.error('Error:', error);
+                .catch(err => {
+                    console.error('Error:', err);
                     Swal.close();
+                    let errorMessage = err.message || 'Gagal memproses pembayaran';
+                    if (err.redirect_url) {
+                        window.location.href = err.redirect_url;
+                        return;
+                    }
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: error.message || 'Gagal terhubung ke server. Silakan coba lagi.'
+                        text: errorMessage
                     });
                 });
             }
         });
-    };
-});
+}
 </script>
 @endpush
 @endsection

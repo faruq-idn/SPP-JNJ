@@ -2,15 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\User;
-use App\Models\KategoriSantri;
-use App\Models\PembayaranSpp;
 
 class Santri extends Model
 {
+    use HasFactory;
+
     protected $table = 'santri';
 
     protected $fillable = [
@@ -20,39 +18,85 @@ class Santri extends Model
         'tanggal_lahir',
         'alamat',
         'wali_id',
-        'nama_wali',
         'tanggal_masuk',
         'jenjang',
         'kelas',
-        'kategori_id',
         'status',
+        'kategori_id',
         'status_spp'
     ];
 
-    protected $nullable = [
-        'wali_id',
-        'nama_wali'
-    ];
-
     protected $casts = [
-        'tanggal_lahir' => 'date',
-        'tanggal_masuk' => 'date',
-        'nisn' => 'string',
+        'tanggal_lahir' => 'datetime',
+        'tanggal_masuk' => 'datetime',
     ];
 
-    public function wali(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'wali_id');
-    }
-
-    public function kategori(): BelongsTo
+    public function kategori()
     {
         return $this->belongsTo(KategoriSantri::class, 'kategori_id');
     }
 
-    public function pembayaran(): HasMany
+    public function wali()
+    {
+        return $this->belongsTo(User::class, 'wali_id')->where('role', 'wali');
+    }
+
+    public function pembayaran()
     {
         return $this->hasMany(PembayaranSpp::class);
     }
 
+    public function riwayatKenaikanKelas()
+    {
+        return $this->hasMany(KenaikanKelasHistory::class);
+    }
+
+    public function scopeAktif($query)
+    {
+        return $query->where('status', 'aktif');
+    }
+
+    public function scopeLulus($query)
+    {
+        return $query->where('status', 'lulus');
+    }
+
+    public function scopeKeluar($query)
+    {
+        return $query->where('status', 'keluar');
+    }
+
+    public function scopeJenjang($query, $jenjang)
+    {
+        return $query->where('jenjang', $jenjang);
+    }
+
+    public function scopeKelas($query, $kelas)
+    {
+        return $query->where('kelas', $kelas);
+    }
+
+    public function scopeBelumLunas($query)
+    {
+        return $query->where('status_spp', 'Belum Lunas');
+    }
+
+    public function getStatusColorAttribute()
+    {
+        return [
+            'aktif' => 'success',
+            'lulus' => 'info',
+            'keluar' => 'danger'
+        ][$this->status] ?? 'secondary';
+    }
+
+    public function getStatusSppColorAttribute()
+    {
+        return $this->status_spp === 'Lunas' ? 'success' : 'warning';
+    }
+
+    public function getNamaWaliAttribute()
+    {
+        return $this->wali ? $this->wali->name : null;
+    }
 }

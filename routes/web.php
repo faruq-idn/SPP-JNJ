@@ -46,9 +46,11 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::get('santri/{jenjang}/{kelas}', [SantriController::class, 'kelas'])->name('santri.kelas');
     Route::get('santri/search', [SantriController::class, 'search'])->name('santri.search');
     
+    
     // Santri Import/Export
     Route::post('santri/import', [SantriExportController::class, 'importExcel'])->name('santri.import');
     Route::get('santri/template/download', [SantriExportController::class, 'downloadTemplate'])->name('santri.template.download');
+    Route::get('santri/export', [SantriExportController::class, 'export'])->name('santri.export');
     
     // User Management
     Route::resource('users', UserController::class);
@@ -85,3 +87,4 @@ Route::prefix('wali')->middleware(['auth', 'role:wali'])->name('wali.')->group(f
     // Hubungkan Santri
     Route::get('hubungkan', [WaliDashboardController::class, 'hubungkan'])->name('hubungkan');
 });
+

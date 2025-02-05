@@ -1,3 +1,9 @@
+<!-- DataTables -->
+<link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+<!-- Select2 Bootstrap 5 Theme -->
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+
 <style>
     /* Fixed sidebar */
     .sidebar {
@@ -39,7 +45,7 @@
         }
         .main-content {
             margin-left: 0;
-        }
+    }
         .top-navbar {
             left: 0;
         }

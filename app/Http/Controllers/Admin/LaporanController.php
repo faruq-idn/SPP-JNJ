@@ -90,30 +90,30 @@ class LaporanController extends Controller
     }
 
     private function getChartKategori()
-    {
-        $data = KategoriSantri::withCount(['santri as lunas' => function($query) {
-            $query->whereHas('pembayaran', function($q) {
-                $q->where('status', 'success')
-                    ->whereYear('tanggal_bayar', now()->year)
-                    ->whereMonth('tanggal_bayar', now()->month);
-            });
-        }])
-        ->withCount(['santri as belum_lunas' => function($query) {
-            $query->whereHas('pembayaran', function($q) {
-                $q->whereIn('status', ['unpaid', 'pending'])
-                    ->whereYear('tanggal_bayar', now()->year)
-                    ->whereMonth('tanggal_bayar', now()->month);
-            });
-        }])
-        ->get();
-
-        return [
-            'labels' => $data->pluck('nama'),
-            'data' => $data->map(function($item) {
-                $total = $item->lunas + $item->belum_lunas;
-                return $total > 0 ? round(($item->lunas / $total) * 100, 2) : 0;
-            })
-        ];
+        {
+            $data = KategoriSantri::withCount(['santri as lunas' => function($query) {
+                $query->whereHas('pembayaran', function($q) {
+                    $q->where('status', 'success')
+                        ->whereYear('tanggal_bayar', now()->year)
+                        ->whereMonth('tanggal_bayar', now()->month);
+                });
+            }])
+            ->withCount(['santri as belum_lunas' => function($query) {
+                $query->whereHas('pembayaran', function($q) {
+                    $q->whereIn('status', ['unpaid', 'pending'])
+                        ->whereYear('tanggal_bayar', now()->year)
+                        ->whereMonth('tanggal_bayar', now()->month);
+                });
+            }])
+            ->get();
+    
+            return [
+                'labels' => $data->pluck('nama'),
+                'data' => [
+                    'lunas' => $data->pluck('lunas'),
+                    'belum_lunas' => $data->pluck('belum_lunas')
+                ]
+            ];
     }
 
     public function pembayaran(Request $request)

@@ -39,12 +39,13 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::resource('kategori', KategoriSantriController::class);
     
     // Santri
-    Route::resource('santri', SantriController::class);
+    Route::get('santri/riwayat', [SantriController::class, 'riwayat'])->name('santri.riwayat');
+    Route::get('santri/search', [SantriController::class, 'search'])->name('santri.search');
+    Route::get('santri/{jenjang}/{kelas}', [SantriController::class, 'kelas'])->name('santri.kelas');
     Route::post('santri/update-status/{santri}', [SantriController::class, 'updateStatus'])->name('santri.update-status');
     Route::post('santri/kenaikan-kelas', [SantriController::class, 'kenaikanKelas'])->name('santri.kenaikan-kelas');
     Route::post('santri/batal-kenaikan-kelas', [SantriController::class, 'batalKenaikanKelas'])->name('santri.batal-kenaikan-kelas');
-    Route::get('santri/{jenjang}/{kelas}', [SantriController::class, 'kelas'])->name('santri.kelas');
-    Route::get('santri/search', [SantriController::class, 'search'])->name('santri.search');
+    Route::resource('santri', SantriController::class);
     
     
     // Santri Import/Export
@@ -87,4 +88,3 @@ Route::prefix('wali')->middleware(['auth', 'role:wali'])->name('wali.')->group(f
     // Hubungkan Santri
     Route::get('hubungkan', [WaliDashboardController::class, 'hubungkan'])->name('hubungkan');
 });
-

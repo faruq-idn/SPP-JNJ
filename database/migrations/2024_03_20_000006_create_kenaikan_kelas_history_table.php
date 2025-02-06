@@ -11,12 +11,9 @@ return new class extends Migration
         Schema::create('kenaikan_kelas_history', function (Blueprint $table) {
             $table->id();
             $table->foreignId('santri_id')->constrained('santri')->onDelete('cascade');
-            $table->string('jenjang_awal');
-            $table->string('kelas_awal');
-            $table->string('status_awal');
-            $table->string('jenjang_akhir');
-            $table->string('kelas_akhir');
-            $table->string('status_akhir');
+            $table->string('kelas_sebelum');  // Format: "7A", "8B", etc
+            $table->string('kelas_sesudah')->nullable();  // Format: "8A", "9B", null untuk lulus
+            $table->enum('status', ['aktif', 'lulus'])->default('aktif');
             $table->foreignId('created_by')->constrained('users');
             $table->timestamps();
         });

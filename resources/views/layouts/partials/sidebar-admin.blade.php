@@ -7,27 +7,30 @@
             </a>
         </li>
 
-        <!-- Data Santri dengan Sub Menu -->
+        <!-- Data Santri dengan Submenu -->
         <li class="nav-item">
-            <a class="nav-link {{ Request::is('admin/santri*') ? '' : 'collapsed' }}"
-               href="#"
+            <a href="#"
+               class="nav-link d-flex align-items-center justify-content-between {{ Request::is('admin/santri*') ? 'active' : '' }}"
                data-bs-toggle="collapse"
-               data-bs-target="#collapseKelas">
-                <i class="fas fa-users fa-fw me-2"></i>
-                <span>Data Santri</span>
-                <i class="fas fa-angle-down ms-auto"></i>
+               data-bs-target="#collapseSantri"
+               data-url="{{ route('admin.santri.index') }}"
+               aria-expanded="{{ Request::is('admin/santri*') ? 'true' : 'false' }}">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-users fa-fw me-2"></i>
+                    <span>Data Santri</span>
+                </div>
+                <i class="fas fa-angle-down transition-rotate"></i>
             </a>
-            <div id="collapseKelas" class="collapse {{ Request::is('admin/santri*') ? 'show' : '' }}">
+            <div id="collapseSantri" class="collapse {{ Request::is('admin/santri*') ? 'show' : '' }}">
                 <div class="submenu">
-                    <!-- Tombol Semua Santri -->
-                    <div class="submenu-section">
-                        <a href="{{ route('admin.santri.index') }}"
-                           class="btn-all-santri">
-                            <i class="fas fa-list me-1"></i>Semua Santri
-                        </a>
-                    </div>
+                    <!-- Riwayat Kenaikan -->
+                    <a class="submenu-item {{ Request::is('admin/santri/riwayat*') ? 'active' : '' }}"
+                       href="{{ route('admin.santri.riwayat') }}">
+                        <i class="fas fa-history fa-fw me-2"></i>
+                        <span>Riwayat Kenaikan</span>
+                    </a>
 
-                    <!-- SMP -->
+                    <!-- Kelas -->
                     <div class="submenu-section">
                         <div class="submenu-header">SMP</div>
                         @php
@@ -48,7 +51,6 @@
                         @endforeach
                     </div>
 
-                    <!-- SMA -->
                     <div class="submenu-section">
                         <div class="submenu-header">SMA</div>
                         @php

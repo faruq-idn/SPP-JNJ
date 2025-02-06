@@ -191,20 +191,30 @@
                                 <tr>
                                     <td>
                                         @php
-                                            $namaBulan = \Carbon\Carbon::createFromFormat('m', $p->bulan)->translatedFormat('F');
+                                            try {
+                                                $namaBulan = \Carbon\Carbon::createFromFormat('m', $p->bulan)->translatedFormat('F');
+                                            } catch (\Exception $e) {
+                                                $namaBulan = '-';
+                                            }
                                         @endphp
                                         {{ $namaBulan }}
                                     </td>
                                     <td>
-                                        @if($p->tanggal_bayar)
+                                        @if(isset($p->tanggal_bayar) && $p->tanggal_bayar)
                                             {{ \Carbon\Carbon::parse($p->tanggal_bayar)->format('d/m/Y') }}
                                         @else
                                             -
                                         @endif
                                     </td>
-                                    <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
                                     <td>
-                                        @if($p->metode_pembayaran)
+                                        @if(isset($p->nominal))
+                                            Rp {{ number_format($p->nominal, 0, ',', '.') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if(isset($p->metode_pembayaran) && $p->metode_pembayaran)
                                             <span class="badge bg-info">
                                                 {{ $p->metode_pembayaran->nama }}
                                             </span>
@@ -213,9 +223,13 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge bg-{{ $p->status == 'success' ? 'success' : ($p->status == 'pending' ? 'warning' : 'danger') }}">
-                                            {{ ucfirst($p->status) }}
-                                        </span>
+                                        @if(isset($p->status))
+                                            <span class="badge bg-{{ $p->status == 'success' ? 'success' : ($p->status == 'pending' ? 'warning' : 'danger') }}">
+                                                {{ ucfirst($p->status) }}
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary">Belum Bayar</span>
+                                        @endif
                                     </td>
                                     <td class="text-center">
                                         @if(is_object($p) && isset($p->id))

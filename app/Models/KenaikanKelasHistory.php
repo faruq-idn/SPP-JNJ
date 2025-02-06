@@ -7,16 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 class KenaikanKelasHistory extends Model
 {
     protected $table = 'kenaikan_kelas_history';
-
+    
     protected $fillable = [
         'santri_id',
-        'jenjang_awal',
-        'kelas_awal',
-        'status_awal',
-        'jenjang_akhir',
-        'kelas_akhir',
-        'status_akhir',
+        'kelas_sebelum',
+        'kelas_sesudah',
+        'status',
         'created_by'
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
     public function santri()

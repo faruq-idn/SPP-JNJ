@@ -128,3 +128,9 @@ function confirmLogout() {
     });
 }
 </script>
+
+@if(Auth::user()->role === 'admin')
+<!-- Admin specific scripts -->
+<script src="{{ asset('js/kenaikan-kelas.js') }}"></script>
+<script src="{{ asset('js/sidebar-admin.js') }}"></script>
+@endif

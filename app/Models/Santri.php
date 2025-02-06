@@ -23,12 +23,14 @@ class Santri extends Model
         'kelas',
         'status',
         'kategori_id',
-        'status_spp'
+        'status_spp',
+        'tahun_tamat'
     ];
 
     protected $casts = [
         'tanggal_lahir' => 'datetime',
         'tanggal_masuk' => 'datetime',
+        'tahun_tamat' => 'integer'
     ];
 
     public function kategori()

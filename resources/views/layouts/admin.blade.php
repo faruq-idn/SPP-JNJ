@@ -9,6 +9,7 @@
     <title>@yield('title') - Admin Panel</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     @include('layouts.partials.styles')
     @include('layouts.partials.custom-styles')

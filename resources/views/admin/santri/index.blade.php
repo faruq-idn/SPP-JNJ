@@ -137,11 +137,24 @@
 @push('scripts')
 <script>
 // Add CSRF token to all ajax requests
+const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 $.ajaxSetup({
     headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        'X-CSRF-TOKEN': token
     }
 });
+
+// Untuk request yang menggunakan dataType: 'json'
+function setupAjaxRequest(data) {
+    return {
+        ...data,
+        headers: {
+            'X-CSRF-TOKEN': token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    };
+}
 
 function toggleCheckAll() {
     const checkAll = document.getElementById('checkAll');
@@ -169,71 +182,336 @@ function toggleButtons() {
     }
 }
 
+function getKelasTujuan(jenjang, kelas) {
+    const tingkat = parseInt(kelas);
+    
+    // Validasi format kelas (contoh: "7A", "8B", dst)
+    if (isNaN(tingkat)) {
+        return null;
+    }
+    
+    const suffix = kelas.replace(tingkat, '');
+    let kelasBaru = tingkat + 1;
+    
+    // Jika kelas 9 SMP, tetapkan null agar ditangani khusus
+    if (jenjang === 'SMP' && tingkat === 9) {
+        return null;
+    }
+    // Jika kelas 12 SMA, tidak bisa naik kelas
+    else if (jenjang === 'SMA' && tingkat === 12) {
+        return null;
+    }
+    // Naik 1 tingkat dengan suffix yang sama
+    else {
+        return kelasBaru + suffix;
+    }
+}
+
 function kenaikanKelas() {
+    const checkboxes = document.getElementsByClassName('santri-checkbox');
+    const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+    const santriRows = checkedBoxes.map(cb => cb.closest('tr'));
+    
+    let detailHtml = '<ul class="list-group list-group-flush">';
+    const kelasGrouped = {};
+    const kelas9SMP = [];
+    
+    santriRows.forEach(row => {
+        const nama = row.cells[2].textContent;
+        const [jenjang, kelas] = row.cells[3].textContent.trim().split(' ');
+        
+        // Pisahkan santri kelas 9 SMP
+        if (jenjang === 'SMP' && kelas.startsWith('9')) {
+            kelas9SMP.push({
+                nama,
+                id: row.querySelector('.santri-checkbox').value
+            });
+            return;
+        }
+        
+        const kelasTujuan = getKelasTujuan(jenjang, kelas);
+        if (!kelasTujuan) {
+            alert(`Tidak dapat menaikkan kelas untuk ${nama} (${jenjang} ${kelas})`);
+            return;
+        }
+        
+        if (!kelasGrouped[`${jenjang} ${kelas}`]) {
+            kelasGrouped[`${jenjang} ${kelas}`] = [];
+        }
+        kelasGrouped[`${jenjang} ${kelas}`].push({
+            nama,
+            kelasTujuan
+        });
+    });
+    
+    // Jika ada santri kelas 9 SMP
+    if (kelas9SMP.length > 0) {
+        detailHtml += `
+            <li class="list-group-item bg-warning">
+                <h6>Kelas 9 SMP</h6>
+                <div class="alert alert-info">
+                    <strong>Peringatan!</strong>
+                    <p class="mb-2">Untuk santri kelas 9 SMP, pilih santri yang akan diproses:</p>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="kelas9Action" id="lulus" value="lulus" checked onchange="toggleKelas9Checkboxes()">
+                        <label class="form-check-label" for="lulus">
+                            Lulus (Tidak melanjutkan di sekolah ini)
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="kelas9Action" id="lanjut" value="lanjut" onchange="toggleKelas9Checkboxes()">
+                        <label class="form-check-label" for="lanjut">
+                            Lanjut ke kelas 10 SMA
+                        </label>
+                    </div>
+                </div>
+                <div class="list-group">
+                    ${kelas9SMP.map(s => `
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input kelas9-checkbox" type="checkbox" 
+                                       value="${s.id}" id="santri9-${s.id}">
+                                <label class="form-check-label" for="santri9-${s.id}">
+                                    ${s.nama}
+                                </label>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </li>
+        `;
+    }
+    
+    // Generate detail HTML untuk kelas lain
+    Object.entries(kelasGrouped).forEach(([kelasAsal, santri]) => {
+        detailHtml += `
+            <li class="list-group-item">
+                <h6>Kelas ${kelasAsal} → Kelas ${santri[0].kelasTujuan}</h6>
+                <ul>
+                    ${santri.map(s => `<li>${s.nama}</li>`).join('')}
+                </ul>
+            </li>
+        `;
+    });
+    
+    detailHtml += '</ul>';
+    
+    if (Object.keys(kelasGrouped).length === 0 && kelas9SMP.length === 0) {
+        alert('Tidak ada santri yang dapat diproses kenaikan kelasnya');
+        return;
+    }
+    
+    // Tampilkan modal dengan detail
+    document.getElementById('detailKenaikanKelas').innerHTML = detailHtml;
     const modal = new bootstrap.Modal(document.getElementById('modalKenaikanKelas'));
     modal.show();
 }
 
-function prosesKenaikanKelas() {
+// Handle form submit untuk kenaikan kelas
+document.getElementById('formKenaikanKelas').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
     const modal = bootstrap.Modal.getInstance(document.getElementById('modalKenaikanKelas'));
     const checkboxes = document.getElementsByClassName('santri-checkbox');
     const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
-    const kelasTujuan = document.getElementById('kelas_tujuan').value;
+    const santriRows = checkedBoxes.map(cb => cb.closest('tr'));
     
-    if (!kelasTujuan) {
-        alert('Mohon isi kelas tujuan');
+    // Pisahkan data santri reguler dan kelas 9
+    const santriData = [];
+    const santriKelas9 = [];
+    
+    santriRows.forEach(row => {
+        const [jenjang, kelas] = row.cells[3].textContent.trim().split(' ');
+        const id = row.querySelector('.santri-checkbox').value;
+        const nama = row.cells[2].textContent;
+        
+        if (jenjang === 'SMP' && kelas.startsWith('9')) {
+            santriKelas9.push({ id, nama, kelas });
+        } else {
+            const kelasTujuan = getKelasTujuan(jenjang, kelas);
+            if (kelasTujuan) {
+                santriData.push({ 
+                    id: parseInt(id),
+                    kelasTujuan,
+                    jenjang,
+                    status: 'aktif'
+                });
+            }
+        }
+    });
+    
+    // Proses santri kelas 9 berdasarkan pilihan radio dan checkbox
+    if (santriKelas9.length > 0) {
+        const kelas9Action = document.querySelector('input[name="kelas9Action"]:checked').value;
+        const selectedSantri9 = Array.from(document.getElementsByClassName('kelas9-checkbox'))
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        
+        // Hanya proses santri kelas 9 yang dicentang
+        santriKelas9.forEach(santri => {
+            if (!selectedSantri9.includes(santri.id)) return;
+            
+            if (kelas9Action === 'lulus') {
+                santriData.push({
+                    id: santri.id,
+                    kelasTujuan: null,
+                    jenjang: 'SMP',
+                    status: 'lulus'
+                });
+        } else {
+            const suffix = santri.kelas ? santri.kelas.replace(/[0-9]/g, '') : 'A';
+            santriData.push({
+                id: parseInt(santri.id),
+                kelasTujuan: '10' + suffix,
+                jenjang: 'SMA',
+                status: 'aktif'
+                });
+            }
+        });
+    }
+    
+    // Validasi data sebelum dikirim
+    let errors = [];
+    santriData.forEach(data => {
+        if (!data.id) {
+            errors.push('ID santri tidak valid');
+        }
+        if (data.status === 'aktif' && !data.kelasTujuan) {
+            errors.push('Kelas tujuan harus diisi');
+        }
+        if (!['SMP', 'SMA'].includes(data.jenjang)) {
+            errors.push('Jenjang tidak valid');
+        }
+        if (!['aktif', 'lulus'].includes(data.status)) {
+            errors.push('Status tidak valid');
+        }
+    });
+
+    if (errors.length > 0) {
+        alert('Terjadi kesalahan validasi:\n' + errors.join('\n'));
+        return;
+    }
+
+    if (santriData.length === 0) {
+        alert('Tidak ada santri yang dapat diproses kenaikan kelasnya');
         return;
     }
     
-    const santriIds = checkedBoxes.map(cb => cb.value);
-    
     // Kirim request ke server
-    $.ajax({
-        url: "{{ route('admin.santri.kenaikan-kelas') }}",
-        type: 'POST',
-        data: {
-            santri_ids: santriIds,
-            kelas_tujuan: kelasTujuan
+    fetch("{{ route('admin.santri.kenaikan-kelas') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': token,
+            'Accept': 'application/json'
         },
-        dataType: 'json'
+        body: JSON.stringify({
+            santri_data: santriData
+        })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         alert(data.message);
         location.reload();
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Terjadi kesalahan saat memproses kenaikan kelas');
+        if (!error.response) {
+            alert('Terjadi kesalahan koneksi. Silakan coba lagi.');
+            return;
+        }
+
+        // Log request data untuk debugging
+        console.log('Request Data:', {
+            santri_data: santriData
+        });
+
+        error.response.text().then(text => {
+            try {
+                const data = JSON.parse(text);
+                alert(data.message || 'Terjadi kesalahan saat memproses kenaikan kelas');
+            } catch (e) {
+                console.error('Response Text:', text);
+                alert('Terjadi kesalahan. Silakan periksa console untuk detail.');
+            }
+        });
+    });
+    
+    modal.hide();
+});
+
+function toggleKelas9Checkboxes() {
+    const actionLulus = document.getElementById('lulus').checked;
+    const checkboxes = document.getElementsByClassName('kelas9-checkbox');
+    
+    Array.from(checkboxes).forEach(checkbox => {
+        if (actionLulus) {
+            checkbox.checked = true;
+            checkbox.disabled = true;
+        } else {
+            checkbox.checked = false;
+            checkbox.disabled = false;
+        }
     });
 }
 
+// Panggil fungsi saat modal ditampilkan untuk mengatur status awal checkbox
+document.getElementById('modalKenaikanKelas').addEventListener('shown.bs.modal', function () {
+    toggleKelas9Checkboxes();
+});
+
 function batalKenaikanKelas() {
-    if (!confirm('Apakah Anda yakin ingin membatalkan kenaikan kelas untuk santri yang dipilih?')) {
+    if (!confirm('PERHATIAN!\n\nAnda akan membatalkan kenaikan kelas untuk santri yang dipilih:\n- Santri akan dikembalikan ke kelas sebelumnya\n- Status santri akan dikembalikan seperti semula\n- Riwayat kenaikan kelas akan dihapus\n\nLanjutkan pembatalan kenaikan kelas?')) {
         return;
     }
     
     const checkboxes = document.getElementsByClassName('santri-checkbox');
     const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
-    const santriIds = checkedBoxes.map(cb => cb.value);
+    const santriIds = checkedBoxes.map(cb => parseInt(cb.value));
     
     // Kirim request ke server
-    $.ajax({
-        url: "{{ route('admin.santri.batal-kenaikan-kelas') }}",
-        type: 'POST',
-        data: {
-            santri_ids: santriIds
+    fetch("{{ route('admin.santri.batal-kenaikan-kelas') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': token,
+            'Accept': 'application/json'
         },
-        dataType: 'json'
+        body: JSON.stringify({
+            santri_ids: santriIds
+        })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         alert(data.message);
         location.reload();
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Terjadi kesalahan saat membatalkan kenaikan kelas');
+        if (!error.response) {
+            alert('Terjadi kesalahan koneksi. Silakan coba lagi.');
+            return;
+        }
+
+        error.response.text().then(text => {
+            try {
+                const data = JSON.parse(text);
+                alert(data.message || 'Terjadi kesalahan saat membatalkan kenaikan kelas');
+            } catch (e) {
+                console.error('Response Text:', text);
+                alert('Terjadi kesalahan. Silakan periksa console untuk detail.');
+            }
+        });
     });
 }
 </script>

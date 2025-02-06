@@ -8,6 +8,10 @@ use App\Models\Santri;
 use App\Models\User;
 use Illuminate\Http\Request;
 use League\Csv\Reader;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class SantriController extends Controller
 {
@@ -189,73 +193,151 @@ class SantriController extends Controller
 
     public function kenaikanKelas(Request $request)
     {
-        $request->validate([
-            'santri_ids' => 'required|array',
-            'santri_ids.*' => 'exists:santri,id',
-            'kelas_tujuan' => 'required|string|max:3'
-        ]);
-
-        $santriIds = $request->input('santri_ids');
-        $kelasTujuan = $request->input('kelas_tujuan');
-
-        // Ambil data santri yang akan dinaikan kelasnya
-        $santri = Santri::whereIn('id', $santriIds)->get();
-
-        foreach ($santri as $s) {
-            // Simpan riwayat kenaikan kelas
-            $s->riwayatKenaikanKelas()->create([
-                'jenjang_awal' => $s->jenjang,
-                'kelas_awal' => $s->kelas,
-                'status_awal' => $s->status,
-                'jenjang_akhir' => $s->jenjang,
-                'kelas_akhir' => $kelasTujuan,
-                'status_akhir' => 'aktif',
-                'created_by' => request()->user()->id
+        try {
+            $validator = Validator::make($request->all(), [
+                'santri_data' => 'required|array',
+                'santri_data.*.id' => 'required|exists:santri,id',
+                'santri_data.*.kelasTujuan' => 'nullable|string|max:3',
+                'santri_data.*.jenjang' => 'required|in:SMP,SMA',
+                'santri_data.*.status' => 'required|in:aktif,lulus'
             ]);
 
-            // Update kelas santri
-            $s->update(['kelas' => $kelasTujuan]);
-        }
+            $santriData = $request->input('santri_data');
 
-        return response()->json([
-            'message' => 'Kenaikan kelas berhasil diproses'
-        ]);
+            if (empty($santriData)) {
+                throw new \Exception('Tidak ada data santri yang dipilih');
+            }
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validasi data santri gagal: ' . implode(', ', $validator->errors()->all()),
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            DB::beginTransaction();
+            $santri = Santri::whereIn('id', collect($santriData)->pluck('id'))->get();
+
+            $santriCollection = collect($santriData);
+            
+            foreach ($santri as $s) {
+                $dataTujuan = $santriCollection->first(function ($item) use ($s) {
+                    return $item['id'] == $s->id;
+                });
+                
+                if (!$dataTujuan) {
+                    Log::warning("Data tujuan tidak ditemukan untuk santri ID: {$s->id}");
+                    continue;
+                }
+
+                // Debug log
+                Log::info("Processing santri:", [
+                    'id' => $s->id,
+                    'data_tujuan' => $dataTujuan
+                ]);
+
+                // Jika status lulus
+                if ($dataTujuan['status'] === 'lulus') {
+                    $s->riwayatKenaikanKelas()->create([
+                        'santri_id' => $s->id,
+                        'jenjang_awal' => $s->jenjang,
+                        'kelas_awal' => $s->kelas,
+                        'status_awal' => $s->status,
+                        'jenjang_akhir' => $s->jenjang,
+                        'kelas_akhir' => $s->kelas,
+                        'status_akhir' => 'lulus',
+                        'created_by' => Auth::id()
+                    ]);
+
+                    $s->update(['status' => 'lulus']);
+                }
+                // Jika naik kelas
+                else {
+                    $s->riwayatKenaikanKelas()->create([
+                        'santri_id' => $s->id,
+                        'jenjang_awal' => $s->jenjang,
+                        'kelas_awal' => $s->kelas,
+                        'status_awal' => $s->status,
+                        'jenjang_akhir' => $dataTujuan['jenjang'],
+                        'kelas_akhir' => $dataTujuan['kelasTujuan'],
+                        'status_akhir' => 'aktif',
+                        'created_by' => Auth::id()
+                    ]);
+
+                    $s->update([
+                        'jenjang' => $dataTujuan['jenjang'],
+                        'kelas' => $dataTujuan['kelasTujuan'],
+                        'status' => 'aktif'
+                    ]);
+                }
+            }
+
+            DB::commit();
+            
+            return response()->json([
+                'message' => 'Kenaikan kelas berhasil diproses'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return response()->json([
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function batalKenaikanKelas(Request $request)
     {
-        $request->validate([
-            'santri_ids' => 'required|array',
-            'santri_ids.*' => 'exists:santri,id'
-        ]);
+        try {
+            $request->validate([
+                'santri_ids' => 'required|array',
+                'santri_ids.*' => 'exists:santri,id'
+            ]);
 
-        $santriIds = $request->input('santri_ids');
+            DB::beginTransaction();
 
-        // Ambil data santri yang akan dibatalkan kenaikan kelasnya
-        $santri = Santri::whereIn('id', $santriIds)
-            ->with(['riwayatKenaikanKelas' => function($query) {
-                $query->latest();
-            }])
-            ->get();
+            $santriIds = $request->input('santri_ids');
+            
+            // Ambil data santri yang akan dibatalkan kenaikan kelasnya
+            $santri = Santri::whereIn('id', $santriIds)
+                ->with(['riwayatKenaikanKelas' => function($query) {
+                    $query->latest();
+                }])
+                ->get();
 
-        foreach ($santri as $s) {
-            if ($s->riwayatKenaikanKelas->isNotEmpty()) {
-                $riwayatTerakhir = $s->riwayatKenaikanKelas->first();
-                
-                // Kembalikan ke kelas sebelumnya
-                $s->update([
-                    'kelas' => $riwayatTerakhir->kelas_awal,
-                    'jenjang' => $riwayatTerakhir->jenjang_awal,
-                    'status' => $riwayatTerakhir->status_awal
-                ]);
-                
-                // Hapus riwayat kenaikan kelas terakhir
-                $riwayatTerakhir->delete();
+            if ($santri->isEmpty()) {
+                throw new \Exception('Tidak ada santri yang dipilih');
             }
-        }
 
-        return response()->json([
-            'message' => 'Pembatalan kenaikan kelas berhasil diproses'
-        ]);
+            foreach ($santri as $s) {
+                if ($s->riwayatKenaikanKelas->isNotEmpty()) {
+                    $riwayatTerakhir = $s->riwayatKenaikanKelas->first();
+                    
+                    // Kembalikan ke kelas sebelumnya
+                    $s->update([
+                        'kelas' => $riwayatTerakhir->kelas_awal,
+                        'jenjang' => $riwayatTerakhir->jenjang_awal,
+                        'status' => $riwayatTerakhir->status_awal
+                    ]);
+                    
+                    // Hapus riwayat kenaikan kelas terakhir
+                    $riwayatTerakhir->delete();
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Pembatalan kenaikan kelas berhasil diproses'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return response()->json([
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

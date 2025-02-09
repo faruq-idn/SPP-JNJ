@@ -36,13 +36,43 @@ class TagihanController extends Controller
         // Ambil tarif terbaru
         $tarif = $santri->kategori->riwayatTarif()->latest()->first();
 
+        // Ambil bulan dan tahun sekarang
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
         // Ambil pembayaran dan kelompokkan per tahun
-        $pembayaranPerTahun = PembayaranSpp::where('santri_id', $santri->id)
-            ->select('id', 'bulan', 'tahun', 'nominal', 'status', 'tanggal_bayar')
-            ->orderBy('tahun', 'desc')
-            ->orderBy('bulan', 'asc')
+        $pembayaran = PembayaranSpp::where('santri_id', $santri->id)
+            ->select('id', 'bulan', 'tahun', 'nominal', 'status', 'tanggal_bayar', 'metode_pembayaran_id')
+            ->with('metode_pembayaran')
             ->get()
+            ->map(function ($item) use ($currentMonth, $currentYear) {
+                // Konversi bulan dari angka ke nama
+                $bulanNum = str_pad($item->bulan, 2, '0', STR_PAD_LEFT);
+                $item->nama_bulan = \Carbon\Carbon::createFromFormat('m', $bulanNum)->translatedFormat('F');
+                
+                // Hitung prioritas urutan
+                if ($item->tahun == $currentYear && $item->bulan == $currentMonth) {
+                    $item->urutan = 1; // Bulan sekarang paling atas
+                } elseif ($item->status != 'success') {
+                    $item->urutan = 2; // Belum lunas kedua
+                } else {
+                    $item->urutan = 3; // Sudah lunas terakhir
+                }
+                
+                return $item;
+            })
+            ->sortBy([
+                ['urutan', 'asc'],           // Urutkan berdasarkan prioritas
+                ['tahun', 'desc'],           // Tahun terbaru
+                ['bulan', 'desc'],           // Bulan terbaru dalam tahun yang sama
+                ['status', function($a, $b) { // Unpaid -> Pending -> Success
+                    $statusOrder = ['unpaid' => 1, 'pending' => 2, 'success' => 3];
+                    return $statusOrder[$a] <=> $statusOrder[$b];
+                }]
+            ])
             ->groupBy('tahun');
+
+        $pembayaranPerTahun = $pembayaran;
 
         // Hitung total tunggakan (termasuk status unpaid dan pending)
         $totalTunggakan = PembayaranSpp::where('santri_id', $santri->id)

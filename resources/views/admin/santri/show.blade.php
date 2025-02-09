@@ -108,10 +108,26 @@
             </div>
 
             <div class="card shadow">
-                <div class="card-header py-3">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Kategori & Tarif SPP</h6>
+                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#riwayatTarifModal">
+                        <i class="fas fa-history"></i> Riwayat Tarif
+                    </button>
                 </div>
                 <div class="card-body">
+                    <div class="p-3 rounded-3 {{ $statusSpp == 'Lunas' ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10' }} mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted">Status SPP Tahun {{ date('Y') }}</span>
+                                <div class="fw-bold fs-5">{{ $statusSpp }}</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="text-muted">Total Tunggakan</span>
+                                <div class="fw-bold fs-5 text-danger">Rp {{ number_format($totalTunggakan, 0, ',', '.') }}</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <table class="table">
                         <tr>
                             <th width="30%">Kategori</th>
@@ -120,20 +136,59 @@
                         <tr>
                             <th>Tarif SPP</th>
                             <td>
-                                @if($santri->kategori->tarifTerbaru)
-                                    Rp {{ number_format($santri->kategori->tarifTerbaru->nominal, 0, ',', '.') }}
-                                @else
-                                    <span class="text-muted">Belum diatur</span>
-                                @endif
+                                <div class="d-flex justify-content-between align-items-center">
+                                    @if($santri->kategori->tarifTerbaru)
+                                        <span>Rp {{ number_format($santri->kategori->tarifTerbaru->nominal, 0, ',', '.') }}</span>
+                                        <span class="text-muted small">per bulan</span>
+                                    @else
+                                        <span class="text-muted">Belum diatur</span>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
+                        @foreach($totalTunggakanPerTahun as $tahun => $tunggakan)
                         <tr>
-                            <th>Total Tunggakan</th>
-                            <td class="text-danger">
-                                Rp {{ number_format($totalTunggakan, 0, ',', '.') }}
+                            <th>Tunggakan {{ $tahun }}</th>
+                            <td class="{{ $tunggakan > 0 ? 'text-danger' : 'text-success' }}">
+                                Rp {{ number_format($tunggakan, 0, ',', '.') }}
                             </td>
                         </tr>
+                        @endforeach
                     </table>
+                </div>
+            </div>
+
+            <!-- Modal Riwayat Perubahan Tarif -->
+            <div class="modal fade" id="riwayatTarifModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Riwayat Perubahan Tarif</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>Nominal</th>
+                                            <th>Keterangan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($riwayatTarif as $rt)
+                                        <tr>
+                                            <td>{{ $rt->created_at->format('d/m/Y') }}</td>
+                                            <td>Rp {{ number_format($rt->nominal, 0, ',', '.') }}</td>
+                                            <td>{{ $rt->keterangan ?: '-' }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -229,29 +284,29 @@
                                             </span>
                                         @else
                                             <span class="badge bg-secondary">Belum Bayar</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if(is_object($p) && isset($p->id))
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-info" onclick="showDetail('{{ $p->id }}')">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                @if($p->status != 'success')
-                                                    <button class="btn btn-success" onclick="verifikasiPembayaran('{{ $p->id }}')">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                @endif
-                                                <button class="btn btn-danger" onclick="hapusPembayaran('{{ $p->id }}')">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        @else
-                                            <button class="btn btn-sm btn-primary" onclick="tambahPembayaran('{{ $tahun }}', '{{ $p->bulan }}')">
-                                                <i class="fas fa-plus me-1"></i>Bayar
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if(is_object($p) && isset($p->id))
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-info" onclick="showDetail('{{ $p->id }}', '{{ $p->nama_bulan ?? \Carbon\Carbon::create()->month($p->bulan)->translatedFormat('F') }}', {{ $p->nominal }}, '{{ $p->tahun }}', '{{ $p->status }}', '{{ $p->tanggal_bayar ? $p->tanggal_bayar->format('d/m/Y H:i') : '-' }}', '{{ optional($p->metode_pembayaran)->nama ?? '-' }}')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        @if($p->status != 'success')
+                                            <button class="btn btn-success" onclick="verifikasiPembayaran('{{ $p->id }}', '{{ $p->nama_bulan ?? \Carbon\Carbon::create()->month($p->bulan)->translatedFormat('F') }}', {{ $p->nominal }})">
+                                                <i class="fas fa-check"></i>
                                             </button>
                                         @endif
-                                    </td>
+                                        <button class="btn btn-danger" onclick="hapusPembayaran('{{ $p->id }}', '{{ $p->nama_bulan ?? \Carbon\Carbon::create()->month($p->bulan)->translatedFormat('F') }}', '{{ $p->tahun }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                @else
+                                    <button class="btn btn-sm btn-primary" onclick="tambahPembayaran('{{ $tahun }}', '{{ $p->bulan }}', {{ $p->nominal }})">
+                                        <i class="fas fa-plus me-1"></i>Bayar
+                                    </button>
+                                @endif
+                            </td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -265,60 +320,79 @@
 </div>
 @endsection
 
+<!-- Modal Detail & Form Pembayaran -->
+<div class="modal fade" id="modalPembayaran" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Detail Pembayaran SPP</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <h6 class="mb-3 fw-bold text-primary">Informasi Tagihan</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td width="40%">Periode</td>
+                            <td><span id="detail-bulan" class="fw-bold"></span> <span id="detail-tahun"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Status</td>
+                            <td><span id="detail-status"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Nominal</td>
+                            <td class="fw-bold text-primary">Rp <span id="detail-nominal"></span></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="pembayaran-info" style="display: none;">
+                    <h6 class="mb-3 fw-bold text-success">Informasi Pembayaran</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td width="40%">Tanggal</td>
+                            <td><span id="detail-tanggal"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Metode</td>
+                            <td><span id="detail-metode"></span></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <form id="formPembayaran" style="display: none;">
+                    @csrf
+                    <input type="hidden" name="pembayaran_id" id="pembayaran_id">
+                    <div class="mb-3">
+                        <label class="form-label">Metode Pembayaran</label>
+                        <select class="form-select" name="metode_pembayaran_id" required>
+                            <option value="">Pilih Metode</option>
+                            <option value="1">Manual/Tunai</option>
+                            <option value="2">Manual/Transfer</option>
+                            <option value="3">Payment Gateway</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Keterangan (opsional)</label>
+                        <textarea class="form-control" name="keterangan" rows="2"></textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check me-1"></i>Verifikasi Pembayaran
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
-function showDetail(id) {
-    // Implementasi detail pembayaran
-    Swal.fire({
-        title: 'Detail Pembayaran',
-        text: 'Fitur detail pembayaran akan segera tersedia',
-        icon: 'info'
-    });
-}
-
-function verifikasiPembayaran(id) {
-    Swal.fire({
-        title: 'Verifikasi Pembayaran',
-        text: 'Apakah Anda yakin ingin memverifikasi pembayaran ini?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#dc3545',
-        confirmButtonText: 'Ya, Verifikasi',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Implementasi verifikasi pembayaran
-            Swal.fire('Berhasil', 'Pembayaran telah diverifikasi', 'success');
-        }
-    });
-}
-
-function hapusPembayaran(id) {
-    Swal.fire({
-        title: 'Hapus Pembayaran',
-        text: 'Apakah Anda yakin ingin menghapus pembayaran ini?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Ya, Hapus',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Implementasi hapus pembayaran
-            Swal.fire('Berhasil', 'Pembayaran telah dihapus', 'success');
-        }
-    });
-}
-
-function tambahPembayaran() {
-    // Implementasi tambah pembayaran
-    Swal.fire({
-        title: 'Tambah Pembayaran',
-        text: 'Fitur tambah pembayaran akan segera tersedia',
-        icon: 'info'
-    });
-}
-</script>
-@endpush
+function showDetail(id, bulan, nominal, tahun, status, tanggal, metode) {
+    const modal = new bootstrap.Modal(document.getElementById('modalPembayaran'));
+    
+    // Update konten modal
+    document.getElementById('modalTitle').textContent = 'Detail Pembayaran SPP';
+    document.getElementById('detail-bulan').textContent = bulan;

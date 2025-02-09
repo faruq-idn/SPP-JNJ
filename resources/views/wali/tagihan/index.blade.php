@@ -1,6 +1,6 @@
 @extends('layouts.wali')
 
-@section('title', 'Tagihan &amp; Riwayat SPP')
+@section('title', 'Tagihan & Riwayat SPP')
 
 @section('content')
 <div class="container-fluid p-3 p-md-4">
@@ -120,20 +120,19 @@
                     <h5 class="card-title mb-0">Tahun {{ $tahun }}</h5>
                 </div>
                 <div class="table-responsive">
-                    <table class="table align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="bg-light">
                             <tr>
                                 <th>Bulan</th>
                                 <th>Status</th>
                                 <th>Nominal</th>
                                 <th>Tanggal Bayar</th>
-                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($pembayaranBulanan as $pembayaran)
-                            <tr>
-                                <td>{{ $pembayaran->bulan }}</td>
+                            <tr style="cursor: pointer" onclick="showDetailPembayaran({{ $pembayaran->id }}, '{{ $pembayaran->nama_bulan }}', {{ $pembayaran->nominal }}, '{{ $pembayaran->status }}', '{{ $pembayaran->tanggal_bayar ? $pembayaran->tanggal_bayar->format('d/m/Y H:i') : '-' }}', '{{ $pembayaran->metode_pembayaran ? $pembayaran->metode_pembayaran->nama : '-' }}')">
+                                <td>{{ $pembayaran->nama_bulan }}</td>
                                 <td>
                                     <span class="badge bg-{{ $pembayaran->status == 'success' ? 'success' : ($pembayaran->status == 'pending' ? 'warning' : 'danger') }}">
                                         @if($pembayaran->status == 'success')
@@ -147,21 +146,6 @@
                                 </td>
                                 <td>Rp {{ number_format($pembayaran->nominal, 0, ',', '.') }}</td>
                                 <td>{{ $pembayaran->tanggal_bayar ? $pembayaran->tanggal_bayar->format('d/m/Y H:i') : '-' }}</td>
-                                <td>
-                                    @if($pembayaran->status == 'success')
-                                        <button class="btn btn-success btn-sm" disabled>
-                                            <i class="fas fa-check-circle me-1"></i>Lunas
-                                        </button>
-                                    @elseif($pembayaran->status == 'unpaid')
-                                    <button class="btn btn-primary btn-sm" onclick="bayarSPP({{ $pembayaran->id }})">
-                                        <i class="fas fa-money-bill me-1"></i>Bayar Online
-                                    </button>
-                                    @elseif($pembayaran->status == 'pending')
-                                    <button class="btn btn-warning btn-sm" onclick="bayarSPP({{ $pembayaran->id }})">
-                                        <i class="fas fa-clock me-1"></i>Lanjutkan Pembayaran
-                                    </button>
-                                    @endif
-                                </td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -173,7 +157,163 @@
     </div>
 </div>
 
+<!-- Modal Detail Pembayaran -->
+<div class="modal fade" id="modalDetailPembayaran" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Pembayaran SPP</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <h6 class="mb-3 fw-bold text-primary">Informasi Tagihan</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td width="40%">Periode</td>
+                            <td><span id="detail-bulan" class="fw-bold"></span> <span id="detail-tahun"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Status</td>
+                            <td><span id="detail-status"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Nominal</td>
+                            <td class="fw-bold text-primary">Rp <span id="detail-nominal"></span></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="mb-4" id="detail-pembayaran-info">
+                    <h6 class="mb-3 fw-bold text-success">Informasi Pembayaran</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td width="40%">Tanggal</td>
+                            <td><span id="detail-tanggal"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Metode</td>
+                            <td><span id="detail-metode" class="badge bg-info"></span></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div id="pembayaran-options" class="mt-3">
+                    <h6 class="mb-3">Pilih Metode Pembayaran:</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-block" onclick="bayarManualTunai()">
+                            <i class="fas fa-money-bill me-2"></i>Manual/Tunai
+                        </button>
+                        <button class="btn btn-outline-info btn-block" onclick="bayarManualTransfer()">
+                            <i class="fas fa-exchange-alt me-2"></i>Manual/Transfer
+                        </button>
+                        <button class="btn btn-primary btn-block" onclick="bayarOnline()">
+                            <i class="fas fa-globe me-2"></i>Pembayaran Online
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
+<script>
+    let selectedPembayaranId = null;
+    
+    function showDetailPembayaran(id, bulan, nominal, status, tanggal, metode) {
+        // Cek nomor HP dulu
+        @if(!auth()->user()->no_hp)
+            Swal.fire({
+                title: 'Nomor HP Belum Terdaftar',
+                text: 'Anda harus menambahkan nomor HP terlebih dahulu',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Tambahkan Sekarang',
+                cancelButtonText: 'Nanti Saja',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const profileModal = document.getElementById('profileModal');
+                    const modal = new bootstrap.Modal(profileModal);
+                    modal.show();
+                }
+            });
+            return;
+        @endif
+
+        selectedPembayaranId = id;
+        
+        // Update konten modal
+        document.getElementById('detail-bulan').textContent = bulan;
+        document.getElementById('detail-nominal').textContent = nominal.toLocaleString('id-ID');
+        document.getElementById('detail-tahun').textContent = new Date().getFullYear();
+        
+        // Update status dengan badge
+        const statusBadge = document.createElement('span');
+        if (status === 'success') {
+            statusBadge.className = 'badge bg-success';
+            statusBadge.textContent = 'Lunas';
+            document.getElementById('pembayaran-options').style.display = 'none';
+        } else if (status === 'pending') {
+            statusBadge.className = 'badge bg-warning';
+            statusBadge.textContent = 'Pending';
+            document.getElementById('pembayaran-options').style.display = 'block';
+        } else {
+            statusBadge.className = 'badge bg-danger';
+            statusBadge.textContent = 'Belum Lunas';
+            document.getElementById('pembayaran-options').style.display = 'block';
+        }
+        document.getElementById('detail-status').innerHTML = '';
+        document.getElementById('detail-status').appendChild(statusBadge);
+        
+        // Info pembayaran hanya ditampilkan jika sudah lunas
+        const infoPembayaran = document.getElementById('detail-pembayaran-info');
+        if (status === 'success') {
+            infoPembayaran.style.display = 'block';
+            document.getElementById('detail-tanggal').textContent = tanggal;
+            document.getElementById('detail-metode').textContent = metode;
+        } else {
+            infoPembayaran.style.display = 'none';
+        }
+        
+        // Tampilkan modal
+        const modal = new bootstrap.Modal(document.getElementById('modalDetailPembayaran'));
+        modal.show();
+    }
+    
+    function bayarManualTunai() {
+        Swal.fire({
+            title: 'Pembayaran Manual/Tunai',
+            text: 'Silakan lakukan pembayaran langsung ke bagian administrasi pondok.',
+            icon: 'info',
+            confirmButtonText: 'Mengerti'
+        });
+    }
+    
+    function bayarManualTransfer() {
+        Swal.fire({
+            title: 'Pembayaran Manual/Transfer',
+            html: `
+                Silakan transfer ke rekening berikut:<br><br>
+                <b>Bank BRI</b><br>
+                No. Rek: 1234-5678-9012-3456<br>
+                A.n: Yayasan Pondok<br><br>
+                Setelah transfer, harap konfirmasi dengan mengirimkan bukti transfer ke administrasi.
+            `,
+            icon: 'info',
+            confirmButtonText: 'Mengerti'
+        });
+    }
+    
+    function bayarOnline() {
+        if (selectedPembayaranId) {
+            bayarSPP(selectedPembayaranId);
+        }
+    }
+</script>
+
 <script>
     window.bayarSPP = function(id) {
         // Cek nomor HP wali terlebih dahulu

@@ -76,6 +76,7 @@
                 <th>No HP</th>
                 <th>Jumlah Bulan</th>
                 <th>Total Tunggakan</th>
+                <th>Bulan Tunggakan</th>
             </tr>
         </thead>
         <tbody>
@@ -90,6 +91,11 @@
                 <td>{{ $s->wali->no_hp ?? '-' }}</td>
                 <td>{{ $s->tunggakan_count }} bulan</td>
                 <td>Rp {{ number_format($s->pembayaran->sum('nominal'), 0, ',', '.') }}</td>
+                <td>
+                    {{ implode(', ', $s->pembayaran->pluck('bulan')->map(function($bulan) {
+                        return Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
+                    })->toArray()) }}
+                </td>
             </tr>
             @endforeach
         </tbody>

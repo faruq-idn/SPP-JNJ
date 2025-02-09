@@ -31,13 +31,14 @@ class DashboardController extends Controller
             ->whereNull('nama_wali')
             ->get();
 
-        if ($santri_list->isEmpty() && $unlinked_santri->isEmpty()) {
+        if ($santri_list->isEmpty()) {
             return view('wali.dashboard', [
                 'santri' => null,
-                'santri_list' => collect(),
+                'santri_list' => $santri_list,
                 'unlinked_santri' => collect(),
                 'available_santri' => $available_santri,
-                'pembayaran_terbaru' => collect()
+                'pembayaran_terbaru' => collect(),
+                'total_tunggakan' => 0
             ]);
         }
 
@@ -57,7 +58,13 @@ class DashboardController extends Controller
         // Ambil data pembayaran jika ada santri yang terhubung
         $pembayaran_terbaru = collect();
         if ($santri) {
+            // Hitung total tunggakan (termasuk status unpaid dan pending)
+            $total_tunggakan = PembayaranSpp::where('santri_id', $santri->id)
+                ->whereIn('status', ['unpaid', 'pending'])
+                ->sum('nominal');
+
             $pembayaran_terbaru = PembayaranSpp::where('santri_id', $santri->id)
+                ->whereIn('status', ['unpaid', 'pending'])
                 ->latest()
                 ->take(5)
                 ->get();
@@ -68,7 +75,8 @@ class DashboardController extends Controller
             'santri_list',
             'unlinked_santri',
             'available_santri',
-            'pembayaran_terbaru'
+            'pembayaran_terbaru',
+            'total_tunggakan'
         ));
     }
 

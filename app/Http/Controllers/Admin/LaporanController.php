@@ -9,17 +9,25 @@ use App\Models\KategoriSantri;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Rap2hpoutre\FastExcel\FastExcel;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use App\Http\Controllers\Admin\Exports\ExcelExportController;
+use App\Http\Controllers\Admin\Exports\PdfExportController;
 
 class LaporanController extends Controller
 {
+    protected $excelExport;
+    protected $pdfExport;
+
+    public function __construct(ExcelExportController $excelExport, PdfExportController $pdfExport)
+    {
+        $this->excelExport = $excelExport;
+        $this->pdfExport = $pdfExport;
+    }
+
     public function index()
     {
         $bulanIni = now()->format('m');
         $tahunIni = now()->format('Y');
 
-        // Data untuk rangkuman
         $totalPembayaranBulanIni = PembayaranSpp::where('status', 'success')
             ->whereYear('tanggal_bayar', $tahunIni)
             ->whereMonth('tanggal_bayar', $bulanIni)
@@ -38,13 +46,9 @@ class LaporanController extends Controller
             $query->whereIn('status', ['unpaid', 'pending']);
         })->count();
 
-        // Data untuk chart pembayaran
         $chartData = $this->getChartData();
-
-        // Data untuk chart kategori
         $chartKategori = $this->getChartKategori();
 
-        // Data untuk filter
         $jenjang = ['SMP', 'SMA'];
         $kategori = KategoriSantri::pluck('nama', 'id');
 
@@ -60,71 +64,15 @@ class LaporanController extends Controller
         ));
     }
 
-    private function getChartData()
-    {
-        $months = collect(range(1, 12))->map(function($month) {
-            return Carbon::create(null, $month, 1)->translatedFormat('F');
-        });
-
-        $totals = DB::table('pembayaran_spp')
-            ->select(DB::raw('EXTRACT(MONTH FROM tanggal_bayar) as bulan'), DB::raw('SUM(nominal) as total'))
-            ->whereYear('tanggal_bayar', now()->year)
-            ->where('status', 'success')
-            ->groupBy(DB::raw('EXTRACT(MONTH FROM tanggal_bayar)'))
-            ->orderBy('bulan')
-            ->get()
-            ->pluck('total', 'bulan')
-            ->map(function($total) {
-                return (int) $total;
-            });
-
-        // Fill missing months with 0
-        $totals = collect(range(1, 12))->mapWithKeys(function($month) use ($totals) {
-            return [$month => $totals->get($month, 0)];
-        });
-
-        return [
-            'labels' => $months->values()->all(),
-            'data' => $totals->values()->all()
-        ];
-    }
-
-    private function getChartKategori()
-        {
-            $data = KategoriSantri::withCount(['santri as lunas' => function($query) {
-                $query->whereHas('pembayaran', function($q) {
-                    $q->where('status', 'success')
-                        ->whereYear('tanggal_bayar', now()->year)
-                        ->whereMonth('tanggal_bayar', now()->month);
-                });
-            }])
-            ->withCount(['santri as belum_lunas' => function($query) {
-                $query->whereHas('pembayaran', function($q) {
-                    $q->whereIn('status', ['unpaid', 'pending'])
-                        ->whereYear('tanggal_bayar', now()->year)
-                        ->whereMonth('tanggal_bayar', now()->month);
-                });
-            }])
-            ->get();
-    
-            return [
-                'labels' => $data->pluck('nama'),
-                'data' => [
-                    'lunas' => $data->pluck('lunas'),
-                    'belum_lunas' => $data->pluck('belum_lunas')
-                ]
-            ];
-    }
-
     public function pembayaran(Request $request)
     {
+        $bulan = $request->get('bulan', date('m'));
+        $tahun = $request->get('tahun', date('Y'));
+        $kategori_list = KategoriSantri::all();
+
         $query = PembayaranSpp::with(['santri.kategori', 'metode_pembayaran'])
-            ->when($request->filled('tanggal_awal'), function($q) use ($request) {
-                $q->whereDate('tanggal_bayar', '>=', $request->tanggal_awal);
-            })
-            ->when($request->filled('tanggal_akhir'), function($q) use ($request) {
-                $q->whereDate('tanggal_bayar', '<=', $request->tanggal_akhir);
-            })
+            ->whereMonth('tanggal_bayar', $bulan)
+            ->whereYear('tanggal_bayar', $tahun)
             ->when($request->filled('status'), function($q) use ($request) {
                 $q->where('status', $request->status);
             })
@@ -138,16 +86,14 @@ class LaporanController extends Controller
         $totalPembayaran = $pembayaran->sum('nominal');
 
         if ($request->has('export')) {
-            if ($request->export === 'pdf') {
-                $pdf = PDF::loadView('admin.laporan.pdf.pembayaran', compact('pembayaran', 'totalPembayaran'))
-                    ->setPaper('a4', 'landscape');
-                return $pdf->download('laporan-pembayaran.pdf');
-            } else {
-                return $this->exportPembayaranExcel($pembayaran);
+            if ($request->export === 'excel') {
+                return $this->excelExport->exportPembayaran($pembayaran, $bulan, $tahun);
+            } elseif ($request->export === 'pdf') {
+                return $this->pdfExport->exportPembayaran($pembayaran, $bulan, $tahun);
             }
         }
 
-        return view('admin.laporan.pembayaran', compact('pembayaran', 'totalPembayaran'));
+        return view('admin.laporan.pembayaran', compact('pembayaran', 'totalPembayaran', 'bulan', 'tahun', 'kategori_list'));
     }
 
     public function tunggakan(Request $request)
@@ -180,56 +126,67 @@ class LaporanController extends Controller
 
         if ($request->has('export')) {
             if ($request->export === 'pdf') {
-                $pdf = PDF::loadView('admin.laporan.pdf.tunggakan', compact('santri', 'totalTunggakan'))
-                    ->setPaper('a4', 'landscape');
-                return $pdf->download('laporan-tunggakan.pdf');
+                return $this->pdfExport->exportTunggakan($santri, $totalTunggakan);
             } else {
-                return $this->exportTunggakanExcel($santri);
+                return $this->excelExport->exportTunggakan($santri, $totalTunggakan);
             }
         }
 
         return view('admin.laporan.tunggakan', compact('santri', 'totalTunggakan'));
     }
 
-    private function exportPembayaranExcel($pembayaran)
+    private function getChartData()
     {
-        $data = $pembayaran->map(function($p) {
-            return [
-                'Tanggal' => $p->tanggal_bayar ? $p->tanggal_bayar->format('d/m/Y') : '-',
-                'NISN' => $p->santri->nisn,
-                'Nama Santri' => $p->santri->nama,
-                'Kelas' => $p->santri->jenjang . ' ' . $p->santri->kelas,
-                'Kategori' => $p->santri->kategori->nama,
-                'Bulan' => Carbon::createFromFormat('m', $p->bulan)->translatedFormat('F'),
-                'Tahun' => $p->tahun,
-                'Nominal' => 'Rp ' . number_format($p->nominal, 0, ',', '.'),
-                'Metode' => $p->metode_pembayaran->nama ?? 'Manual',
-                'Status' => ucfirst($p->status),
-                'Keterangan' => $p->keterangan ?? '-'
-            ];
+        $months = collect(range(1, 12))->map(function($month) {
+            return Carbon::create(null, $month, 1)->translatedFormat('F');
         });
 
-        return (new FastExcel($data))->download('laporan-pembayaran.xlsx');
+        $totals = DB::table('pembayaran_spp')
+            ->select(DB::raw('EXTRACT(MONTH FROM tanggal_bayar) as bulan'), DB::raw('SUM(nominal) as total'))
+            ->whereYear('tanggal_bayar', now()->year)
+            ->where('status', 'success')
+            ->groupBy(DB::raw('EXTRACT(MONTH FROM tanggal_bayar)'))
+            ->orderBy('bulan')
+            ->get()
+            ->pluck('total', 'bulan')
+            ->map(function($total) {
+                return (int) $total;
+            });
+
+        $totals = collect(range(1, 12))->mapWithKeys(function($month) use ($totals) {
+            return [$month => $totals->get($month, 0)];
+        });
+
+        return [
+            'labels' => $months->values()->all(),
+            'data' => $totals->values()->all()
+        ];
     }
 
-    private function exportTunggakanExcel($santri)
+    private function getChartKategori()
     {
-        $data = $santri->map(function($s) {
-            return [
-                'NISN' => $s->nisn,
-                'Nama Santri' => $s->nama,
-                'Kelas' => $s->jenjang . ' ' . $s->kelas,
-                'Kategori' => $s->kategori->nama,
-                'Wali Santri' => $s->wali->name ?? '-',
-                'No HP Wali' => $s->wali->no_hp ?? '-',
-                'Jumlah Tunggakan' => $s->tunggakan_count . ' bulan',
-                'Total Nominal' => 'Rp ' . number_format($s->pembayaran->sum('nominal'), 0, ',', '.'),
-                'Status' => implode(', ', $s->pembayaran->pluck('bulan')->map(function($bulan) {
-                    return Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
-                })->toArray())
-            ];
-        });
+        $data = KategoriSantri::withCount(['santri as lunas' => function($query) {
+            $query->whereHas('pembayaran', function($q) {
+                $q->where('status', 'success')
+                    ->whereYear('tanggal_bayar', now()->year)
+                    ->whereMonth('tanggal_bayar', now()->month);
+            });
+        }])
+        ->withCount(['santri as belum_lunas' => function($query) {
+            $query->whereHas('pembayaran', function($q) {
+                $q->whereIn('status', ['unpaid', 'pending'])
+                    ->whereYear('tanggal_bayar', now()->year)
+                    ->whereMonth('tanggal_bayar', now()->month);
+            });
+        }])
+        ->get();
 
-        return (new FastExcel($data))->download('laporan-tunggakan.xlsx');
+        return [
+            'labels' => $data->pluck('nama'),
+            'data' => [
+                'lunas' => $data->pluck('lunas'),
+                'belum_lunas' => $data->pluck('belum_lunas')
+            ]
+        ];
     }
 }

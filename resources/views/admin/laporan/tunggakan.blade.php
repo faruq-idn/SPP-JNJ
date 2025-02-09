@@ -10,12 +10,12 @@
             <a href="{{ route('admin.laporan.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-1"></i>Kembali
             </a>
-            <button type="button" class="btn btn-danger" onclick="printPDF()">
+            <a href="{{ route('admin.laporan.tunggakan', array_merge(request()->all(), ['export' => 'pdf'])) }}" class="btn btn-danger">
                 <i class="fas fa-file-pdf me-1"></i>PDF
-            </button>
-            <button type="button" class="btn btn-success" onclick="exportExcel()">
+            </a>
+            <a href="{{ route('admin.laporan.tunggakan', array_merge(request()->all(), ['export' => 'excel'])) }}" class="btn btn-success">
                 <i class="fas fa-file-excel me-1"></i>Excel
-            </button>
+            </a>
         </div>
     </div>
 
@@ -182,17 +182,6 @@ $(document).ready(function() {
     });
 });
 
-function printPDF() {
-    let url = new URL(window.location.href);
-    url.searchParams.set('export', 'pdf');
-    window.location.href = url.toString();
-}
-
-function exportExcel() {
-    let url = new URL(window.location.href);
-    url.searchParams.set('export', 'excel');
-    window.location.href = url.toString();
-}
 </script>
 @endpush
 @endsection

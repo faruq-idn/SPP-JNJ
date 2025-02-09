@@ -11,8 +11,13 @@ class MetodePembayaranSeeder extends Seeder
     {
         $metode = [
             [
-                'kode' => 'MANUAL',
+                'kode' => 'MANUAL_TUNAI',
                 'nama' => 'Manual/Tunai',
+                'status' => 'aktif'
+            ],
+            [
+                'kode' => 'MANUAL_TRANSFER',
+                'nama' => 'Manual/Transfer',
                 'status' => 'aktif'
             ],
             [

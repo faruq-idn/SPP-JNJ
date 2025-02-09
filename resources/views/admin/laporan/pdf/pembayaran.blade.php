@@ -48,8 +48,10 @@
 <body>
     <div class="header">
         <h2>Laporan Pembayaran SPP</h2>
-        <p>Periode: {{ request('tanggal_awal') ?? 'Semua' }} s/d {{ request('tanggal_akhir') ?? 'Semua' }}</p>
-        <p>Status: {{ request('status') ? ucfirst(request('status')) : 'Semua Status' }}</p>
+        <p>Periode: {{ Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F') }} {{ $tahun }}</p>
+        @if(request('status'))
+            <p>Status: {{ ucfirst(request('status')) }}</p>
+        @endif
     </div>
 
     <table>

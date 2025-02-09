@@ -7,12 +7,12 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Laporan Pembayaran</h1>
         <div class="btn-group" role="group">
-            <a href="{{ route('admin.laporan.export.pembayaran', ['bulan' => $bulan, 'tahun' => $tahun, 'kategori' => request('kategori')]) }}" 
+            <a href="{{ route('admin.laporan.pembayaran', ['bulan' => $bulan, 'tahun' => $tahun, 'kategori' => request('kategori'), 'export' => 'excel']) }}" 
                class="btn btn-success">
                 <i class="fas fa-file-excel me-1"></i> Export Excel
             </a>
-            <a href="{{ route('admin.laporan.pembayaran.pdf', ['bulan' => $bulan, 'tahun' => $tahun, 'kategori' => request('kategori')]) }}" 
-               class="btn btn-danger" target="_blank">
+            <a href="{{ route('admin.laporan.pembayaran', ['bulan' => $bulan, 'tahun' => $tahun, 'kategori' => request('kategori'), 'export' => 'pdf']) }}" 
+               class="btn btn-danger">
                 <i class="fas fa-file-pdf me-1"></i> Export PDF
             </a>
         </div>
@@ -86,7 +86,7 @@
                             <td>{{ $p->santri->nama }}</td>
                             <td>{{ $p->santri->kategori->nama }}</td>
                             <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
-                            <td>{{ $p->metode }}</td>
+                            <td>{{ $p->metode_pembayaran->nama ?? 'Manual' }}</td>
                         </tr>
                         @empty
                         <tr>
@@ -97,7 +97,7 @@
                     <tfoot>
                         <tr>
                             <th colspan="5" class="text-end">Total:</th>
-                            <th colspan="2">Rp {{ number_format($total, 0, ',', '.') }}</th>
+                            <th colspan="2">Rp {{ number_format($totalPembayaran, 0, ',', '.') }}</th>
                         </tr>
                     </tfoot>
                 </table>

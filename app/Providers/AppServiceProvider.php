@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL;
+use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,8 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if(config('app.env') !== 'local') {
-            URL::forceScheme('https');
-        }
+        // Set Carbon locale to Indonesian
+        Carbon::setLocale('id');
+        setlocale(LC_TIME, 'id_ID.utf8', 'id_ID.UTF-8', 'id_ID', 'id');
     }
 }

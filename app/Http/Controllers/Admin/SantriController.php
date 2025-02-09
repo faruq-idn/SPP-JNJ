@@ -6,12 +6,168 @@ use App\Http\Controllers\Controller;
 use App\Models\Santri;
 use App\Models\KategoriSantri;
 use App\Models\KenaikanKelasHistory;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class SantriController extends Controller
 {
+    public function create()
+    {
+        $kategori = KategoriSantri::all();
+        $jenjang = ['SMP', 'SMA'];
+        $kelas = [
+            'SMP' => ['7A', '7B', '8A', '8B', '9A', '9B'],
+            'SMA' => ['10A', '10B', '11A', '11B', '12A', '12B']
+        ];
+        $wali = User::where('role', 'wali')->get();
+
+        return view('admin.santri.create', compact('kategori', 'jenjang', 'kelas', 'wali'));
+    }
+
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'nisn' => 'required|unique:santri',
+            'nama' => 'required',
+            'jenis_kelamin' => 'required|in:L,P',
+            'tanggal_lahir' => 'required|date',
+            'alamat' => 'required',
+            'wali_id' => 'required|exists:users,id',
+            'tanggal_masuk' => 'required|date',
+            'jenjang' => 'required|in:SMP,SMA',
+            'kelas' => 'required',
+            'kategori_id' => 'required|exists:kategori_santri,id',
+            'status' => 'required|in:aktif,non-aktif'
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+            
+            $santri = Santri::create($request->all());
+            
+            DB::commit();
+            
+            return redirect()
+                ->route('admin.santri.index')
+                ->with('success', 'Data santri berhasil ditambahkan');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
+        }
+    }
+
+    public function edit(Santri $santri)
+    {
+        // Debug route information
+        \Illuminate\Support\Facades\Log::info('Edit method accessed', [
+            'santri_id' => $santri->id,
+            'url' => request()->url(),
+            'method' => request()->method(),
+            'route_parameters' => request()->route()->parameters(),
+            'middleware' => request()->route()->middleware(),
+            'action' => request()->route()->getActionName()
+        ]);
+        $kategori_santri = KategoriSantri::all();
+        $jenjang = ['SMP', 'SMA'];
+        $kelas = [
+            'SMP' => ['7A', '7B', '8A', '8B', '9A', '9B'],
+            'SMA' => ['10A', '10B', '11A', '11B', '12A', '12B']
+        ];
+        
+        // Hilangkan data yang tidak diperlukan di form edit
+        return view('admin.santri.edit', compact('santri', 'kategori_santri', 'jenjang', 'kelas'));
+    }
+
+    public function update(Request $request, Santri $santri)
+    {
+        $validator = Validator::make($request->all(), [
+            'nisn' => 'required|unique:santri,nisn,' . $santri->id,
+            'nama' => 'required',
+            'jenis_kelamin' => 'required|in:L,P',
+            'tanggal_lahir' => 'required|date',
+            'alamat' => 'required',
+            'wali_id' => 'required|exists:users,id',
+            'tanggal_masuk' => 'required|date',
+            'jenjang' => 'required|in:SMP,SMA',
+            'kelas' => 'required',
+            'kategori_id' => 'required|exists:kategori_santri,id',
+            'status' => 'required|in:aktif,lulus,keluar'
+        ]);
+
+        if ($validator->fails()) {
+            Log::error('Validasi update santri gagal', [
+                'errors' => $validator->errors()->toArray(),
+                'input' => $request->all()
+            ]);
+            
+            return redirect()
+                ->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+            
+            $santri->update($request->all());
+            
+            DB::commit();
+            
+            return redirect()
+                ->route('admin.santri.index')
+                ->with('success', 'Data santri berhasil diperbarui');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error update santri: ' . $e->getMessage(), [
+                'santri_id' => $santri->id,
+                'input' => $request->all()
+            ]);
+            
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage());
+        }
+    }
+
+    public function destroy(Santri $santri)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $santri->delete();
+            
+            DB::commit();
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data santri berhasil dihapus'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat menghapus data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function show(Santri $santri)
     {
         $pembayaranPerTahun = [];
@@ -51,22 +207,26 @@ class SantriController extends Controller
         return view('admin.santri.show', compact('santri', 'pembayaranPerTahun', 'totalTunggakan'));
     }
 
-public function index()
-{
-    $santri = Santri::with(['kategori', 'wali'])->get();
-    return view('admin.santri.index', compact('santri'));
-}
+    public function index()
+    {
+        // Muat data santri hanya di halaman index
+        $santri = Santri::with(['kategori', 'wali'])
+            ->orderBy('nama')
+            ->get();
+            
+        return view('admin.santri.index', compact('santri'));
+    }
 
-public function riwayat()
-{
-    $riwayat = KenaikanKelasHistory::with(['santri', 'creator'])
-        ->orderBy('created_at', 'desc')
-        ->paginate(25);
+    public function riwayat()
+    {
+        $riwayat = KenaikanKelasHistory::with(['santri', 'creator'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(25);
 
-    return view('admin.santri.riwayat', compact('riwayat'));
-}
+        return view('admin.santri.riwayat', compact('riwayat'));
+    }
 
-public function kenaikanKelas()
+    public function kenaikanKelas()
     {
         DB::beginTransaction();
         try {
@@ -194,17 +354,55 @@ public function kenaikanKelas()
         }
     }
 
+    public function __construct()
+    {
+        \Illuminate\Support\Facades\Log::info('Route information for each request', [
+            'url' => request()->url(),
+            'method' => request()->method(),
+            'route' => request()->route() ? [
+                'name' => request()->route()->getName(),
+                'parameters' => request()->route()->parameters(),
+                'action' => request()->route()->getActionName()
+            ] : null
+        ]);
+    }
+
     public function kelas($jenjang, $kelas)
     {
+        // Log untuk debugging
+        Log::info('Kelas method accessed', [
+            'jenjang' => $jenjang,
+            'kelas' => $kelas,
+            'url' => request()->url(),
+            'method' => request()->method(),
+            'route' => request()->route() ? [
+                'name' => request()->route()->getName(),
+                'parameters' => request()->route()->parameters()
+            ] : null
+        ]);
+
+        // Validasi format jenjang dan kelas
+        if (!in_array(strtoupper($jenjang), ['SMP', 'SMA'])) {
+            abort(404);
+        }
+
+        $validKelas = $jenjang == 'smp' 
+            ? ['7A', '7B', '8A', '8B', '9A', '9B']
+            : ['10A', '10B', '11A', '11B', '12A', '12B'];
+
+        if (!in_array(strtoupper($kelas), $validKelas)) {
+            abort(404);
+        }
+
         $santri = Santri::with(['kategori', 'wali'])
             ->where('jenjang', strtoupper($jenjang))
-            ->where('kelas', $kelas)
+            ->where('kelas', strtoupper($kelas))
             ->where('status', 'aktif')
             ->get();
 
         $currentKelas = [
             'jenjang' => strtoupper($jenjang),
-            'kelas' => $kelas
+            'kelas' => strtoupper($kelas)
         ];
 
         return view('admin.santri.index', compact('santri', 'currentKelas'));

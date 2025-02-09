@@ -1,5 +1,20 @@
 @extends('layouts.admin')
 
+@push('before-content')
+<!-- Form specific styles -->
+<style>
+    .form-label {
+        font-weight: 600;
+    }
+    .card {
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .select2-container--bootstrap-5 .select2-selection {
+        min-height: 38px;
+    }
+</style>
+@endpush
+
 @section('title', 'Tambah Santri')
 
 @section('content')

@@ -4,12 +4,12 @@
 
 @push('styles')
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<!-- DataTables -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 <style>
-    .table tbody tr {
+    /* DataTable specific styles */
+    #dataTable tbody tr td:not(:last-child) {
         cursor: pointer;
-    }
-    .table-hover tbody tr:hover {
-        background-color: rgba(0,0,0,.075);
     }
 </style>
 @endpush
@@ -41,72 +41,91 @@
     </div>
     @endif
 
-    <!-- Data Santri -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Daftar Santri</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover" id="dataTable">
-                    <thead>
-                        <tr>
-                            <th>NISN</th>
-                            <th>Nama</th>
-                            <th>Kelas</th>
-                            <th>Kategori</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($santri as $s)
-                        <tr>
-                            <td onclick="window.location='{{ route('admin.santri.show', $s->id) }}'">{{ $s->nisn }}</td>
-                            <td onclick="window.location='{{ route('admin.santri.show', $s->id) }}'">{{ $s->nama }}</td>
-                            <td onclick="window.location='{{ route('admin.santri.show', $s->id) }}'">{{ $s->jenjang }} {{ $s->kelas }}</td>
-                            <td onclick="window.location='{{ route('admin.santri.show', $s->id) }}'">{{ $s->kategori->nama ?? '-' }}</td>
-                            <td>
-                                <span class="badge bg-{{ $s->status_color }}">
-                                    {{ ucfirst($s->status) }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a href="{{ route('admin.santri.show', $s->id) }}"
-                                       class="btn btn-sm btn-info">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.santri.edit', $s->id) }}" 
-                                       class="btn btn-sm btn-primary">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.santri.destroy', $s->id) }}" 
-                                          method="POST" 
-                                          class="d-inline"
-                                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    @include('admin.santri.partials._table')
 </div>
 
 @include('admin.santri.partials.modal-import')
 @include('admin.santri.partials.modal-kenaikan-kelas')
 @endsection
 
+
 @push('scripts')
-<script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="{{ asset('js/kenaikan-kelas.js') }}"></script>
+<script>
+// Inisialisasi DataTable khusus untuk halaman ini
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+        },
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
+        order: [[1, 'asc']], // Urutkan berdasarkan nama
+        columnDefs: [{
+            targets: -1, // Kolom terakhir (aksi)
+            orderable: false,
+            searchable: false
+        }]
+    });
+});
+</script>
+<script>
+function hapusSantri(id) {
+    const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+            confirmButton: 'btn btn-danger ms-2',
+            cancelButton: 'btn btn-secondary'
+        },
+        buttonsStyling: false
+    });
+
+    swalWithBootstrapButtons.fire({
+        title: 'Konfirmasi Hapus',
+        text: 'Apakah Anda yakin ingin menghapus data santri ini?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Kirim request ajax untuk hapus data
+            fetch(`{{ url('admin/santri') }}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    swalWithBootstrapButtons.fire({
+                        icon: 'success',
+                        title: 'Berhasil Dihapus!',
+                        text: data.message,
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        // Refresh halaman
+                        window.location.reload();
+                    });
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .catch(error => {
+                swalWithBootstrapButtons.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: error.message || 'Terjadi kesalahan saat menghapus data'
+                });
+            });
+        }
+    });
+}
+</script>
 @endpush

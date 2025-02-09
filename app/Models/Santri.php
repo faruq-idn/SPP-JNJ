@@ -101,4 +101,25 @@ class Santri extends Model
     {
         return $this->wali ? $this->wali->name : null;
     }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
+
+    /**
+     * Retrieve the model for a bound value.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        \Illuminate\Support\Facades\Log::info('Santri route binding', [
+            'value' => $value,
+            'field' => $field
+        ]);
+        
+        return $this->where('id', $value)->firstOrFail();
+    }
 }

@@ -239,9 +239,9 @@ function bayarSPP(id) {
                     console.error('Error:', err);
                     Swal.close();
                     let errorMessage = err.message || 'Gagal memproses pembayaran';
-                    if (err.redirect_url) {
-                        window.location.href = err.redirect_url;
-                        return;
+                    if (err.show_profile_modal) {
+                        const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
+                        profileModal.show();
                     }
                     Swal.fire({
                         icon: 'error',

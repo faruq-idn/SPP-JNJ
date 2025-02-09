@@ -8,17 +8,6 @@
     <meta http-equiv="Expires" content="-1">
     <title>@yield('title') - Wali Panel</title>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const menuToggle = document.querySelector('.mobile-menu-toggle');
-        const bottomNav = document.querySelector('.bottom-nav');
-
-        menuToggle.addEventListener('click', function() {
-            bottomNav.classList.toggle('active');
-        });
-    });
-    </script>
-
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->

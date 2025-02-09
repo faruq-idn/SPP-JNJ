@@ -1,5 +1,10 @@
 @extends('layouts.admin')
 
+@push('styles')
+<!-- DataTables -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+@endpush
+
 @section('title', 'Riwayat Kenaikan Kelas')
 
 @section('content')
@@ -52,6 +57,9 @@
 @endsection
 
 @push('scripts')
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script>
     $(document).ready(function() {
         // Cek apakah ada data di tabel

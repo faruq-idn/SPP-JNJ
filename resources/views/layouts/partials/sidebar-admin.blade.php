@@ -7,21 +7,22 @@
             </a>
         </li>
 
-        <!-- Data Santri dengan Submenu -->
+        <!-- Data Santri dengan navigasi dan dropdown terpisah -->
         <li class="nav-item">
-            <a href="#"
-               class="nav-link d-flex align-items-center justify-content-between {{ Request::is('admin/santri*') ? 'active' : '' }}"
-               data-bs-toggle="collapse"
-               data-bs-target="#collapseSantri"
-               data-url="{{ route('admin.santri.index') }}"
-               aria-expanded="{{ Request::is('admin/santri*') ? 'true' : 'false' }}">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-users fa-fw me-2"></i>
-                    <span>Data Santri</span>
-                </div>
-                <i class="fas fa-angle-down transition-rotate"></i>
-            </a>
-            <div id="collapseSantri" class="collapse {{ Request::is('admin/santri*') ? 'show' : '' }}">
+            <div class="d-flex align-items-center">
+                <a href="{{ route('admin.santri.index') }}" 
+                   class="nav-link flex-grow-1 {{ Request::routeIs('admin.santri.index') ? 'active' : '' }}">
+                    <i class="fas fa-users fa-fw me-2"></i> Data Santri
+                </a>
+                <button class="btn btn-link p-0 ms-2 text-light dropdown-toggle-icon"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseSantri"
+                        aria-expanded="{{ Request::routeIs('admin.santri.kelas') || Request::routeIs('admin.santri.riwayat') ? 'true' : 'false' }}">
+                    <i class="fas fa-angle-down"></i>
+                </button>
+            </div>
+            <div class="collapse {{ Request::routeIs('admin.santri.kelas') || Request::routeIs('admin.santri.riwayat') ? 'show' : '' }}" 
+                 id="collapseSantri">
                 <div class="submenu">
                     <!-- Riwayat Kenaikan -->
                     <a class="submenu-item {{ Request::is('admin/santri/riwayat*') ? 'active' : '' }}"

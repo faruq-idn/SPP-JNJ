@@ -67,5 +67,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'role' => \App\Http\Middleware\CheckRole::class,
         'prevent-back' => \App\Http\Middleware\PreventBackHistory::class,
+        'santri.debug' => \App\Http\Middleware\SantriRouteDebugMiddleware::class,
     ];
 }

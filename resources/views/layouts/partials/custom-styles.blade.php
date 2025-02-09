@@ -1,8 +1,20 @@
-<!-- DataTables -->
-<link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-
 <!-- Select2 Bootstrap 5 Theme -->
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+
+<!-- DataTable Custom Styles -->
+<style>
+    /* Table styles */
+    .dataTables_wrapper .btn-group {
+        gap: 0.25rem;
+    }
+    .table td:not(:last-child) {
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    /* Hover cursor hanya di halaman yang membutuhkan, bukan di semua tabel */
+</style>
 
 <style>
     /* Fixed sidebar */
@@ -70,12 +82,29 @@
         font-size: 0.9rem;
     }
 
+    /* Dropdown toggle icon styles */
+    .dropdown-toggle-icon {
+        color: rgba(255, 255, 255, 0.8) !important;
+        line-height: 1;
+    }
+
+    .dropdown-toggle-icon:hover {
+        color: white !important;
+    }
+
+    .dropdown-toggle-icon:focus {
+        box-shadow: none !important;
+    }
+
     .collapse:not(.show) .fas.fa-chevron-down {
         transform: rotate(-90deg);
     }
 
-    .fas.fa-chevron-down {
+    .fas.fa-chevron-down,
+    .fas.fa-angle-down {
         transition: transform 0.2s;
+        width: 12px;
+        text-align: center;
     }
 
     /* Submenu Styling */

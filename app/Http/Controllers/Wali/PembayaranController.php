@@ -35,7 +35,8 @@ class PembayaranController extends Controller
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Anda harus menambahkan nomor HP terlebih dahulu',
-                    'redirect_url' => route('wali.profil')
+                    'show_profile_modal' => true,
+                    'redirect_url' => route('wali.dashboard')
                 ], 400);
             }
 
@@ -172,5 +173,17 @@ class PembayaranController extends Controller
         $santri->update([
             'status_spp' => $unpaidCount === 0 ? 'Lunas' : 'Belum Lunas'
         ]);
+    }
+
+    public function success()
+    {
+        return redirect()->route('wali.tagihan')
+            ->with('success', 'Pembayaran berhasil diproses');
+    }
+
+    public function error()
+    {
+        return redirect()->route('wali.tagihan')
+            ->with('error', 'Terjadi kesalahan dalam memproses pembayaran');
     }
 }

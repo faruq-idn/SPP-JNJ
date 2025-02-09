@@ -1,37 +1,37 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Fungsi untuk memeriksa apakah berada di halaman Data Santri (index atau turunannya)
-    function isSantriPage() {
-        return window.location.pathname.startsWith('/admin/santri');
-    }
-
-    // Auto-expand saat di halaman santri (selain index)
-    if (isSantriPage() && !window.location.pathname.endsWith('/admin/santri')) {
-        const santriDropdown = document.getElementById('collapseSantri');
-        if (santriDropdown && !santriDropdown.classList.contains('show')) {
-            new bootstrap.Collapse(santriDropdown).show();
+    // Animasi ikon dropdown untuk tombol di Data Santri
+    const dropdownButtons = document.querySelectorAll('button[data-bs-toggle="collapse"]');
+    dropdownButtons.forEach(button => {
+        // Inisialisasi state awal
+        const icon = button.querySelector('.fa-angle-down');
+        if (icon && button.getAttribute('aria-expanded') === 'true') {
+            icon.style.transform = 'rotate(180deg)';
         }
-    }
 
-    // Handle click pada menu Data Santri
-    const santriMenu = document.querySelector('a[data-bs-target="#collapseSantri"]');
-    if (santriMenu) {
-        santriMenu.addEventListener('click', function(e) {
-            // Periksa apakah yang diklik adalah icon dropdown
-            if (e.target.closest('.fa-angle-down')) {
-                e.preventDefault(); // Mencegah navigasi jika mengklik icon dropdown
-                const santriDropdown = document.getElementById('collapseSantri');
-                new bootstrap.Collapse(santriDropdown).toggle(); // Toggle collapse
-            } else if (!isSantriPage()) { // Navigasi hanya jika BUKAN di halaman santri
-                window.location.href = this.dataset.url;
+        // Event listener untuk animasi
+        button.addEventListener('click', () => {
+            const icon = button.querySelector('.fa-angle-down');
+            if (icon) {
+                icon.style.transition = 'transform 0.2s';
+                icon.style.transform = button.getAttribute('aria-expanded') === 'true' ? 
+                    'rotate(0)' : 'rotate(180deg)';
             }
         });
-    }
+    });
 
-    // Tutup submenu jika berada di halaman index santri
-    if (window.location.pathname === '/admin/santri') {
-        const santriDropdown = document.getElementById('collapseSantri');
-        if (santriDropdown && santriDropdown.classList.contains('show')) {
-            new bootstrap.Collapse(santriDropdown).hide();
+    // Handler khusus untuk Manajemen Pengguna yang masih menggunakan chevron
+    document.querySelectorAll('a[data-bs-toggle="collapse"]').forEach(link => {
+        const icon = link.querySelector('.fa-chevron-down');
+        if (icon && link.getAttribute('aria-expanded') === 'true') {
+            icon.style.transform = 'rotate(180deg)';
         }
-    }
+
+        link.addEventListener('click', () => {
+            if (icon) {
+                icon.style.transition = 'transform 0.2s';
+                icon.style.transform = link.getAttribute('aria-expanded') === 'true' ? 
+                    'rotate(0)' : 'rotate(180deg)';
+            }
+        });
+    });
 });

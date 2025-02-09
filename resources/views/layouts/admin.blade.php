@@ -39,7 +39,9 @@
 
             <!-- Page Content -->
             <div class="p-4">
+                @stack('before-content')
                 @yield('content')
+                @stack('after-content')
             </div>
         </div>
     </div>

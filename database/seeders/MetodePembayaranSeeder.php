@@ -22,7 +22,7 @@ class MetodePembayaranSeeder extends Seeder
             ],
             [
                 'kode' => 'MIDTRANS',
-                'nama' => 'Payment Gateway',
+                'nama' => 'Pembayaran Online',
                 'status' => 'aktif'
             ]
         ];

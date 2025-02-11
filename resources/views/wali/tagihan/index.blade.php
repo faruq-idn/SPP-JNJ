@@ -131,7 +131,7 @@
                         </thead>
                         <tbody>
                             @foreach($pembayaranBulanan as $pembayaran)
-                            <tr style="cursor: pointer" onclick="showDetailPembayaran({{ $pembayaran->id }}, '{{ $pembayaran->nama_bulan }}', {{ $pembayaran->nominal }}, '{{ $pembayaran->status }}', '{{ $pembayaran->tanggal_bayar ? $pembayaran->tanggal_bayar->format('d/m/Y H:i') : '-' }}', '{{ $pembayaran->metode_pembayaran ? $pembayaran->metode_pembayaran->nama : '-' }}')">
+                            <tr style="cursor: pointer" onclick="showDetailPembayaran({{ $pembayaran->id }}, '{{ $pembayaran->nama_bulan }}', {{ $pembayaran->nominal }}, '{{ $pembayaran->status }}', '{{ $pembayaran->tanggal_bayar ? $pembayaran->tanggal_bayar->format('d/m/Y H:i') : '-' }}', '{{ $pembayaran->metode_pembayaran ? $pembayaran->metode_pembayaran->nama : '-' }}', '{{ $pembayaran->tahun }}')">
                                 <td>{{ $pembayaran->nama_bulan }}</td>
                                 <td>
                                     <span class="badge bg-{{ $pembayaran->status == 'success' ? 'success' : ($pembayaran->status == 'pending' ? 'warning' : 'danger') }}">
@@ -198,18 +198,24 @@
                     </table>
                 </div>
                 
+                @php
+                    $metode_manual = App\Models\MetodePembayaran::where('kode', 'like', 'MANUAL_%')->get();
+                    $metode_online = App\Models\MetodePembayaran::where('kode', 'MIDTRANS')->first();
+                @endphp
                 <div id="pembayaran-options" class="mt-3">
                     <h6 class="mb-3">Pilih Metode Pembayaran:</h6>
                     <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary btn-block" onclick="bayarManualTunai()">
-                            <i class="fas fa-money-bill me-2"></i>Manual/Tunai
-                        </button>
-                        <button class="btn btn-outline-info btn-block" onclick="bayarManualTransfer()">
-                            <i class="fas fa-exchange-alt me-2"></i>Manual/Transfer
-                        </button>
-                        <button class="btn btn-primary btn-block" onclick="bayarOnline()">
-                            <i class="fas fa-globe me-2"></i>Pembayaran Online
-                        </button>
+                        @foreach($metode_manual as $metode)
+                            <button class="btn {{ $metode->kode == 'MANUAL_TUNAI' ? 'btn-outline-primary' : 'btn-outline-info' }} btn-block" 
+                                    onclick="bayarManual('{{ $metode->kode }}', '{{ $metode->nama }}')">
+                                <i class="fas {{ $metode->kode == 'MANUAL_TUNAI' ? 'fa-money-bill' : 'fa-exchange-alt' }} me-2"></i>{{ $metode->nama }}
+                            </button>
+                        @endforeach
+                        @if($metode_online)
+                            <button class="btn btn-primary btn-block" onclick="bayarOnline()">
+                                <i class="fas fa-globe me-2"></i>{{ $metode_online->nama }}
+                            </button>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -221,7 +227,7 @@
 <script>
     let selectedPembayaranId = null;
     
-    function showDetailPembayaran(id, bulan, nominal, status, tanggal, metode) {
+    function showDetailPembayaran(id, bulan, nominal, status, tanggal, metode, tahun) {
         // Cek nomor HP dulu
         @if(!auth()->user()->no_hp)
             Swal.fire({
@@ -248,7 +254,7 @@
         // Update konten modal
         document.getElementById('detail-bulan').textContent = bulan;
         document.getElementById('detail-nominal').textContent = nominal.toLocaleString('id-ID');
-        document.getElementById('detail-tahun').textContent = new Date().getFullYear();
+        document.getElementById('detail-tahun').textContent = tahun;
         
         // Update status dengan badge
         const statusBadge = document.createElement('span');
@@ -283,25 +289,21 @@
         modal.show();
     }
     
-    function bayarManualTunai() {
-        Swal.fire({
-            title: 'Pembayaran Manual/Tunai',
-            text: 'Silakan lakukan pembayaran langsung ke bagian administrasi pondok.',
-            icon: 'info',
-            confirmButtonText: 'Mengerti'
-        });
-    }
-    
-    function bayarManualTransfer() {
-        Swal.fire({
-            title: 'Pembayaran Manual/Transfer',
-            html: `
-                Silakan transfer ke rekening berikut:<br><br>
+    function bayarManual(kode, nama) {
+        let pesan = '';
+        if (kode === 'MANUAL_TUNAI') {
+            pesan = 'Silakan lakukan pembayaran langsung ke bagian administrasi pondok.';
+        } else if (kode === 'MANUAL_TRANSFER') {
+            pesan = `Silakan transfer ke rekening berikut:<br><br>
                 <b>Bank BRI</b><br>
                 No. Rek: 1234-5678-9012-3456<br>
                 A.n: Yayasan Pondok<br><br>
-                Setelah transfer, harap konfirmasi dengan mengirimkan bukti transfer ke administrasi.
-            `,
+                Setelah transfer, harap konfirmasi dengan mengirimkan bukti transfer ke administrasi.`;
+        }
+
+        Swal.fire({
+            title: `Pembayaran ${nama}`,
+            html: pesan,
             icon: 'info',
             confirmButtonText: 'Mengerti'
         });

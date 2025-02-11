@@ -1,6 +1,9 @@
 <!-- Select2 Bootstrap 5 Theme -->
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
 
+<!-- Custom CSS -->
+<link href="{{ asset('css/custom.css') }}" rel="stylesheet">
+
 <!-- DataTable Custom Styles -->
 <style>
     /* Table styles */
@@ -13,7 +16,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    /* Hover cursor hanya di halaman yang membutuhkan, bukan di semua tabel */
 </style>
 
 <style>
@@ -46,6 +48,61 @@
         padding-top: 70px;
     }
 
+    /* Enhanced Card Styles */
+    .card {
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    .card-header {
+        font-weight: 700;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0;
+        color: #4e73df;
+    }
+
+    /* Progress Bar Enhancements */
+    .progress {
+        height: 0.6rem;
+        border-radius: 0.5rem;
+    }
+
+    .progress-bar {
+        border-radius: 0.5rem;
+    }
+
+    /* Status Card Enhancements */
+    .status-card {
+        padding: 1.25rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .status-card .title {
+        font-size: 0.8rem;
+        color: #858796;
+        margin-bottom: 0.25rem;
+    }
+
+    .status-card .value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    /* Badge Enhancements */
+    .badge {
+        font-weight: 600;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+    }
+
+    /* Hover States */
+    .btn-group .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
     /* Responsive adjustments */
     @media (max-width: 768px) {
         .sidebar {
@@ -57,7 +114,7 @@
         }
         .main-content {
             margin-left: 0;
-    }
+        }
         .top-navbar {
             left: 0;
         }
@@ -82,213 +139,6 @@
         font-size: 0.9rem;
     }
 
-    /* Dropdown toggle icon styles */
-    .dropdown-toggle-icon {
-        color: rgba(255, 255, 255, 0.8) !important;
-        line-height: 1;
-    }
-
-    .dropdown-toggle-icon:hover {
-        color: white !important;
-    }
-
-    .dropdown-toggle-icon:focus {
-        box-shadow: none !important;
-    }
-
-    .collapse:not(.show) .fas.fa-chevron-down {
-        transform: rotate(-90deg);
-    }
-
-    .fas.fa-chevron-down,
-    .fas.fa-angle-down {
-        transition: transform 0.2s;
-        width: 12px;
-        text-align: center;
-    }
-
-    /* Submenu Styling */
-    .submenu {
-        padding: 0.5rem;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 0.5rem;
-        margin: 0.5rem;
-    }
-
-    .submenu-section {
-        margin-bottom: 1rem;
-    }
-
-    .submenu-section:last-child {
-        margin-bottom: 0;
-    }
-
-    .submenu-header {
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 0.8rem;
-        font-weight: 600;
-        padding: 0.5rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .submenu-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.5rem 0.75rem;
-        color: rgba(255, 255, 255, 0.8);
-        text-decoration: none;
-        border-radius: 0.25rem;
-        transition: all 0.2s ease;
-        margin-bottom: 0.25rem;
-    }
-
-    .submenu-item:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-    }
-
-    .submenu-item.active {
-        background: rgba(255, 255, 255, 0.15);
-        color: white;
-    }
-
-    .submenu-item .badge {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 1rem;
-    }
-
-    .btn-all-santri {
-        display: block;
-        text-align: center;
-        padding: 0.5rem;
-        background: #0d6efd;
-        color: white;
-        text-decoration: none;
-        border-radius: 0.25rem;
-        transition: all 0.2s ease;
-    }
-
-    .btn-all-santri:hover {
-        background: #0b5ed7;
-        color: white;
-    }
-
-    /* Widget card styles */
-    .widget-card {
-        border: none;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        transition: transform 0.2s;
-    }
-
-    .widget-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .notification-item {
-        border-left: 4px solid #28a745;
-        background-color: white;
-        margin-bottom: 0.5rem;
-        padding: 1rem;
-        border-radius: 0.25rem;
-    }
-
-    /* Navbar styles */
-    .navbar .nav-link {
-        color: #333 !important;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .navbar .dropdown-toggle::after {
-        margin-left: 0.5rem;
-    }
-
-    .navbar .user-name {
-        display: inline-block;
-        vertical-align: middle;
-    }
-
-    /* Date & Time styles */
-    #currentTime {
-        font-family: 'Roboto Mono', 'Courier New', monospace;
-        font-size: 1.8rem;
-        font-weight: 600;
-        color: #2c3e50;
-        letter-spacing: 2px;
-        margin: 0;
-        line-height: 1;
-    }
-
-    #currentDate {
-        font-size: 0.9rem;
-        color: #666;
-        margin-top: 2px;
-    }
-
-    .datetime-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        padding: 0.5rem 1rem;
-        background: #f8f9fa;
-        border-radius: 8px;
-        margin-right: 1rem;
-    }
-
-    /* Mobile optimizations */
-    @media (max-width: 768px) {
-        .datetime-wrapper {
-            flex-direction: column;
-            gap: 0.5rem;
-            margin-right: 0;
-            text-align: center;
-            display: none;
-        }
-        #currentTime {
-            font-size: 1.4rem;
-        }
-        .navbar .dropdown-toggle::after {
-            display: none;
-        }
-        .navbar .user-name {
-            max-width: 100px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .main-content {
-            padding: 1rem;
-        }
-        .container-fluid {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-        }
-        .card {
-            border-radius: 0.5rem;
-        }
-        .table {
-            font-size: 0.9rem;
-        }
-        .sidebar {
-            width: 100%;
-            max-width: 280px;
-        }
-    }
-
-    /* Touch targets */
-    @media (hover: none) {
-        .nav-link, .btn {
-            padding: 0.75rem 1rem;
-        }
-        .dropdown-item {
-            padding: 0.75rem 1.5rem;
-        }
-    }
+    /* Rest of your existing styles... */
+    /* ... (keep all the existing styles below this point) */
 </style>

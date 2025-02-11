@@ -4,223 +4,246 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PembayaranSpp;
+use App\Models\Santri;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class PembayaranController extends Controller
 {
     public function index()
     {
-        $belumLunas = PembayaranSpp::with(['santri'])
+        $totalBelumLunas = PembayaranSpp::where('status', '!=', 'success')->count();
+        $pembayaranPending = PembayaranSpp::with(['santri', 'metode_pembayaran'])
             ->where('status', '!=', 'success')
-            ->latest('created_at')
-            ->paginate(10, ['*'], 'belum_lunas');
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'pending')
+            ->appends(request()->except('pending'));
 
-        $lunas = PembayaranSpp::with(['santri'])
+        $totalLunas = PembayaranSpp::where('status', 'success')->count();
+        $pembayaranLunas = PembayaranSpp::with(['santri', 'metode_pembayaran'])
             ->where('status', 'success')
-            ->latest('tanggal_bayar')
-            ->paginate(10, ['*'], 'lunas');
+            ->orderBy('tanggal_bayar', 'desc')
+            ->paginate(10, ['*'], 'lunas')
+            ->appends(request()->except('lunas'));
 
-        return view('admin.pembayaran.index', [
-            'title' => 'Data Pembayaran SPP',
-            'belumLunas' => $belumLunas,
-            'lunas' => $lunas
-        ]);
+        return view('admin.pembayaran.index', compact(
+            'totalBelumLunas',
+            'pembayaranPending',
+            'totalLunas',
+            'pembayaranLunas'
+        ));
     }
 
     public function create()
     {
-        // Data untuk dropdown bulan
-        $bulan = [
-            '01' => 'Januari',
-            '02' => 'Februari',
-            '03' => 'Maret',
-            '04' => 'April',
-            '05' => 'Mei',
-            '06' => 'Juni',
-            '07' => 'Juli',
-            '08' => 'Agustus',
-            '09' => 'September',
-            '10' => 'Oktober',
-            '11' => 'November',
-            '12' => 'Desember'
-        ];
-
-        // Data untuk dropdown tahun (2 tahun ke belakang sampai 1 tahun ke depan)
-        $tahun = range(date('Y') - 2, date('Y') + 1);
-
-        return view('admin.pembayaran.create', compact('bulan', 'tahun'));
+        $santri = Santri::where('status', 'aktif')->get();
+        return view('admin.pembayaran.create', compact('santri'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'santri_id' => 'required|exists:santri,id',
-            'tanggal_bayar' => 'required|date',
-            'bulan' => 'required|in:01,02,03,04,05,06,07,08,09,10,11,12',
             'tahun' => 'required|digits:4',
-            'nominal' => 'required|numeric|min:1',
-            'metode_pembayaran_id' => 'required|exists:metode_pembayaran,id',
-            'keterangan' => 'nullable|string|max:255'
+            'bulan' => 'required|numeric|min:1|max:12',
         ]);
 
         try {
-            // Cek apakah pembayaran sudah ada
+            DB::beginTransaction();
+
+            // Check if payment already exists
             $exists = PembayaranSpp::where([
-                'santri_id' => $validated['santri_id'],
-                'bulan' => $validated['bulan'],
-                'tahun' => $validated['tahun'],
-                'status' => 'success'
+                'santri_id' => $request->santri_id,
+                'tahun' => $request->tahun,
+                'bulan' => $request->bulan
             ])->exists();
 
             if ($exists) {
-                return back()->with('error', 'Pembayaran untuk periode ini sudah lunas');
+                return redirect()
+                    ->back()
+                    ->with('error', 'Tagihan untuk periode tersebut sudah ada');
             }
 
-            // Simpan pembayaran
-            $validated['status'] = 'success';
-            PembayaranSpp::create($validated);
+            // Get santri tarif
+            $santri = Santri::with('kategori.tarifTerbaru')->findOrFail($request->santri_id);
+            if (!$santri->kategori->tarifTerbaru) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Tarif SPP untuk kategori santri belum diatur');
+            }
 
+            PembayaranSpp::create([
+                'santri_id' => $request->santri_id,
+                'tahun' => $request->tahun,
+                'bulan' => $request->bulan,
+                'nominal' => $santri->kategori->tarifTerbaru->nominal,
+                'status' => 'unpaid'
+            ]);
+
+            DB::commit();
             return redirect()
                 ->route('admin.pembayaran.index')
-                ->with('success', 'Pembayaran SPP berhasil disimpan');
+                ->with('success', 'Tagihan berhasil dibuat');
 
         } catch (\Exception $e) {
-            return back()
-                ->with('error', 'Gagal menyimpan pembayaran: ' . $e->getMessage())
-                ->withInput();
+            DB::rollBack();
+            return redirect()
+                ->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
     public function show(PembayaranSpp $pembayaran)
     {
         $pembayaran->load(['santri', 'metode_pembayaran']);
-
-        return response()->json([
-            'id' => $pembayaran->id,
-            'santri' => [
-                'nama' => $pembayaran->santri->nama,
-                'nisn' => $pembayaran->santri->nisn,
-                'kelas' => $pembayaran->santri->jenjang . ' ' . $pembayaran->santri->kelas,
-                'kategori' => $pembayaran->santri->kategori->nama ?? '-'
-            ],
-            'pembayaran' => [
-                'tanggal' => $pembayaran->tanggal_bayar ? $pembayaran->tanggal_bayar->format('d/m/Y') : '-',
-                'bulan' => \Carbon\Carbon::createFromFormat('m', $pembayaran->bulan)->translatedFormat('F'),
-                'tahun' => $pembayaran->tahun,
-                'nominal' => number_format($pembayaran->nominal, 0, ',', '.'),
-                'metode' => $pembayaran->metode_pembayaran->nama ?? 'Manual',
-                'status' => ucfirst($pembayaran->status),
-                'keterangan' => $pembayaran->keterangan ?? '-'
-            ]
-        ]);
+        return view('admin.pembayaran.show', compact('pembayaran'));
     }
 
-    public function generateTagihan(Request $request)
+    public function verifikasi(Request $request, $id)
     {
+        $request->validate([
+            'metode_pembayaran_id' => 'required|exists:metode_pembayaran,id'
+        ]);
+
         try {
-            $period = $request->input('period');
-            $date = \Carbon\Carbon::createFromFormat('Y-m', $period);
-            $bulan = str_pad($date->format('n'), 2, '0', STR_PAD_LEFT);
-            $tahun = $date->format('Y');
+            DB::beginTransaction();
 
-            // Cek santri yang sudah memiliki tagihan
-            $existingCount = PembayaranSpp::where([
-                'bulan' => $bulan,
-                'tahun' => $tahun
-            ])->count();
-
-            // Jika ditemukan tagihan yang sudah ada
-            if ($existingCount > 0 && !$request->input('force')) {
-                return response()->json([
-                    'status' => 'warning',
-                    'message' => "Ditemukan {$existingCount} tagihan yang sudah ada untuk periode " . $date->translatedFormat('F Y'),
-                    'needsConfirmation' => true
-                ]);
-            }
-
-            // Jalankan artisan command dengan parameter force jika diperlukan
-            $exitCode = Artisan::call('tagihan:generate', [
-                '--bulan' => $period,
-                '--force' => $request->input('force', false)
+            $pembayaran = PembayaranSpp::findOrFail($id);
+            $pembayaran->update([
+                'status' => 'success',
+                'metode_pembayaran_id' => $request->metode_pembayaran_id,
+                'keterangan' => $request->keterangan,
+                'tanggal_bayar' => now()
             ]);
 
-            if ($exitCode === 0) {
-                $message = $request->input('force') 
-                    ? 'Berhasil generate tagihan untuk santri yang belum memiliki tagihan'
-                    : 'Berhasil generate tagihan';
+            DB::commit();
 
-                return response()->json([
-                    'status' => 'success',
-                    'message' => $message
-                ]);
-            }
-
-            throw new \Exception('Gagal generate tagihan');
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pembayaran berhasil diverifikasi'
+            ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
     }
 
-    public function print(PembayaranSpp $pembayaran)
+    public function generateTagihan(Request $request)
     {
-        $pembayaran->load(['santri.kategori', 'metode_pembayaran']);
-
-        return view('admin.pembayaran.print', [
-            'pembayaran' => $pembayaran
+        $request->validate([
+            'tahun' => 'required|digits:4',
+            'bulan' => 'required|numeric|min:1|max:12',
         ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Get all active santri with their latest tarif
+            $santriList = Santri::with('kategori.tarifTerbaru')
+                ->where('status', 'aktif')
+                ->get();
+
+            $generated = 0;
+            $errors = 0;
+
+            foreach ($santriList as $santri) {
+                // Skip if no tarif set
+                if (!$santri->kategori->tarifTerbaru) {
+                    $errors++;
+                    continue;
+                }
+
+                // Check if payment already exists
+                $exists = PembayaranSpp::where([
+                    'santri_id' => $santri->id,
+                    'tahun' => $request->tahun,
+                    'bulan' => $request->bulan
+                ])->exists();
+
+                if (!$exists) {
+                    PembayaranSpp::create([
+                        'santri_id' => $santri->id,
+                        'tahun' => $request->tahun,
+                        'bulan' => $request->bulan,
+                        'nominal' => $santri->kategori->tarifTerbaru->nominal,
+                        'status' => 'unpaid'
+                    ]);
+                    $generated++;
+                }
+            }
+
+            DB::commit();
+
+            $message = "Berhasil generate {$generated} tagihan.";
+            if ($errors > 0) {
+                $message .= " {$errors} santri dilewati karena tidak memiliki tarif.";
+            }
+
+            return redirect()
+                ->route('admin.pembayaran.index')
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()
+                ->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 
     public function hapusTagihan(Request $request)
     {
+        $request->validate([
+            'tahun' => 'required|digits:4',
+            'bulan' => 'required|numeric|min:1|max:12',
+        ]);
+
         try {
-            $request->validate([
-                'period' => 'required|date_format:Y-m'
-            ]);
+            DB::beginTransaction();
 
-            $period = \Carbon\Carbon::createFromFormat('Y-m', $request->period);
-            $bulan = str_pad($period->format('n'), 2, '0', STR_PAD_LEFT);
-            $tahun = $period->format('Y');
-
-            // Hapus tagihan yang belum dibayar
+            // Only delete unpaid payments
             $deleted = PembayaranSpp::where([
-                'bulan' => $bulan,
-                'tahun' => $tahun,
-                'status' => 'pending'
+                'tahun' => $request->tahun,
+                'bulan' => $request->bulan,
+                'status' => 'unpaid'
             ])->delete();
 
-            return response()->json([
-                'status' => 'success',
-                'message' => "Berhasil menghapus {$deleted} tagihan",
-                'data' => [
-                    'count' => $deleted
-                ]
-            ]);
+            DB::commit();
+
+            return redirect()
+                ->route('admin.pembayaran.index')
+                ->with('success', "Berhasil menghapus {$deleted} tagihan yang belum dibayar.");
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gagal menghapus tagihan: ' . $e->getMessage()
-            ], 500);
+            DB::rollBack();
+            return redirect()
+                ->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
     public function checkStatus(Request $request)
     {
-        $exists = PembayaranSpp::where([
-            'santri_id' => $request->santri_id,
-            'bulan' => $request->bulan,
-            'tahun' => $request->tahun,
-            'status' => 'success'
-        ])->exists();
+        $pembayaran = PembayaranSpp::find($request->id);
+        
+        if (!$pembayaran) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pembayaran tidak ditemukan'
+            ], 404);
+        }
 
         return response()->json([
-            'status' => $exists ? 'lunas' : 'belum'
+            'status' => 'success',
+            'data' => [
+                'status' => $pembayaran->status,
+                'message' => 'Status pembayaran: ' . ucfirst($pembayaran->status)
+            ]
         ]);
     }
 }

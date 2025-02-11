@@ -167,8 +167,8 @@ class WaliSantriSeeder extends Seeder
                 $bulan = $now->copy()->subMonths($i);
                 $status = $i < $tunggakan ? 'pending' : 'success';
 
-                // Untuk pembayaran yang success, gunakan pembayaran manual
-                $payment_type = $status === 'success' ? 'Manual/Tunai' : null;
+                // Untuk pembayaran yang success, gunakan metode Manual/Tunai
+                $metodeTunai = MetodePembayaran::where('kode', 'MANUAL_TUNAI')->first();
                 $transaction_id = $status === 'success' ? 'MANUAL-'.$santri->id.'-'.$i.'-'.time() : null;
                 $order_id = $status === 'success' ? 'MANUAL-'.$santri->id.'-'.$i.'-'.time() : null;
 
@@ -179,26 +179,31 @@ class WaliSantriSeeder extends Seeder
                     'tahun' => $bulan->format('Y'),
                     'nominal' => $nominal,
                     'status' => $status,
-                    'keterangan' => $status === 'success' ? 'Pembayaran Manual/Tunai' : 'Belum dibayar',
-                    'payment_type' => $payment_type,
+                    'keterangan' => $status === 'success' ? 'Pembayaran ' . $metodeTunai->nama : 'Belum dibayar',
+                    'metode_pembayaran_id' => $status === 'success' ? $metodeTunai->id : null,
+                    'payment_type' => $status === 'success' ? $metodeTunai->nama : null,
                     'transaction_id' => $transaction_id,
                     'order_id' => $order_id
                 ]);
             }
         }
 
-        // Contoh pembayaran SPP online (Midtrans)
-        PembayaranSpp::create([
-            'santri_id' => 1,
-            'tanggal_bayar' => '2024-01-20 07:00:32',
-            'bulan' => '01',
-            'tahun' => '2024',
-            'nominal' => 500000.00,
-            'status' => 'success',
-            'keterangan' => 'Pembayaran via Midtrans',
-            'payment_type' => 'bank_transfer',
-            'transaction_id' => 'TRX-'.time(),
-            'order_id' => 'SPP-1-'.time()
-        ]);
+        // Contoh pembayaran SPP online
+        $metodeOnline = MetodePembayaran::where('kode', 'MIDTRANS')->first();
+        if ($metodeOnline) {
+            PembayaranSpp::create([
+                'santri_id' => 1,
+                'tanggal_bayar' => '2024-01-20 07:00:32',
+                'bulan' => '01',
+                'tahun' => '2024',
+                'nominal' => 500000.00,
+                'status' => 'success',
+                'keterangan' => 'Pembayaran via ' . $metodeOnline->nama,
+                'metode_pembayaran_id' => $metodeOnline->id,
+                'payment_type' => $metodeOnline->nama,
+                'transaction_id' => 'TRX-'.time(),
+                'order_id' => 'SPP-1-'.time()
+            ]);
+        }
     }
 }

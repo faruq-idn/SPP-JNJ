@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             KategoriSantriSeeder::class,
+            MetodePembayaranSeeder::class, // Pindahkan ke atas sebelum WaliSantriSeeder
             WaliSantriSeeder::class,
         ]);
     }

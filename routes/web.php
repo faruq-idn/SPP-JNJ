@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\KategoriSantriController;
 use App\Http\Controllers\Admin\KenaikanKelasController;
@@ -10,13 +11,30 @@ use App\Http\Controllers\Admin\SantriController;
 use App\Http\Controllers\Admin\SantriExportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Petugas\DashboardController as PetugasDashboardController;
 use App\Http\Controllers\Wali\DashboardController as WaliDashboardController;
 use App\Http\Controllers\Wali\PembayaranController as WaliPembayaranController;
 use App\Http\Controllers\Wali\ProfilController;
 use App\Http\Controllers\Wali\TagihanController;
+use App\Http\Controllers\Petugas\SantriController as PetugasSantriController;
+use App\Http\Controllers\Petugas\PembayaranController as PetugasPembayaranController;
+
 
 // Public Routes
 Route::get('/', function () {
+    if (Auth::check()) {
+        switch (Auth::user()->role) {
+            case 'admin':
+                return redirect()->route('admin.dashboard');
+                break;
+            case 'petugas':
+                return redirect()->route('petugas.dashboard');
+                break;
+            case 'wali':
+                return redirect()->route('wali.dashboard');
+                break;
+        }
+    }
     return view('welcome');
 })->name('welcome');
 
@@ -54,6 +72,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
         // Verifikasi Pembayaran Route
         Route::post('pembayaran/{id}/verifikasi', [SantriController::class, 'verifikasiPembayaran'])->name('pembayaran.verifikasi');
         
+        
         // Class route (harus di akhir untuk menghindari konflik)
         Route::get('{jenjang}/{kelas}', [SantriController::class, 'kelas'])
             ->name('kelas')
@@ -68,17 +87,39 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::resource('users', UserController::class);
     
     // Pembayaran
-    Route::get('pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
-    Route::get('pembayaran/create', [PembayaranController::class, 'create'])->name('pembayaran.create');
-    Route::post('pembayaran', [PembayaranController::class, 'store'])->name('pembayaran.store');
-    Route::get('pembayaran/check-status', [PembayaranController::class, 'checkStatus'])->name('pembayaran.check-status');
-    Route::get('pembayaran/{pembayaran}', [PembayaranController::class, 'show'])->name('pembayaran.show');
-    Route::delete('pembayaran/hapus-tagihan', [PembayaranController::class, 'hapusTagihan'])->name('pembayaran.hapus-tagihan');
+    Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
+        Route::get('/', [PembayaranController::class, 'index'])->name('index');
+        Route::get('/create', [PembayaranController::class, 'create'])->name('create');
+        Route::post('/', [PembayaranController::class, 'store'])->name('store');
+        Route::get('/check-status', [PembayaranController::class, 'checkStatus'])->name('check-status');
+        Route::get('/{pembayaran}', [PembayaranController::class, 'show'])->name('show');
+        Route::post('/{id}/verifikasi', [PembayaranController::class, 'verifikasi'])->name('verifikasi');
+        Route::post('/generate-tagihan', [PembayaranController::class, 'generateTagihan'])->name('generate-tagihan');
+        Route::delete('/hapus-tagihan', [PembayaranController::class, 'hapusTagihan'])->name('hapus-tagihan');
+    });
 
     // Laporan
     Route::get('laporan', [LaporanController::class, 'index'])->name('laporan.index');
     Route::get('laporan/pembayaran', [LaporanController::class, 'pembayaran'])->name('laporan.pembayaran');
     Route::get('laporan/tunggakan', [LaporanController::class, 'tunggakan'])->name('laporan.tunggakan');
+});
+
+// Petugas Routes
+Route::prefix('petugas')->middleware(['auth', 'role:petugas'])->name('petugas.')->group(function () {
+    Route::get('dashboard', [PetugasDashboardController::class, 'index'])->name('dashboard');
+    
+    // Profil
+    Route::put('profil', [ProfilController::class, 'update'])->name('profil.update');
+    
+    // Santri
+    Route::get('santri/{santri}', [PetugasSantriController::class, 'show'])->name('santri.show');
+    
+    // Pembayaran
+    Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
+        Route::get('/', [PetugasPembayaranController::class, 'index'])->name('index');
+        Route::get('/{pembayaran}', [PetugasPembayaranController::class, 'show'])->name('show');
+        Route::post('/{id}/verifikasi', [PetugasPembayaranController::class, 'verifikasi'])->name('verifikasi');
+    });
 });
 
 // Wali Routes

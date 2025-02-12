@@ -68,6 +68,10 @@
                                         </button>
                                     @endif
                                 </div>
+                            @else
+                                <button class="btn btn-sm btn-primary" onclick="tambahPembayaran('{{ $tahun }}', '{{ $p->bulan }}', {{ $p->nominal }})">
+                                    <i class="fas fa-plus me-1"></i>Bayar
+                                </button>
                             @endif
                         </td>
                     </tr>

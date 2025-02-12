@@ -10,52 +10,87 @@ use Illuminate\Support\Facades\DB;
 
 class SantriController extends Controller
 {
+    private function hitungStatusSpp($santri, $tahun)
+    {
+        $pembayaranTahunIni = $santri->pembayaran()
+            ->where('tahun', $tahun)
+            ->whereMonth('created_at', '<=', now()->month)
+            ->get();
+
+        if ($pembayaranTahunIni->isEmpty()) {
+            return 'Belum Lunas';
+        }
+
+        return $pembayaranTahunIni->every(function ($pembayaran) {
+            return $pembayaran->status === 'success';
+        }) ? 'Lunas' : 'Belum Lunas';
+    }
+
     public function show(Santri $santri)
     {
         $santri->load(['kategori.tarifTerbaru', 'wali']);
         
-        // Get riwayat perubahan tarif
-        $riwayatTarif = $santri->kategori->riwayatTarif()
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Get metode pembayaran
-        $metode = MetodePembayaran::all();
-
-        // Get pembayaran untuk tiap tahun
-        $pembayaran = PembayaranSpp::with(['metode_pembayaran'])
-            ->where('santri_id', $santri->id)
-            ->orderBy('tahun', 'desc')
-            ->orderBy('bulan', 'desc')
-            ->get();
-
-        // Group pembayaran by tahun
-        $pembayaranPerTahun = $pembayaran->groupBy('tahun');
-
-        // Hitung tunggakan per tahun
-        $totalTunggakanPerTahun = [];
-        $totalTunggakan = 0;
         $tahunSekarang = date('Y');
+        $bulanSekarang = date('n');
 
-        foreach ($pembayaranPerTahun as $tahun => $pembayaranList) {
-            // Hitung tunggakan untuk tahun ini
-            $tunggakanTahun = $pembayaranList
-                ->where('status', '!=', 'success')
-                ->sum('nominal');
+        $pembayaranPerTahun = [];
+        $totalTunggakanPerTahun = [];
+        
+        // Ambil pembayaran untuk 2 tahun terakhir
+        for ($tahun = $tahunSekarang; $tahun >= $tahunSekarang - 1; $tahun--) {
+            $pembayaranList = [];
+            $tunggakanTahun = 0;
+            
+            // Generate data hanya untuk bulan yang sudah lewat atau bulan sekarang
+            $bulanMaksimal = ($tahun == $tahunSekarang) ? $bulanSekarang : 12;
+            
+            for ($bulan = 1; $bulan <= $bulanMaksimal; $bulan++) {
+                $pembayaran = $santri->pembayaran()
+                    ->where('tahun', $tahun)
+                    ->where('bulan', $bulan)
+                    ->with('metode_pembayaran')
+                    ->first();
 
-            $totalTunggakanPerTahun[$tahun] = $tunggakanTahun;
-            $totalTunggakan += $tunggakanTahun;
+                $nominal = $santri->kategori->tarifTerbaru->nominal ?? 0;
+
+                if ($pembayaran) {
+                    if ($pembayaran->status !== 'success') {
+                        $tunggakanTahun += $pembayaran->nominal;
+                    }
+                    $pembayaranList[] = $pembayaran;
+                } else {
+                    // Tambahkan ke tunggakan
+                    $tunggakanTahun += $nominal;
+                    
+                    // Buat object untuk bulan ini
+                    $pembayaranList[] = (object)[
+                        'bulan' => $bulan,
+                        'nama_bulan' => \Carbon\Carbon::create()->month($bulan)->translatedFormat('F'),
+                        'nominal' => $nominal,
+                        'status' => 'unpaid',
+                        'tahun' => $tahun,
+                        'metode_pembayaran' => null,
+                        'tanggal_bayar' => null
+                    ];
+                }
+            }
+            
+            if (!empty($pembayaranList)) {
+                $pembayaranPerTahun[$tahun] = collect($pembayaranList)->sortBy('bulan');
+                $totalTunggakanPerTahun[$tahun] = $tunggakanTahun;
+            }
         }
 
-        // Set status SPP berdasarkan tunggakan
-        $statusSpp = 'Lunas';
-        if ($totalTunggakan > 0) {
-            $statusSpp = 'Belum Lunas';
-        }
+        // Hitung total tunggakan keseluruhan
+        $totalTunggakan = array_sum($totalTunggakanPerTahun);
+
+        // Hitung status SPP berdasarkan pembayaran tahun ini
+        $statusSpp = $this->hitungStatusSpp($santri, $tahunSekarang);
+
+        $metode = MetodePembayaran::all();
 
         return view('petugas.santri.show', compact(
             'santri',
-            'riwayatTarif',
             'pembayaranPerTahun',
             'statusSpp',
             'totalTunggakan',

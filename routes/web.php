@@ -51,6 +51,9 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     
     // Kategori Santri
+    Route::get('kategori/list', [KategoriSantriController::class, 'list'])->name('kategori.list');
+    Route::get('kategori/{kategori}/get-data', [KategoriSantriController::class, 'getData'])->name('kategori.getData');
+    Route::post('kategori/{kategori}/update-tarif', [KategoriSantriController::class, 'updateTarif'])->name('kategori.updateTarif');
     Route::resource('kategori', KategoriSantriController::class);
     
     // Base Santri Resource

@@ -118,6 +118,23 @@ function verifikasiPembayaran(id, bulan, nominal) {
     showDetail(id, bulan, nominal, '', 'pending', '', '');
 }
 
+// Tambah Pembayaran Manual
+function tambahPembayaran(tahun = null, bulan = null, nominal = null) {
+    const modal = new bootstrap.Modal(document.getElementById('modalPembayaran'));
+    document.getElementById('modalTitle').textContent = 'Tambah Pembayaran Manual';
+    
+    if (tahun && bulan && nominal) {
+        document.getElementById('detail-bulan').textContent = bulan;
+        document.getElementById('detail-tahun').textContent = tahun;
+        document.getElementById('detail-nominal').textContent = nominal.toLocaleString('id-ID');
+    }
+    
+    document.getElementById('pembayaran-info').style.display = 'none';
+    document.getElementById('formPembayaran').style.display = 'block';
+    
+    modal.show();
+}
+
 $(document).ready(function() {
     // Reset form saat modal ditutup
     $('#modalPembayaran').on('hidden.bs.modal', function() {

@@ -7,6 +7,7 @@ use App\Models\Santri;
 use App\Models\KategoriSantri;
 use App\Models\User;
 use App\Models\PembayaranSpp;
+use App\Models\MetodePembayaran;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -54,9 +55,10 @@ class SantriController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         try {
@@ -64,29 +66,24 @@ class SantriController extends Controller
             $santri = Santri::create($request->all());
             DB::commit();
             
-            return redirect()
-                ->route('admin.santri.index')
-                ->with('success', 'Data santri berhasil ditambahkan');
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data santri berhasil ditambahkan'
+            ]);
                 
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function edit(Santri $santri)
     {
-        $kategori_santri = KategoriSantri::all();
-        $jenjang = ['SMP', 'SMA'];
-        $kelas = [
-            'SMP' => ['7A', '7B', '8A', '8B', '9A', '9B'],
-            'SMA' => ['10A', '10B', '11A', '11B', '12A', '12B']
-        ];
-        
-        return view('admin.santri.edit', compact('santri', 'kategori_santri', 'jenjang', 'kelas'));
+        $santri->load('wali');
+        return response()->json($santri);
     }
 
     public function update(Request $request, Santri $santri)
@@ -106,15 +103,10 @@ class SantriController extends Controller
         ]);
 
         if ($validator->fails()) {
-            Log::error('Validasi update santri gagal', [
-                'errors' => $validator->errors()->toArray(),
-                'input' => $request->all()
-            ]);
-            
-            return redirect()
-                ->back()
-                ->withErrors($validator)
-                ->withInput();
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         try {
@@ -122,10 +114,11 @@ class SantriController extends Controller
             $santri->update($request->all());
             DB::commit();
             
-            return redirect()
-                ->route('admin.santri.index')
-                ->with('success', 'Data santri berhasil diperbarui');
-                
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data santri berhasil diperbarui'
+            ]);
+            
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error update santri: ' . $e->getMessage(), [
@@ -133,10 +126,10 @@ class SantriController extends Controller
                 'input' => $request->all()
             ]);
             
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -163,6 +156,8 @@ class SantriController extends Controller
 
     public function show(Santri $santri)
     {
+        $santri->load(['kategori.tarifTerbaru', 'wali']);
+        
         $tahunSekarang = date('Y');
         $bulanSekarang = date('n');
 
@@ -198,9 +193,12 @@ class SantriController extends Controller
                     // Buat object untuk bulan ini
                     $pembayaranList[] = (object)[
                         'bulan' => $bulan,
+                        'nama_bulan' => Carbon::create()->month($bulan)->translatedFormat('F'),
                         'nominal' => $nominal,
                         'status' => 'unpaid',
-                        'tahun' => $tahun
+                        'tahun' => $tahun,
+                        'metode_pembayaran' => null,
+                        'tanggal_bayar' => null
                     ];
                 }
             }
@@ -217,12 +215,15 @@ class SantriController extends Controller
         // Hitung status SPP
         $statusSpp = $this->hitungStatusSpp($santri, $tahunSekarang);
 
-        return view('admin.santri.detail', compact(
+        $metode = MetodePembayaran::all();
+
+        return view('admin.santri.show', compact(
             'santri',
             'pembayaranPerTahun',
             'totalTunggakan',
             'totalTunggakanPerTahun',
-            'statusSpp'
+            'statusSpp',
+            'metode'
         ));
     }
 

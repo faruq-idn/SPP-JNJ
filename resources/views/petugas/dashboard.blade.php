@@ -73,7 +73,7 @@
                     <tbody>
                         @forelse($pembayaranTerbaru as $p)
                             <tr>
-                                <td>{{ $p->tanggal_bayar->format('d/m/Y') }}</td>
+                                <td>{{ $p->tanggal_bayar ? $p->tanggal_bayar->format('d/m/Y') : '-' }}</td>
                                 <td>{{ $p->santri->nama }}</td>
                                 <td>Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
                                 <td>

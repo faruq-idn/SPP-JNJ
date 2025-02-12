@@ -33,11 +33,14 @@
                                    class="btn btn-sm btn-info">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ route('admin.santri.edit', ['santri' => $s->id]) }}" 
-                                   class="btn btn-sm btn-primary"
-                                   onclick="event.preventDefault(); window.location.href='{{ route('admin.santri.edit', ['santri' => $s->id]) }}';">
+                                <button type="button" 
+                                        class="btn btn-sm btn-primary"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#santriFormModal"
+                                        data-mode="edit"
+                                        data-id="{{ $s->id }}">
                                     <i class="fas fa-edit"></i>
-                                </a>
+                                </button>
                                 <button type="button" 
                                         onclick="hapusSantri({{ $s->id }})"
                                         class="btn btn-sm btn-danger">

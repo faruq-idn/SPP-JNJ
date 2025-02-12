@@ -23,68 +23,117 @@ class KategoriSantriController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'keterangan' => 'nullable|string',
-            'nominal_spp' => 'required|numeric|min:0'
-        ]);
+        try {
+            $validated = $request->validate([
+                'nama' => 'required|string|max:255',
+                'keterangan' => 'nullable|string',
+                'nominal_spp' => 'required|numeric|min:0'
+            ]);
 
-        $kategori = KategoriSantri::create([
-            'nama' => $validated['nama'],
-            'keterangan' => $validated['keterangan']
-        ]);
+            $kategori = KategoriSantri::create([
+                'nama' => $validated['nama'],
+                'keterangan' => $validated['keterangan']
+            ]);
 
-        RiwayatTarifSpp::create([
-            'kategori_id' => $kategori->id,
-            'nominal' => $validated['nominal_spp'],
-            'berlaku_mulai' => now(),
-            'keterangan' => 'Tarif awal'
-        ]);
+            RiwayatTarifSpp::create([
+                'kategori_id' => $kategori->id,
+                'nominal' => $validated['nominal_spp'],
+                'berlaku_mulai' => now(),
+                'keterangan' => 'Tarif awal'
+            ]);
 
-        return redirect()->route('admin.kategori.index')
-            ->with('success', 'Kategori santri berhasil ditambahkan');
+            $kategori->load('tarifTerbaru');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori santri berhasil ditambahkan',
+                'data' => $kategori
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan kategori: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function edit(KategoriSantri $kategori)
+    public function getData(KategoriSantri $kategori)
     {
-        $kategori->load('riwayatTarif');
-        return view('admin.kategori.edit', compact('kategori'));
+        $kategori->load(['tarifTerbaru', 'riwayatTarif']);
+        return response()->json([
+            'success' => true,
+            'data' => $kategori
+        ]);
     }
 
     public function update(Request $request, KategoriSantri $kategori)
     {
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'keterangan' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'nama' => 'required|string|max:255',
+                'keterangan' => 'nullable|string',
+            ]);
 
-        $kategori->update($validated);
+            $kategori->update($validated);
 
-        return redirect()->route('admin.kategori.index')
-            ->with('success', 'Kategori santri berhasil diperbarui');
+            $kategori->load('tarifTerbaru');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori santri berhasil diperbarui',
+                'data' => $kategori
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui kategori: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function updateTarif(Request $request, KategoriSantri $kategori)
     {
-        $validated = $request->validate([
-            'nominal' => 'required|numeric|min:0',
-            'berlaku_mulai' => 'required|date',
-            'keterangan' => 'nullable|string'
-        ]);
+        try {
+            $validated = $request->validate([
+                'nominal' => 'required|numeric|min:0',
+                'berlaku_mulai' => 'required|date',
+                'keterangan' => 'nullable|string'
+            ]);
 
-        RiwayatTarifSpp::where('kategori_id', $kategori->id)
-            ->whereNull('berlaku_sampai')
-            ->update(['berlaku_sampai' => $validated['berlaku_mulai']]);
+            RiwayatTarifSpp::where('kategori_id', $kategori->id)
+                ->whereNull('berlaku_sampai')
+                ->update(['berlaku_sampai' => $validated['berlaku_mulai']]);
 
-        RiwayatTarifSpp::create([
-            'kategori_id' => $kategori->id,
-            'nominal' => $validated['nominal'],
-            'berlaku_mulai' => $validated['berlaku_mulai'],
-            'keterangan' => $validated['keterangan']
-        ]);
+            RiwayatTarifSpp::create([
+                'kategori_id' => $kategori->id,
+                'nominal' => $validated['nominal'],
+                'berlaku_mulai' => $validated['berlaku_mulai'],
+                'keterangan' => $validated['keterangan']
+            ]);
 
-        return redirect()->route('admin.kategori.index')
-            ->with('success', 'Tarif SPP berhasil diperbarui');
+            $kategori->load(['tarifTerbaru', 'riwayatTarif']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tarif SPP berhasil diperbarui',
+                'data' => $kategori
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui tarif: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function list()
+    {
+        $kategori = KategoriSantri::select('id', 'nama')
+            ->orderBy('nama')
+            ->get();
+            
+        return response()->json($kategori);
     }
 
     public function destroy(KategoriSantri $kategori)

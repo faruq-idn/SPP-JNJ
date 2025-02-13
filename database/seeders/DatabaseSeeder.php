@@ -9,10 +9,12 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            RoleSeeder::class,
-            KategoriSantriSeeder::class,
-            MetodePembayaranSeeder::class, // Pindahkan ke atas sebelum WaliSantriSeeder
+            UserSeeder::class,
             WaliSantriSeeder::class,
+            KategoriSantriSeeder::class,
+            MetodePembayaranSeeder::class,
+            SantriSeeder::class,      // Harus setelah KategoriSantri dan WaliSantri
+            PembayaranSppSeeder::class // Harus paling terakhir
         ]);
     }
 }

@@ -26,42 +26,12 @@ class UserSeeder extends Seeder
             'role' => 'petugas'
         ]);
 
-        // Wali Santri
-        $waliSantri = [
-            [
-                'name' => 'Ahmad Fauzi',
-                'email' => 'fauzi@example.com',
-                'password' => Hash::make('password'),
-                'role' => 'wali'
-            ],
-            [
-                'name' => 'Siti Aminah',
-                'email' => 'aminah@example.com',
-                'password' => Hash::make('password'),
-                'role' => 'wali'
-            ],
-            [
-                'name' => 'Muhammad Hasan',
-                'email' => 'hasan@example.com',
-                'password' => Hash::make('password'),
-                'role' => 'wali'
-            ],
-            [
-                'name' => 'Nur Fatimah',
-                'email' => 'fatimah@example.com',
-                'password' => Hash::make('password'),
-                'role' => 'wali'
-            ],
-            [
-                'name' => 'Abdullah',
-                'email' => 'abdullah@example.com',
-                'password' => Hash::make('password'),
-                'role' => 'wali'
-            ]
-        ];
-
-        foreach ($waliSantri as $wali) {
-            User::create($wali);
-        }
+        // Add additional petugas for testing
+        User::create([
+            'name' => 'Petugas Keuangan 2',
+            'email' => 'petugas2@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'petugas'
+        ]);
     }
 }

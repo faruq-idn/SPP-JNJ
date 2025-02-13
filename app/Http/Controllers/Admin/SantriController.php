@@ -169,10 +169,19 @@ class SantriController extends Controller
             $pembayaranList = [];
             $tunggakanTahun = 0;
             
+            // Tentukan bulan awal berdasarkan tanggal masuk santri
+            $bulanAwal = 1;
+            $tanggalMasuk = Carbon::parse($santri->tanggal_masuk);
+            if ($tahun == $tanggalMasuk->year) {
+                $bulanAwal = $tanggalMasuk->month;
+            } elseif ($tahun < $tanggalMasuk->year) {
+                continue; // Skip tahun sebelum santri masuk
+            }
+            
             // Generate data hanya untuk bulan yang sudah lewat atau bulan sekarang
             $bulanMaksimal = ($tahun == $tahunSekarang) ? $bulanSekarang : 12;
             
-            for ($bulan = 1; $bulan <= $bulanMaksimal; $bulan++) {
+            for ($bulan = $bulanAwal; $bulan <= $bulanMaksimal; $bulan++) {
                 $pembayaran = $santri->pembayaran()
                     ->where('tahun', $tahun)
                     ->where('bulan', $bulan)
@@ -204,7 +213,7 @@ class SantriController extends Controller
             }
             
             if (!empty($pembayaranList)) {
-                $pembayaranPerTahun[$tahun] = collect($pembayaranList)->sortBy('bulan');
+                $pembayaranPerTahun[$tahun] = collect($pembayaranList)->sortByDesc('bulan');
                 $totalTunggakanPerTahun[$tahun] = $tunggakanTahun;
             }
         }
@@ -229,7 +238,7 @@ class SantriController extends Controller
 
     public function verifikasiPembayaran(Request $request, $id)
     {
-        $pembayaran = PembayaranSpp::findOrFail($id);
+        $pembayaran = PembayaranSpp::with('metode_pembayaran')->findOrFail($id);
 
         try {
             DB::beginTransaction();
@@ -241,9 +250,25 @@ class SantriController extends Controller
             ]);
             DB::commit();
 
+            // Load data pembayaran yang diperbarui
+            $pembayaran->load('metode_pembayaran');
+
             return response()->json([
                 'status' => 'success',
-                'message' => 'Pembayaran berhasil diverifikasi'
+                'message' => 'Pembayaran berhasil diverifikasi',
+                'data' => [
+                    'id' => $pembayaran->id,
+                    'status' => 'success',
+                    'tanggal_bayar' => $pembayaran->tanggal_bayar->format('d/m/Y'),
+                    'metode' => $pembayaran->metode_pembayaran->nama,
+                    'payment_info' => [
+                        'order_id' => $pembayaran->order_id,
+                        'transaction_id' => $pembayaran->transaction_id,
+                        'payment_type' => $pembayaran->payment_type,
+                        'payment_details' => $pembayaran->payment_details,
+                        'keterangan' => $pembayaran->keterangan
+                    ]
+                ]
             ]);
 
         } catch (\Exception $e) {
@@ -251,6 +276,29 @@ class SantriController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function hapusPembayaran($id)
+    {
+        $pembayaran = PembayaranSpp::findOrFail($id);
+
+        try {
+            DB::beginTransaction();
+            $pembayaran->delete();
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pembayaran berhasil dihapus'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat menghapus pembayaran: ' . $e->getMessage()
             ], 500);
         }
     }

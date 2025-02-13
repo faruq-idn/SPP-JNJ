@@ -19,7 +19,6 @@ use App\Http\Controllers\Wali\TagihanController;
 use App\Http\Controllers\Petugas\SantriController as PetugasSantriController;
 use App\Http\Controllers\Petugas\PembayaranController as PetugasPembayaranController;
 
-
 // Public Routes
 Route::get('/', function () {
     if (Auth::check()) {
@@ -74,7 +73,6 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
         
         // Verifikasi Pembayaran Route
         Route::post('pembayaran/{id}/verifikasi', [SantriController::class, 'verifikasiPembayaran'])->name('pembayaran.verifikasi');
-        
         
         // Class route (harus di akhir untuk menghindari konflik)
         Route::get('{jenjang}/{kelas}', [SantriController::class, 'kelas'])

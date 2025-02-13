@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\PembayaranSpp;
 use App\Models\Santri;
 use App\Models\User;
+use App\Models\MetodePembayaran;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
@@ -12,66 +13,89 @@ class PembayaranSppSeeder extends Seeder
 {
     public function run()
     {
-        // Ambil data santri dan petugas
-        $santri = Santri::all();
         $petugas = User::where('role', 'petugas')->first();
+        $santris = Santri::with(['kategori.tarifTerbaru'])->get();
+        $now = Carbon::now();
 
-        // Status pembayaran yang mungkin
-        $status = ['pending', 'success', 'failed'];
+        // Get metode pembayaran
+        $metodeTunai = MetodePembayaran::where('kode', 'MANUAL_TUNAI')->first()->id;
+        $metodeTransfer = MetodePembayaran::where('kode', 'MANUAL_TRANSFER')->first()->id;
+        $metodeMidtrans = MetodePembayaran::where('kode', 'MIDTRANS')->first()->id;
+        
+        foreach ($santris as $santri) {
+            $tanggalMasuk = Carbon::parse($santri->tanggal_masuk);
+            $nominal = $santri->kategori->tarifTerbaru->nominal ?? 500000;
 
-        // Metode pembayaran yang tersedia
-        $metode = ['tunai', 'transfer', 'midtrans'];
+            // Jika santri sudah lulus, generate pembayaran sampai bulan kelulusan
+            if ($santri->status === 'lulus') {
+                $bulanAkhir = Carbon::create($santri->tahun_tamat, 6, 1); // Juni tahun kelulusan
+            } else {
+                $bulanAkhir = $now;
+            }
 
-        // Generate pembayaran untuk 6 bulan terakhir
-        for ($i = 0; $i < 6; $i++) {
-            $bulan = Carbon::now()->subMonths($i);
+            // Generate data pembayaran dari bulan masuk sampai sekarang/lulus
+            $currentDate = $tanggalMasuk->copy()->startOfMonth();
+            while ($currentDate <= $bulanAkhir) {
+                // Skip jika sudah ada pembayaran
+                $existingPayment = PembayaranSpp::where('santri_id', $santri->id)
+                    ->where('bulan', $currentDate->format('m'))
+                    ->where('tahun', $currentDate->format('Y'))
+                    ->exists();
 
-            foreach ($santri as $s) {
-                // 80% kemungkinan sudah bayar
-                if (rand(1, 100) <= 80) {
+                if (!$existingPayment) {
+                    // Tentukan status pembayaran
+                    // Semakin lama jarak dengan bulan sekarang, semakin besar kemungkinan sudah lunas
+                    $monthsAgo = $currentDate->diffInMonths($now);
+                    $chanceOfPayment = $monthsAgo > 6 ? 90 : (90 - ($monthsAgo * 10));
+                    
+                    if ($santri->status === 'lulus') {
+                        $chanceOfPayment = 100; // Santri lulus pasti sudah lunas
+                    }
+
+                    $isPaid = rand(1, 100) <= $chanceOfPayment;
+                    $status = $isPaid ? PembayaranSpp::STATUS_SUCCESS : PembayaranSpp::STATUS_FAILED;
+
+                    // Generate pembayaran
                     PembayaranSpp::create([
-                        'santri_id' => $s->id,
-                        'tanggal_bayar' => $bulan->format('Y-m-d'),
-                        'bulan' => $bulan->format('m'),
-                        'tahun' => $bulan->format('Y'),
-                        'nominal' => 500000, // Nominal default
-                        'metode_pembayaran' => $metode[array_rand($metode)],
-                        'status' => $status[array_rand($status)],
-                        'keterangan' => 'Pembayaran SPP ' . $bulan->format('F Y'),
-                        'petugas_id' => $petugas->id
+                        'santri_id' => $santri->id,
+                        'tanggal_bayar' => $status === PembayaranSpp::STATUS_SUCCESS 
+                            ? $currentDate->copy()->addDays(rand(1, 20))->format('Y-m-d')
+                            : null,
+                        'bulan' => $currentDate->format('m'),
+                        'tahun' => $currentDate->format('Y'),
+                        'nominal' => $nominal,
+                        'metode_pembayaran_id' => $status === PembayaranSpp::STATUS_SUCCESS 
+                            ? (rand(1, 100) <= 70 ? $metodeTunai : $metodeTransfer)
+                            : null,
+                        'status' => $status,
+                        'keterangan' => $status === PembayaranSpp::STATUS_SUCCESS 
+                            ? 'Pembayaran SPP ' . $currentDate->translatedFormat('F Y')
+                            : 'Belum dibayar'
                     ]);
                 }
+
+                $currentDate->addMonth();
             }
         }
 
-        // Generate beberapa pembayaran hari ini
-        foreach ($santri->random(2) as $s) {
-            PembayaranSpp::create([
-                'santri_id' => $s->id,
-                'tanggal_bayar' => now(),
-                'bulan' => now()->format('m'),
-                'tahun' => now()->format('Y'),
-                'nominal' => 500000,
-                'metode_pembayaran' => $metode[array_rand($metode)],
-                'status' => 'success',
-                'keterangan' => 'Pembayaran SPP ' . now()->format('F Y'),
-                'petugas_id' => $petugas->id
-            ]);
-        }
+        // Generate beberapa pembayaran online pending
+        $activeSantris = Santri::where('status', 'aktif')->get()->random(5);
+        foreach ($activeSantris as $santri) {
+            $pembayaran = PembayaranSpp::where('santri_id', $santri->id)
+                ->where('status', PembayaranSpp::STATUS_FAILED)
+                ->first();
 
-        // Generate beberapa pembayaran pending
-        foreach ($santri->random(3) as $s) {
-            PembayaranSpp::create([
-                'santri_id' => $s->id,
-                'tanggal_bayar' => now(),
-                'bulan' => now()->format('m'),
-                'tahun' => now()->format('Y'),
-                'nominal' => 500000,
-                'metode_pembayaran' => 'transfer',
-                'status' => 'pending',
-                'keterangan' => 'Menunggu pembayaran',
-                'petugas_id' => $petugas->id
-            ]);
+            if ($pembayaran) {
+                $orderId = 'ORDER-' . strtoupper(uniqid());
+                $pembayaran->update([
+                    'metode_pembayaran_id' => $metodeMidtrans,
+                    'status' => PembayaranSpp::STATUS_PENDING,
+                    'order_id' => $orderId,
+                    'snap_token' => 'fake-snap-token-' . $orderId,
+                    'payment_type' => 'bank_transfer',
+                    'keterangan' => 'Menunggu pembayaran via bank transfer'
+                ]);
+            }
         }
     }
 }

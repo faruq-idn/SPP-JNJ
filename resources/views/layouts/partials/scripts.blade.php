@@ -119,6 +119,11 @@ function confirmLogout() {
 }
 </script>
 
+@if(Auth::user()->role === 'admin' || Auth::user()->role === 'petugas')
+<!-- Admin & Petugas shared scripts -->
+<script src="{{ asset('js/pembayaran.js') }}"></script>
+@endif
+
 @if(Auth::user()->role === 'admin')
 <!-- Admin specific scripts -->
 <script src="{{ asset('js/kenaikan-kelas.js') }}"></script>

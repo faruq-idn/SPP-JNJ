@@ -26,28 +26,41 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
+        // Log login attempt
+        Log::info('Login attempt', [
+            'email' => $request->email,
+            'ip' => $request->ip()
+        ]);
+
         // Throttle login attempts
         if (! RateLimiter::tooManyAttempts($request->email, 5)) {
             if (Auth::attempt($request->only('email', 'password'))) {
-                RateLimiter::clear($request->email);
-                $request->session()->regenerate();
-
                 $user = Auth::user();
-                Log::info('User Login', [
+                
+                // Log successful login
+                Log::info('User logged in successfully', [
                     'user_id' => $user->id,
+                    'email' => $user->email,
                     'role' => $user->role
                 ]);
 
-                // Redirect langsung ke dashboard sesuai role tanpa memperhatikan intended URL
-                if ($user->role === 'admin') {
-                    return redirect()->route('admin.dashboard');
-                } elseif ($user->role === 'petugas') {
-                    return redirect()->route('petugas.dashboard');
-                } elseif ($user->role === 'wali') {
-                    return redirect()->route('wali.dashboard');
-                }
+                RateLimiter::clear($request->email);
+                $request->session()->regenerate();
+
+                // Direct URL redirection based on role
+                return match($user->role) {
+                    'admin' => redirect('/admin/dashboard'),
+                    'petugas' => redirect('/petugas/dashboard'),
+                    'wali' => redirect('/wali/dashboard'),
+                    default => redirect('/')
+                };
             } else {
                 RateLimiter::hit($request->email);
+
+                Log::warning('Login failed - Invalid credentials', [
+                    'email' => $request->email,
+                    'ip' => $request->ip()
+                ]);
 
                 throw ValidationException::withMessages([
                     'email' => 'Email atau password salah.',
@@ -62,19 +75,15 @@ class LoginController extends Controller
         }
     }
 
-    /**
-     * Get the rate limiting throttle key for the login requests.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return string
-     */
-    protected function throttleKey(Request $request): string
-    {
-        return Str::transliterate(strtolower($request->input('email').'|'.$request->ip()));
-    }
-
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        
+        Log::info('User logging out', [
+            'user_id' => $user ? $user->id : 'none',
+            'role' => $user ? $user->role : 'none'
+        ]);
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

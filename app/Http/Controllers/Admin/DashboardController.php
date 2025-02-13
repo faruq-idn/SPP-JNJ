@@ -7,79 +7,85 @@ use App\Models\Santri;
 use App\Models\PembayaranSpp;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
+    public function __construct()
+    {
+        Log::info('AdminDashboardController initialized', [
+            'user_id' => Auth::id(),
+            'session_id' => session()->getId()
+        ]);
+    }
+
     public function index()
     {
-        // Statistik Umum
-        $totalSantri = Santri::where('status', 'aktif')->count();
-        $totalPetugas = User::where('role', 'petugas')->count();
-        $totalWali = User::where('role', 'wali')->count();
+        Log::info('Admin dashboard accessed', [
+            'user_id' => Auth::id(),
+            'role' => Auth::user()->role,
+            'session_id' => session()->getId()
+        ]);
 
-        // Statistik Pembayaran
-        $totalPembayaran = PembayaranSpp::where('status', 'success')->count();
-        $totalPenerimaan = PembayaranSpp::where('status', 'success')->sum('nominal');
-        $totalTunggakan = PembayaranSpp::where('status', 'pending')->sum('nominal');
+        try {
+            // Statistik Umum
+            $totalSantri = Santri::where('status', 'aktif')->count();
+            $totalPetugas = User::where('role', 'petugas')->count();
+            $totalWali = User::where('role', 'wali')->count();
 
-        // Statistik per Jenjang
-        $santriPerJenjang = Santri::where('status', 'aktif')
-            ->selectRaw('jenjang, count(*) as total')
-            ->groupBy('jenjang')
-            ->pluck('total', 'jenjang')
-            ->toArray();
+            // Statistik Pembayaran
+            $totalPembayaran = PembayaranSpp::where('status', 'success')->count();
+            $totalPenerimaan = PembayaranSpp::where('status', 'success')->sum('nominal');
+            $totalTunggakan = PembayaranSpp::where('status', 'pending')->sum('nominal');
 
-        // Pembayaran Terbaru
-        $pembayaranTerbaru = PembayaranSpp::with(['santri'])
-            ->latest()
-            ->take(5)
-            ->get();
+            // Statistik per Jenjang
+            $santriPerJenjang = Santri::where('status', 'aktif')
+                ->selectRaw('jenjang, count(*) as total')
+                ->groupBy('jenjang')
+                ->pluck('total', 'jenjang')
+                ->toArray();
 
-        // Santri dengan Tunggakan Terbanyak
-        $santriTunggakan = Santri::withCount(['pembayaran' => function($query) {
-                $query->where('status', 'pending');
-            }])
-            ->having('pembayaran_count', '>', 0)
-            ->orderByDesc('pembayaran_count')
-            ->take(5)
-            ->get();
-
-        return view('admin.dashboard', compact(
-            'totalSantri',
-            'totalPetugas',
-            'totalWali',
-            'totalPembayaran',
-            'totalPenerimaan',
-            'totalTunggakan',
-            'santriPerJenjang',
-            'pembayaranTerbaru',
-            'santriTunggakan'
-        ));
-    }
-
-    public function petugas()
-    {
-        $data = [
-            'totalSantri' => Santri::count(),
-            'totalPenerimaan' => PembayaranSpp::where('status', 'success')->sum('nominal'),
-            'pembayaranHariIni' => PembayaranSpp::whereDate('created_at', today())->count(),
-            'pembayaranTerbaru' => PembayaranSpp::with('santri')
+            // Pembayaran Terbaru
+            $pembayaranTerbaru = PembayaranSpp::with(['santri'])
                 ->latest()
                 ->take(5)
-                ->get(),
-        ];
+                ->get();
 
-        return view('petugas.dashboard', $data);
-    }
+            // Santri dengan Tunggakan Terbanyak
+            $santriTunggakan = Santri::withCount(['pembayaran' => function($query) {
+                    $query->where('status', 'pending');
+                }])
+                ->having('pembayaran_count', '>', 0)
+                ->orderByDesc('pembayaran_count')
+                ->take(5)
+                ->get();
 
-    public function wali()
-    {
-        $santri = Santri::where('wali_id', Auth::id())->first();
-        $pembayaran = PembayaranSpp::where('santri_id', $santri->id ?? 0)
-            ->latest()
-            ->take(5)
-            ->get();
+            Log::info('Admin dashboard data loaded successfully', [
+                'total_santri' => $totalSantri,
+                'total_pembayaran' => $totalPembayaran,
+                'session_id' => session()->getId()
+            ]);
 
-        return view('wali.dashboard', compact('santri', 'pembayaran'));
+            return view('admin.dashboard', compact(
+                'totalSantri',
+                'totalPetugas',
+                'totalWali',
+                'totalPembayaran',
+                'totalPenerimaan',
+                'totalTunggakan',
+                'santriPerJenjang',
+                'pembayaranTerbaru',
+                'santriTunggakan'
+            ));
+
+        } catch (\Exception $e) {
+            Log::error('Error loading admin dashboard', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'session_id' => session()->getId()
+            ]);
+
+            return back()->with('error', 'Terjadi kesalahan saat memuat dashboard');
+        }
     }
 }

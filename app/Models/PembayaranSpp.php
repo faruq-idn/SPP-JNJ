@@ -11,6 +11,10 @@ class PembayaranSpp extends Model
 {
     protected $table = 'pembayaran_spp';
 
+    const STATUS_SUCCESS = 'success';
+    const STATUS_FAILED = 'failed';
+    const STATUS_PENDING = 'pending';
+
     protected $fillable = [
         'santri_id',
         'bulan',
@@ -24,7 +28,8 @@ class PembayaranSpp extends Model
         'payment_type',
         'transaction_id',
         'payment_details',
-        'fraud_status'
+        'fraud_status',
+        'metode_pembayaran_id'
     ];
 
     protected $casts = [
@@ -54,17 +59,17 @@ class PembayaranSpp extends Model
 
     public function getIsLunasAttribute(): bool
     {
-        return $this->status === 'success';
+        return $this->status === self::STATUS_SUCCESS;
     }
 
     public function scopeLunas($query)
     {
-        return $query->where('status', 'success');
+        return $query->where('status', self::STATUS_SUCCESS);
     }
 
     public function scopeBelumLunas($query)
     {
-        return $query->where('status', '!=', 'success');
+        return $query->where('status', '!=', self::STATUS_SUCCESS);
     }
 
     protected static function booted()

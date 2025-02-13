@@ -15,7 +15,7 @@ class UpdateStatusSantriTable extends Migration
 
         Schema::table('santri', function (Blueprint $table) {
             // Buat ulang kolom status dengan tipe enum yang benar
-            $table->enum('status', ['aktif', 'non-aktif'])->default('aktif')->after('kelas');
+            $table->enum('status', ['aktif', 'non-aktif', 'lulus'])->default('aktif')->after('kelas');
         });
     }
 

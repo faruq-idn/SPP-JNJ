@@ -1,4 +1,4 @@
-<?php
+o<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->enum('jenjang', ['SMP', 'SMA']);
             $table->string('kelas');
             $table->foreignId('kategori_id')->constrained('kategori_santri');
-            $table->enum('status', ['aktif', 'non-aktif'])->default('aktif');
+            $table->enum('status', ['aktif', 'non-aktif', 'lulus'])->default('aktif');
             $table->enum('status_spp', ['Lunas', 'Belum Lunas'])->default('Belum Lunas');
             $table->timestamps();
 

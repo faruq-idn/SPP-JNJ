@@ -5,6 +5,7 @@ namespace Database\Migrations;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Models\PembayaranSpp;
 
 return new class extends Migration
 {
@@ -26,7 +27,7 @@ return new class extends Migration
             $table->string('payment_type')->nullable();
             $table->string('transaction_id')->nullable();
             $table->json('payment_details')->nullable();
-            $table->string('status')->default('unpaid');
+            $table->string('status')->default(PembayaranSpp::STATUS_FAILED);
 
             $table->timestamps();
 

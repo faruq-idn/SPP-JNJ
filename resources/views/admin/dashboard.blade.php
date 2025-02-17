@@ -9,7 +9,7 @@
         <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
     </div>
 
-    <!-- Statistik Cards -->
+    <!-- Statistik Cards Row 1 -->
     <div class="row g-3 mb-4">
         <!-- Total Santri -->
         <div class="col-xl-3 col-md-6">
@@ -88,6 +88,105 @@
                     <div class="d-flex justify-content-between text-muted small">
                         <span>Petugas: {{ $totalPetugas }}</span>
                         <span>Wali: {{ $totalWali }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Navigasi Bulan -->
+    <div class="d-flex justify-content-center align-items-center mb-4">
+        <a href="{{ route('admin.dashboard', ['bulan' => $prevMonth->format('m'), 'tahun' => $prevMonth->format('Y')]) }}"
+           class="btn btn-outline-secondary"
+           target="_self">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        <h5 class="mb-0 mx-4">{{ $selectedDate->translatedFormat('F Y') }}</h5>
+        @if($canGoNext)
+        <a href="{{ route('admin.dashboard', ['bulan' => $nextMonth->format('m'), 'tahun' => $nextMonth->format('Y')]) }}"
+           class="btn btn-outline-secondary"
+           target="_self">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        @else
+        <button class="btn btn-outline-secondary" disabled>
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        @endif
+    </div>
+
+    <!-- Statistik Cards Row 2 -->
+    <div class="row g-3 mb-4">
+        <!-- Total Pembayaran Bulan Ini -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-success bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-calendar-check text-success fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted mb-1">Pembayaran {{ $selectedDate->translatedFormat('F Y') }}</h6>
+                            <h4 class="card-title mb-0">Rp {{ number_format($pembayaranBulanIni, 0, ',', '.') }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tunggakan Bulan Ini -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-danger bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-calendar-times text-danger fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted mb-1">Tunggakan {{ $selectedDate->translatedFormat('F Y') }}</h6>
+                            <h4 class="card-title mb-0">Rp {{ number_format($tunggakanBulanIni, 0, ',', '.') }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jumlah Santri Menunggak -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-user-clock text-warning fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted mb-1">Santri Menunggak</h6>
+                            <h4 class="card-title mb-0">{{ number_format($jumlahSantriMenunggak) }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Santri per Kategori -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-layer-group text-primary fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted mb-1">Santri per Kategori</h6>
+                        </div>
+                    </div>
+                    <div class="small">
+                        @foreach($santriPerKategori as $kategori => $jumlah)
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>{{ $kategori }}</span>
+                                <span class="fw-bold">{{ $jumlah }}</span>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>

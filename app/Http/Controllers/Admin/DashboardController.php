@@ -8,6 +8,8 @@ use App\Models\PembayaranSpp;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -19,7 +21,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
         Log::info('Admin dashboard accessed', [
             'user_id' => Auth::id(),
@@ -28,15 +30,35 @@ class DashboardController extends Controller
         ]);
 
         try {
+            // Get selected month and year or default to current
+            $selectedDate = $request->filled(['bulan', 'tahun'])
+                ? Carbon::createFromDate($request->tahun, $request->bulan, 1)
+                : now();
+
+            $bulanIni = $selectedDate->format('m');
+            $tahunIni = $selectedDate->format('Y');
+
+            // Get prev and next month dates
+            $prevMonth = (clone $selectedDate)->subMonth();
+            $nextMonth = (clone $selectedDate)->addMonth();
+
+            // Don't allow future months
+            $canGoNext = $nextMonth->lt(now());
+
             // Statistik Umum
             $totalSantri = Santri::where('status', 'aktif')->count();
             $totalPetugas = User::where('role', 'petugas')->count();
             $totalWali = User::where('role', 'wali')->count();
 
-            // Statistik Pembayaran
-            $totalPembayaran = PembayaranSpp::where('status', 'success')->count();
-            $totalPenerimaan = PembayaranSpp::where('status', 'success')->sum('nominal');
-            $totalTunggakan = PembayaranSpp::where('status', 'pending')->sum('nominal');
+            // Statistik per Kategori
+            $santriPerKategori = Santri::where('status', 'aktif')
+                ->selectRaw('kategori_id, count(*) as total')
+                ->groupBy('kategori_id')
+                ->with('kategori')
+                ->get()
+                ->mapWithKeys(function ($item) {
+                    return [$item->kategori->nama => $item->total];
+                });
 
             // Statistik per Jenjang
             $santriPerJenjang = Santri::where('status', 'aktif')
@@ -45,9 +67,43 @@ class DashboardController extends Controller
                 ->pluck('total', 'jenjang')
                 ->toArray();
 
-            // Pembayaran Terbaru
+            // Statistik Pembayaran
+            $bulanIni = now()->format('m');
+            $tahunIni = now()->format('Y');
+
+            $totalPembayaran = PembayaranSpp::where('status', 'success')->count();
+            $totalPenerimaan = PembayaranSpp::where('status', 'success')->sum('nominal');
+            
+            // Total pembayaran bulan yang dipilih (yang sudah lunas)
+            $pembayaranBulanIni = PembayaranSpp::query()
+                ->where('status', 'success')
+                ->where('bulan', $selectedDate->format('m'))
+                ->where('tahun', $selectedDate->format('Y'))
+                ->sum('nominal');
+
+            // Tunggakan bulan yang dipilih
+            $tunggakanBulanIni = PembayaranSpp::query()
+                ->whereIn('status', ['pending', 'unpaid'])
+                ->where('bulan', $selectedDate->format('m'))
+                ->where('tahun', $selectedDate->format('Y'))
+                ->sum('nominal');
+
+            // Total tunggakan semua santri
+            $totalTunggakan = PembayaranSpp::whereIn('status', ['pending', 'unpaid'])->sum('nominal');
+
+            // Jumlah santri yang menunggak untuk bulan yang dipilih
+            $jumlahSantriMenunggak = Santri::whereHas('pembayaran', function($query) use ($selectedDate) {
+                    $query->whereIn('status', ['pending', 'unpaid'])
+                          ->where('bulan', $selectedDate->format('m'))
+                          ->where('tahun', $selectedDate->format('Y'));
+                })
+                ->where('status', 'aktif')
+                ->count();
+
+            // Pembayaran Terbaru (hanya yang lunas)
             $pembayaranTerbaru = PembayaranSpp::with(['santri'])
-                ->latest()
+                ->where('status', 'success')
+                ->latest('tanggal_bayar')
                 ->take(5)
                 ->get();
 
@@ -74,8 +130,16 @@ class DashboardController extends Controller
                 'totalPenerimaan',
                 'totalTunggakan',
                 'santriPerJenjang',
+                'santriPerKategori',
                 'pembayaranTerbaru',
-                'santriTunggakan'
+                'santriTunggakan',
+                'pembayaranBulanIni',
+                'tunggakanBulanIni',
+                'jumlahSantriMenunggak',
+                'selectedDate',
+                'prevMonth',
+                'nextMonth',
+                'canGoNext'
             ));
 
         } catch (\Exception $e) {

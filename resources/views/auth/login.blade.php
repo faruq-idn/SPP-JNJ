@@ -11,7 +11,7 @@
 
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
-                    <form method="POST" action="{{ route('login.submit') }}" class="needs-validation" novalidate>
+                    <form method="POST" action="{{ route('login.submit') }}">
                         @csrf
 
                         <div class="form-floating mb-3">
@@ -28,9 +28,9 @@
                             <input type="password" class="form-control @error('password') is-invalid @enderror"
                                 id="password" name="password" placeholder="Password" required>
                             <label for="password">Password</label>
-                            <div class="position-absolute end-0 top-50 translate-middle-y pe-3" style="z-index: 2; right: 2.5rem;">
-                                <i id="passwordSuccessCheck" class="fas fa-check text-success me-2 d-none"></i>
-                                <i class="far fa-eye-slash toggle-password" style="cursor: pointer; right: -2.5rem;"></i>
+                            <div class="position-absolute end-0 top-50 translate-middle-y d-flex pe-3" style="padding-right: 2.5rem !important;">
+                                <i id="passwordSuccessCheck" class="fas fa-check text-success me-4 d-none"></i>
+                                <i class="far fa-eye-slash toggle-password" style="cursor: pointer; margin-right: 0.5rem;"></i>
                             </div>
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -91,17 +91,6 @@ $(document).ready(function() {
         }
     });
 
-    // Form validation
-    const forms = document.querySelectorAll('.needs-validation');
-    Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        }, false);
-    });
 
     // Animation on load
     $('.card').hide().fadeIn(1000);
@@ -145,14 +134,59 @@ $(document).ready(function() {
     });
 
     // Handle login button loading state
-    $('form').submit(function() {
+    $('form').submit(function(e) {
         const loginButton = $('#loginButton');
         const buttonText = $('#buttonText');
         const loadingSpinner = $('#loadingSpinner');
+        
+        // Aktivasi loading state
+        const setLoading = (isLoading) => {
+            loginButton.prop('disabled', isLoading);
+            buttonText.text(isLoading ? 'Memproses' : 'Masuk');
+            isLoading ? loadingSpinner.removeClass('d-none') : loadingSpinner.addClass('d-none');
+        };
 
-        loginButton.prop('disabled', true);
-        buttonText.text('Memproses');
-        loadingSpinner.removeClass('d-none');
+        setLoading(true);
+
+        // Reset validations
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').remove();
+        $('#passwordSuccessCheck').addClass('d-none');
+
+        // Handle form submission
+        fetch(this.action, {
+            method: 'POST',
+            body: new FormData(this),
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json().then(data => {
+            if (!response.ok) {
+                throw new Error(data.message || 'Email atau password salah.');
+            }
+            return data;
+        }))
+        .then(data => {
+            // Hanya tampilkan centang dan redirect jika login berhasil
+            if (data.url) {
+                $('#passwordSuccessCheck').removeClass('d-none');
+                $('#email, #password').removeClass('is-invalid');
+                setTimeout(() => {
+                    window.location.href = data.url;
+                }, 500);
+            }
+        })
+        .catch(error => {
+            // Reset semua state dan tampilkan error
+            setLoading(false);
+            $('#passwordSuccessCheck').addClass('d-none');
+            $('#email, #password').addClass('is-invalid');
+            $('#email').after(`<div class="invalid-feedback">${error.message}</div>`);
+        });
+
+        e.preventDefault();
     });
 });
 </script>

@@ -44,9 +44,50 @@
         </div>
     </div>
 
+    <!-- Filter Form -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('admin.laporan.tunggakan') }}" class="row g-3">
+                <div class="col-md-4">
+                    <label for="jenjang" class="form-label">Jenjang</label>
+                    <select class="form-select" name="jenjang" id="jenjang">
+                        <option value="">Semua Jenjang</option>
+                        <option value="SMP" {{ request('jenjang') == 'SMP' ? 'selected' : '' }}>SMP</option>
+                        <option value="SMA" {{ request('jenjang') == 'SMA' ? 'selected' : '' }}>SMA</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="kelas" class="form-label">Kelas</label>
+                    <select class="form-select" name="kelas" id="kelas">
+                        <option value="">Semua Kelas</option>
+                        @if(request('jenjang') == 'SMP')
+                            <option value="7A" {{ request('kelas') == '7A' ? 'selected' : '' }}>7A</option>
+                            <option value="7B" {{ request('kelas') == '7B' ? 'selected' : '' }}>7B</option>
+                            <option value="8A" {{ request('kelas') == '8A' ? 'selected' : '' }}>8A</option>
+                            <option value="8B" {{ request('kelas') == '8B' ? 'selected' : '' }}>8B</option>
+                            <option value="9A" {{ request('kelas') == '9A' ? 'selected' : '' }}>9A</option>
+                            <option value="9B" {{ request('kelas') == '9B' ? 'selected' : '' }}>9B</option>
+                        @elseif(request('jenjang') == 'SMA')
+                            <option value="10A" {{ request('kelas') == '10A' ? 'selected' : '' }}>10A</option>
+                            <option value="10B" {{ request('kelas') == '10B' ? 'selected' : '' }}>10B</option>
+                            <option value="11A" {{ request('kelas') == '11A' ? 'selected' : '' }}>11A</option>
+                            <option value="11B" {{ request('kelas') == '11B' ? 'selected' : '' }}>11B</option>
+                            <option value="12A" {{ request('kelas') == '12A' ? 'selected' : '' }}>12A</option>
+                            <option value="12B" {{ request('kelas') == '12B' ? 'selected' : '' }}>12B</option>
+                        @endif
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Filter</button>
+                    <a href="{{ route('admin.laporan.tunggakan') }}" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Summary Card -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl-6 col-md-6 mb-4">
             <div class="card border-left-warning shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
@@ -62,25 +103,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-danger shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Rata-rata Tunggakan</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                Rp {{ number_format($totalTunggakan / max(count($santri), 1), 0, ',', '.') }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl-6 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
@@ -92,24 +115,6 @@
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Rata-rata Lama Tunggakan</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ number_format($santri->avg('tunggakan_count'), 1) }} Bulan
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -179,6 +184,25 @@ $(document).ready(function() {
             url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json'
         },
         order: [[7, 'desc']] // Sort by jumlah bulan descending
+    });
+
+    // Handle jenjang change
+    $('#jenjang').on('change', function() {
+        const jenjang = $(this).val();
+        const kelasSelect = $('#kelas');
+        kelasSelect.empty().append('<option value="">Semua Kelas</option>');
+        
+        if (jenjang === 'SMP') {
+            const kelasSMP = ['7A', '7B', '8A', '8B', '9A', '9B'];
+            kelasSMP.forEach(kelas => {
+                kelasSelect.append(`<option value="${kelas}">${kelas}</option>`);
+            });
+        } else if (jenjang === 'SMA') {
+            const kelasSMA = ['10A', '10B', '11A', '11B', '12A', '12B'];
+            kelasSMA.forEach(kelas => {
+                kelasSelect.append(`<option value="${kelas}">${kelas}</option>`);
+            });
+        }
     });
 });
 

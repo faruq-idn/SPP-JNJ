@@ -1,0 +1,103 @@
+/* Custom CSS for Wali Dashboard Responsive Design */
+
+/* Font Sizes */
+.fs-7 {
+    font-size: 0.875rem;
+}
+
+/* Navbar Styles */
+.navbar {
+    height: 3.5rem;
+}
+
+.navbar-brand {
+    line-height: 1;
+}
+
+.bottom-nav {
+    height: 4rem;
+}
+
+/* Responsive Font Sizes */
+@media (min-width: 768px) {
+    .fs-md-6 {
+        font-size: 1rem !important;
+    }
+    .fs-md-5 {
+        font-size: 1.125rem !important;
+    }
+    .fs-md-4 {
+        font-size: 1.25rem !important;
+    }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 767px) {
+    .card {
+        border-radius: 0.5rem !important;
+    }
+    
+    .card-body {
+        padding: 0.75rem !important;
+    }
+    
+    .status-badge {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    .progress {
+        height: 6px !important;
+    }
+
+    /* Add bottom padding to prevent content from being hidden by bottom navbar */
+    .container-fluid {
+        padding-bottom: 5rem !important;
+    }
+    
+    /* Status Card Responsive */
+    .status-spp-card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .status-spp-card .status-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .status-spp-card .status-badges {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    /* Tunggakan Card Responsive */
+    .tunggakan-item {
+        padding: 0.75rem !important;
+    }
+    
+    .tunggakan-item .btn {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    
+    /* Text Adjustments */
+    .text-mobile-center {
+        text-align: center !important;
+    }
+    
+    .stack-mobile {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Bottom Navigation Adjustments */
+    .nav-link {
+        font-size: 0.75rem;
+        padding: 0.5rem 0;
+    }
+    
+    .nav-link i {
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+    }
+}

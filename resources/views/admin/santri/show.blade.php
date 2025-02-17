@@ -31,15 +31,15 @@
     </div>
 
     <div class="row">
-        <!-- Data Santri -->
+        <!-- Data Santri & Wali-->
         <div class="col-md-6 mb-4">
             @include('shared.santri._data_santri')
+
+            @include('shared.santri._wali_info')
         </div>
 
-        <!-- Data Wali & Kategori -->
+        <!-- Kategori -->
         <div class="col-md-6 mb-4">
-            @include('shared.santri._wali_info')
-
             @include('shared.santri._kategori_tarif')
         </div>
 

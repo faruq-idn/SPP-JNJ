@@ -71,8 +71,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
         Route::post('kenaikan-kelas', [KenaikanKelasController::class, 'kenaikanKelas'])->name('kenaikan-kelas');
         Route::post('batal-kenaikan-kelas', [KenaikanKelasController::class, 'batalKenaikanKelas'])->name('batal-kenaikan-kelas');
         
-        // Verifikasi Pembayaran Route
+        // Pembayaran Routes
         Route::post('pembayaran/{id}/verifikasi', [SantriController::class, 'verifikasiPembayaran'])->name('pembayaran.verifikasi');
+        Route::post('pembayaran/{id}/reset', [SantriController::class, 'resetPembayaran'])->name('pembayaran.reset');
+        Route::delete('pembayaran/{id}/hapus', [SantriController::class, 'hapusPembayaran'])->name('pembayaran.hapus');
         
         // Class route (harus di akhir untuk menghindari konflik)
         Route::get('{jenjang}/{kelas}', [SantriController::class, 'kelas'])

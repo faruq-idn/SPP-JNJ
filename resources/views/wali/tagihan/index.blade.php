@@ -3,8 +3,8 @@
 @section('title', 'Tagihan & Riwayat SPP')
 
 @section('content')
-<div class="container-fluid p-3 p-md-4">
-    <div class="row gy-3">
+<div class="container-fluid p-2 p-md-4 mb-5">
+    <div class="row g-2 g-md-3">
         <div class="col-12">
             @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -25,93 +25,24 @@
             </h2>
 
             @if($santri_list->count() > 1)
-            <div class="card shadow-sm rounded-3 border-0 mb-4">
-                <div class="card-body">
-                    <form action="{{ route('wali.change-santri') }}" method="POST" class="d-flex align-items-center">
+            <div class="card shadow-sm rounded-3 border-0 mb-3 mb-md-4">
+                <div class="card-body p-2 p-md-3">
+                    <form action="{{ route('wali.change-santri') }}" method="POST">
                         @csrf
-                        <label class="me-2 fw-bold">Pilih Santri:</label>
-                        <select name="santri_id" class="form-select me-2" onchange="this.form.submit()">
-                            @foreach($santri_list as $s)
-                            <option value="{{ $s->id }}" {{ $santri->id == $s->id ? 'selected' : '' }}>
-                                {{ $s->nama }} ({{ str_pad($s->nisn, 5, '0', STR_PAD_LEFT) }})
-                            </option>
-                            @endforeach
-                        </select>
+                        <div class="vstack gap-2">
+                            <label class="fw-bold fs-7 fs-md-6">Pilih Santri:</label>
+                            <select name="santri_id" class="form-select fs-7 fs-md-6" onchange="this.form.submit()">
+                                @foreach($santri_list as $s)
+                                <option value="{{ $s->id }}" {{ $santri->id == $s->id ? 'selected' : '' }}>
+                                    {{ $s->nama }} ({{ str_pad($s->nisn, 5, '0', STR_PAD_LEFT) }})
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </form>
                 </div>
             </div>
             @endif
-
-            <!-- Ringkasan Pembayaran -->
-            <div class="card shadow-sm rounded-3 border-0 mb-4">
-                <div class="card-body p-3 p-md-4">
-                    <h5 class="card-title fw-bold text-primary mb-3">Ringkasan Pembayaran</h5>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="p-3 rounded-3 bg-light">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="bg-primary bg-opacity-10 p-2 rounded">
-                                        <i class="fas fa-user-graduate text-primary"></i>
-                                    </div>
-                                    <div>
-                                        <small class="text-muted d-block">Santri</small>
-                                        <span class="fw-bold">{{ $santri->nama }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 rounded-3 bg-light">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="bg-info bg-opacity-10 p-2 rounded">
-                                        <i class="fas fa-tags text-info"></i>
-                                    </div>
-                                    <div>
-                                        <small class="text-muted d-block">Kategori</small>
-                                        <span class="fw-bold">{{ $santri->kategori->nama }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 rounded-3 bg-light">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="bg-success bg-opacity-10 p-2 rounded">
-                                        <i class="fas fa-money-bill text-success"></i>
-                                    </div>
-                                    <div>
-                                        <small class="text-muted d-block">Tarif Bulanan</small>
-                                        <span class="fw-bold">Rp {{ number_format($tarif->nominal ?? 0, 0, ',', '.') }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Status SPP -->
-            <div class="card shadow-sm rounded-3 border-0 mb-4">
-                <div class="card-body p-3 p-md-4">
-                    <div class="d-flex align-items-center justify-content-between gap-3 p-3 rounded-3 {{ $statusSpp == 'Lunas' ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10' }}" style="border: 1px solid {{ $statusSpp == 'Lunas' ? '#19875414' : '#ffc10714' }}">
-                        <div class="d-flex align-items-center gap-3">
-                            <div>
-                                <i class="fas fa-chart-pie fa-2x {{ $statusSpp == 'Lunas' ? 'text-success' : 'text-warning' }}"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted small">Status SPP</div>
-                                <div class="fw-bold fs-5">{{ $statusSpp }}</div>
-                            </div>
-                        </div>
-                        @if($statusSpp != 'Lunas')
-                        <div>
-                            <div class="text-muted small">Total Tunggakan</div>
-                            <div class="fw-bold fs-5 text-danger">Rp {{ number_format($totalTunggakan, 0, ',', '.') }}</div>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
 
             <!-- Riwayat Pembayaran per Tahun -->
             @foreach($pembayaranPerTahun as $tahun => $pembayaranBulanan)
@@ -119,7 +50,46 @@
                 <div class="card-header bg-transparent">
                     <h5 class="card-title mb-0">Tahun {{ $tahun }}</h5>
                 </div>
-                <div class="table-responsive">
+                <!-- Mobile View -->
+                <div class="d-block d-md-none">
+                    <div class="vstack gap-2">
+                        @foreach($pembayaranBulanan as $pembayaran)
+                        <div class="card border-0 bg-light shadow-sm"
+                             style="cursor: pointer"
+                             onclick="showDetailPembayaran({{ $pembayaran->id }}, '{{ $pembayaran->nama_bulan }}', {{ $pembayaran->nominal }}, '{{ $pembayaran->status }}', '{{ $pembayaran->tanggal_bayar ? $pembayaran->tanggal_bayar->format('d/m/Y H:i') : '-' }}', '{{ $pembayaran->metode_pembayaran ? $pembayaran->metode_pembayaran->nama : '-' }}', '{{ $pembayaran->tahun }}')">
+                            <div class="card-body p-2">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="vstack gap-1">
+                                        <span class="fw-bold fs-6">{{ $pembayaran->nama_bulan }}</span>
+                                        <span class="badge bg-{{ $pembayaran->status == 'success' ? 'success' : ($pembayaran->status == 'pending' ? 'warning' : 'danger') }} fs-7">
+                                            @if($pembayaran->status == 'success')
+                                                Lunas
+                                            @elseif($pembayaran->status == 'pending')
+                                                Pending
+                                            @else
+                                                Belum Lunas
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold text-primary fs-7">
+                                            Rp {{ number_format($pembayaran->nominal, 0, ',', '.') }}
+                                        </div>
+                                        @if($pembayaran->tanggal_bayar)
+                                        <small class="text-muted fs-7">
+                                            {{ $pembayaran->tanggal_bayar->format('d/m/Y H:i') }}
+                                        </small>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Desktop View -->
+                <div class="table-responsive d-none d-md-block">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-light">
                             <tr>
@@ -158,44 +128,49 @@
 </div>
 
 <!-- Modal Detail Pembayaran -->
-<div class="modal fade" id="modalDetailPembayaran" tabindex="-1">
+<div class="modal fade" id="modalDetailPembayaran" tabindex="-1" inert>
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Detail Pembayaran SPP</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="mb-4">
-                    <h6 class="mb-3 fw-bold text-primary">Informasi Tagihan</h6>
-                    <table class="table table-sm table-borderless">
-                        <tr>
-                            <td width="40%">Periode</td>
-                            <td><span id="detail-bulan" class="fw-bold"></span> <span id="detail-tahun"></span></td>
-                        </tr>
-                        <tr>
-                            <td>Status</td>
-                            <td><span id="detail-status"></span></td>
-                        </tr>
-                        <tr>
-                            <td>Nominal</td>
-                            <td class="fw-bold text-primary">Rp <span id="detail-nominal"></span></td>
-                        </tr>
-                    </table>
+            <div class="modal-body p-2 p-md-3">
+                <div class="mb-3 mb-md-4">
+                    <h6 class="fs-7 fs-md-6 mb-2 mb-md-3 fw-bold text-primary">Informasi Tagihan</h6>
+                    <div class="vstack gap-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted fs-7 fs-md-6">Periode</span>
+                            <div class="text-end">
+                                <span id="detail-bulan" class="fw-bold fs-7 fs-md-6"></span>
+                                <span id="detail-tahun" class="fs-7 fs-md-6"></span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted fs-7 fs-md-6">Status</span>
+                            <span id="detail-status"></span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted fs-7 fs-md-6">Nominal</span>
+                            <div class="fw-bold text-primary fs-7 fs-md-6">
+                                Rp <span id="detail-nominal"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mb-4" id="detail-pembayaran-info">
-                    <h6 class="mb-3 fw-bold text-success">Informasi Pembayaran</h6>
-                    <table class="table table-sm table-borderless">
-                        <tr>
-                            <td width="40%">Tanggal</td>
-                            <td><span id="detail-tanggal"></span></td>
-                        </tr>
-                        <tr>
-                            <td>Metode</td>
-                            <td><span id="detail-metode" class="badge bg-info"></span></td>
-                        </tr>
-                    </table>
+                <div class="mb-3 mb-md-4" id="detail-pembayaran-info">
+                    <h6 class="fs-7 fs-md-6 mb-2 mb-md-3 fw-bold text-success">Informasi Pembayaran</h6>
+                    <div class="vstack gap-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted fs-7 fs-md-6">Tanggal</span>
+                            <span id="detail-tanggal" class="fs-7 fs-md-6"></span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted fs-7 fs-md-6">Metode</span>
+                            <span id="detail-metode" class="badge bg-info fs-7 fs-md-6"></span>
+                        </div>
+                    </div>
                 </div>
                 
                 @php
@@ -203,17 +178,23 @@
                     $metode_online = App\Models\MetodePembayaran::where('kode', 'MIDTRANS')->first();
                 @endphp
                 <div id="pembayaran-options" class="mt-3">
-                    <h6 class="mb-3">Pilih Metode Pembayaran:</h6>
-                    <div class="d-grid gap-2">
+                    <h6 class="fs-7 fs-md-6 mb-2 mb-md-3 fw-bold">Pilih Metode Pembayaran:</h6>
+                    <div class="vstack gap-2">
                         @foreach($metode_manual as $metode)
-                            <button class="btn {{ $metode->kode == 'MANUAL_TUNAI' ? 'btn-outline-primary' : 'btn-outline-info' }} btn-block" 
+                            <button class="btn {{ $metode->kode == 'MANUAL_TUNAI' ? 'btn-outline-primary' : 'btn-outline-info' }} fs-7 fs-md-6 py-2"
                                     onclick="bayarManual('{{ $metode->kode }}', '{{ $metode->nama }}')">
-                                <i class="fas {{ $metode->kode == 'MANUAL_TUNAI' ? 'fa-money-bill' : 'fa-exchange-alt' }} me-2"></i>{{ $metode->nama }}
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <i class="fas {{ $metode->kode == 'MANUAL_TUNAI' ? 'fa-money-bill' : 'fa-exchange-alt' }}"></i>
+                                    <span>{{ $metode->nama }}</span>
+                                </div>
                             </button>
                         @endforeach
                         @if($metode_online)
-                            <button class="btn btn-primary btn-block" onclick="bayarOnline()">
-                                <i class="fas fa-globe me-2"></i>{{ $metode_online->nama }}
+                            <button class="btn btn-primary fs-7 fs-md-6 py-2" onclick="bayarOnline()">
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <i class="fas fa-globe"></i>
+                                    <span>{{ $metode_online->nama }}</span>
+                                </div>
                             </button>
                         @endif
                     </div>
@@ -285,7 +266,18 @@
         }
         
         // Tampilkan modal
-        const modal = new bootstrap.Modal(document.getElementById('modalDetailPembayaran'));
+        const modalElement = document.getElementById('modalDetailPembayaran');
+        const modal = new bootstrap.Modal(modalElement);
+        
+        // Tangani atribut inert
+        modalElement.addEventListener('shown.bs.modal', function () {
+            modalElement.removeAttribute('inert');
+        });
+        
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            modalElement.setAttribute('inert', '');
+        });
+        
         modal.show();
     }
     

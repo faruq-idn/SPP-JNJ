@@ -3,23 +3,25 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="container-fluid p-3 p-md-4">
-    <div class="row gy-3">
+<div class="container-fluid p-2 p-md-4 mb-5 pb-5">
+    <div class="row g-2 g-md-3">
         
         @if($santri_list->count() > 1)
         <div class="col-12">
             <div class="card shadow-sm rounded-3 border-0">
-                <div class="card-body">
-                    <form action="{{ route('wali.change-santri') }}" method="POST" class="d-flex align-items-center">
+                <div class="card-body p-2 p-md-3">
+                    <form action="{{ route('wali.change-santri') }}" method="POST">
                         @csrf
-                        <label class="me-2 fw-bold">Pilih Santri:</label>
-                        <select name="santri_id" class="form-select me-2" onchange="this.form.submit()">
-                            @foreach($santri_list as $s)
-                            <option value="{{ $s->id }}" {{ $santri->id == $s->id ? 'selected' : '' }}>
-                                {{ $s->nama }} ({{ str_pad($s->nisn, 5, '0', STR_PAD_LEFT) }})
-                            </option>
-                            @endforeach
-                        </select>
+                        <div class="vstack gap-2 gap-md-3">
+                            <label class="fw-bold fs-6">Pilih Santri:</label>
+                            <select name="santri_id" class="form-select" onchange="this.form.submit()">
+                                @foreach($santri_list as $s)
+                                <option value="{{ $s->id }}" {{ $santri->id == $s->id ? 'selected' : '' }}>
+                                    {{ $s->nama }} ({{ str_pad($s->nisn, 5, '0', STR_PAD_LEFT) }})
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -33,33 +35,59 @@
                     <h5 class="card-title fw-bold text-primary mb-3">Informasi Santri</h5>
                     <div class="vstack gap-3">
                         
-                        <div class="bg-light rounded-3 p-3">
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-                                <div>
-                                    <h6 class="fw-bold mb-1">{{ $santri->nama }}</h6>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-secondary">NIS: {{ str_pad($santri->nisn, 5, '0', STR_PAD_LEFT) }}</span>
-                                        <span class="badge bg-info">Jenjang: {{ $santri->jenjang }}</span>
-                                        <span class="badge bg-primary">Kelas {{ $santri->kelas }}</span>
+                        <!-- Informasi Santri -->
+                        <div class="card shadow-sm rounded-3 border-0">
+                            <div class="card-body p-2 p-md-3">
+                                <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+                                    <div class="d-flex flex-column gap-1">
+                                        <h5 class="fw-bold mb-0 fs-4">{{ $santri->nama }}</h5>
+                                        <div class="text-muted fs-6">NIS: {{ str_pad($santri->nisn, 5, '0', STR_PAD_LEFT) }}</div>
+                                    </div>
+                                    <div class="d-flex align-items-start">
+                                        <span class="badge bg-{{ $santri->status_color }} px-3 py-2 fs-6">{{ ucfirst($santri->status) }}</span>
                                     </div>
                                 </div>
-                                <small class="text-muted">
-                                    <i class="fas fa-calendar-alt me-1"></i>
-                                    Terdaftar: {{ $santri->tanggal_masuk->format('d F Y') }}
-                                </small>
-                            </div>
-                        </div>
 
-                        
-                        <div class="card shadow-sm rounded-3 border-0 bg-light p-3">
-                            <div class="row g-3">
-                                <div class="col-sm-6">
-                                    <div class="vstack gap-1">
-                                        <small class="text-muted">Kategori Santri</small>
-                                        <div class="fw-bold">{{ $santri->kategori->nama }}</div>
-                                        <small class="text-muted">Tarif Bulanan</small>
-                                        <div class="fw-bold text-primary">
-                                            {{ is_numeric($santri->tarif_bulanan) ? 'Rp ' . number_format($santri->tarif_bulanan, 0, ',', '.') : '-' }}
+                                <div class="row g-2 g-md-3">
+                                    <div class="col-12 col-md-6">
+                                        <div class="vstack gap-2 gap-md-3">
+                                            <div>
+                                                <div class="text-muted small mb-1">Jenjang & Kelas</div>
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <span class="badge bg-info fs-7 fs-md-6">{{ $santri->jenjang }}</span>
+                                                    <span class="badge bg-primary fs-7 fs-md-6">Kelas {{ $santri->kelas }}</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small mb-1">Tanggal Masuk</div>
+                                                <div class="fw-semibold fs-7 fs-md-6">{{ $santri->tanggal_masuk->format('d F Y') }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small mb-1">Jenis Kelamin</div>
+                                                <div class="fw-semibold fs-7 fs-md-6">{{ $santri->jenis_kelamin }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="vstack gap-2 gap-md-3">
+                                            <div>
+                                                <div class="text-muted small mb-1">Kategori Santri</div>
+                                                <div class="fw-semibold fs-7 fs-md-6">{{ $santri->kategori->nama }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small mb-1">Tarif SPP Bulanan</div>
+                                                <div class="fw-bold text-primary fs-6">
+                                                    @if($santri->kategori->tarifTerbaru)
+                                                        Rp {{ number_format($santri->kategori->tarifTerbaru->nominal, 0, ',', '.') }}
+                                                    @else
+                                                        <span class="text-muted">Belum diatur</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small mb-1">Alamat</div>
+                                                <div class="fw-semibold fs-7 fs-md-6">{{ $santri->alamat ?: '-' }}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -73,23 +101,59 @@
         
         <div class="col-12">
             <div class="card shadow-sm rounded-3 border-0">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">Status SPP</h5>
+                </div>
                 <div class="card-body p-3 p-md-4">
-                    <div class="d-flex align-items-center justify-content-between gap-3 p-3 rounded-3 {{ $santri->status_spp == 'Lunas' ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10' }}">
-                        <div class="d-flex align-items-center gap-3">
-                            <div>
-                                <i class="fas fa-chart-pie fa-2x {{ $santri->status_spp == 'Lunas' ? 'text-success' : 'text-warning' }}"></i>
+                    {{-- Status SPP per tahun --}}
+                    @foreach($pembayaranPerTahun as $tahun => $pembayaranBulanan)
+                        @php
+                            $totalBulan = count($pembayaranBulanan);
+                            $lunasBulan = $pembayaranBulanan->where('status', 'success')->count();
+                            $isLunas = $lunasBulan === $totalBulan;
+                            $presentase = ($lunasBulan / $totalBulan) * 100;
+                            $statusClass = $isLunas ? 'success' : ($presentase > 50 ? 'warning' : 'danger');
+                        @endphp
+                        <div class="p-3 rounded-3 bg-{{ $statusClass }} bg-opacity-10 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h6 class="mb-1">Status SPP {{ $tahun }}</h6>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-{{ $statusClass }}">
+                                            {{ $lunasBulan }}/{{ $totalBulan }} Bulan
+                                        </span>
+                                        @if($isLunas)
+                                            <span class="badge bg-success">Lunas</span>
+                                        @else
+                                            <span class="badge bg-danger">Belum Lunas</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="small text-muted mb-1">Tunggakan</div>
+                                    <div class="fw-bold text-danger">
+                                        Rp {{ number_format($totalTunggakanPerTahun[$tahun] ?? 0, 0, ',', '.') }}
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <div class="text-muted small">Status SPP</div>
-                                <div class="fw-bold fs-5">{{ $santri->status_spp }}</div>
+                            <div class="progress" style="height: 8px">
+                                <div class="progress-bar bg-{{ $statusClass }}"
+                                     role="progressbar"
+                                     style="width: {{ $presentase }}%"
+                                     aria-valuenow="{{ $presentase }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                </div>
                             </div>
                         </div>
-                        @if($santri->status_spp != 'Lunas')
-                        <div>
-                            <div class="text-muted small">Total Tunggakan</div>
-                            <div class="fw-bold fs-5 text-danger">Rp {{ number_format($total_tunggakan ?? 0, 0, ',', '.') }}</div>
+                    @endforeach
+
+                    {{-- Total Tunggakan Keseluruhan --}}
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-danger bg-opacity-10 rounded-3">
+                        <h6 class="mb-0">Total Tunggakan Keseluruhan</h6>
+                        <div class="text-danger fw-bold fs-5">
+                            Rp {{ number_format($total_tunggakan ?? 0, 0, ',', '.') }}
                         </div>
-                        @endif
                     </div>
                 </div>
             </div>
@@ -115,20 +179,19 @@
                     @if($pembayaran_terbaru->isNotEmpty())
                     <div class="vstack gap-3">
                         @foreach($pembayaran_terbaru as $pembayaran)
-                        <div class="bg-light rounded-3 p-3 border">
-                            <div class="row g-3 align-items-center">
-                                
-                                <div class="col-12 col-sm-4">
+                        <div class="tunggakan-item bg-light rounded-3 p-2 p-md-3 border">
+                            <div class="row g-2 g-md-3 align-items-center">
+                                <div class="col-7 col-sm-4">
                                     <div class="vstack">
-                                        <span class="fw-bold text-primary fs-5">{{ $pembayaran->nama_bulan }}</span>
-                                        <span class="text-muted">{{ $pembayaran->tahun }}</span>
+                                        <span class="fw-bold text-primary fs-6 fs-md-5">{{ $pembayaran->nama_bulan }}</span>
+                                        <span class="text-muted fs-7">{{ $pembayaran->tahun }}</span>
                                     </div>
                                 </div>
                                 
-                                <div class="col-12 col-sm-5">
+                                <div class="col-5 col-sm-5 text-end text-sm-start">
                                     <div class="vstack">
-                                        <span class="fw-bold">Rp {{ number_format($pembayaran->nominal, 0, ',', '.') }}</span>
-                                        <span class="text-danger small">
+                                        <span class="fw-bold fs-7 fs-md-6">Rp {{ number_format($pembayaran->nominal, 0, ',', '.') }}</span>
+                                        <span class="text-danger small d-none d-sm-inline">
                                             <i class="fas fa-calendar-alt me-1"></i>
                                             Jatuh tempo: 10 {{ $pembayaran->nama_bulan }} {{ $pembayaran->tahun }}
                                         </span>
@@ -136,7 +199,7 @@
                                 </div>
                                 
                                 <div class="col-12 col-sm-3">
-                                    <button class="btn btn-primary w-100" onclick="showPembayaranOptions({{ $pembayaran->id }}, '{{ $pembayaran->tahun }}')">
+                                    <button class="btn btn-primary btn-sm btn-md-lg w-100" onclick="showPembayaranOptions({{ $pembayaran->id }}, '{{ $pembayaran->tahun }}')">
                                         <i class="fas fa-money-bill me-1"></i>Bayar
                                     </button>
                                 </div>

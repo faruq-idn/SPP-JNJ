@@ -63,6 +63,19 @@ class DashboardController extends Controller
                 ->whereIn('status', ['unpaid', 'pending'])
                 ->sum('nominal');
 
+            // Ambil semua pembayaran dan kelompokkan per tahun
+            $pembayaranPerTahun = PembayaranSpp::where('santri_id', $santri->id)
+                ->get()
+                ->groupBy('tahun');
+
+            // Hitung total tunggakan per tahun
+            $totalTunggakanPerTahun = [];
+            foreach ($pembayaranPerTahun as $tahun => $pembayaran) {
+                $totalTunggakanPerTahun[$tahun] = $pembayaran
+                    ->whereIn('status', ['unpaid', 'pending'])
+                    ->sum('nominal');
+            }
+
             $pembayaran_terbaru = PembayaranSpp::where('santri_id', $santri->id)
                 ->whereIn('status', ['unpaid', 'pending'])
                 ->latest()
@@ -76,7 +89,9 @@ class DashboardController extends Controller
             'unlinked_santri',
             'available_santri',
             'pembayaran_terbaru',
-            'total_tunggakan'
+            'total_tunggakan',
+            'pembayaranPerTahun',
+            'totalTunggakanPerTahun'
         ));
     }
 

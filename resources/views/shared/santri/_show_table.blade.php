@@ -73,6 +73,8 @@
                                 <!-- Detail Button -->
                                 <button type="button"
                                         class="btn {{ $buttonSize }} btn-info d-flex align-items-center px-2"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalPembayaran"
                                         onclick="showDetail(
                                             '{{ isset($p->exists) && $p->exists ? $p->id : '' }}',
                                             '{{ $monthName }}',
@@ -80,7 +82,8 @@
                                             '{{ $tahun }}',
                                             '{{ $p->status }}',
                                             '{{ isset($p->tanggal_bayar) ? $p->tanggal_bayar->translatedFormat("d F Y H:i") : "-" }}',
-                                            '{{ optional($p->metode_pembayaran)->nama ?? "-" }}'
+                                            '{{ optional($p->metode_pembayaran)->nama ?? "-" }}',
+                                            {{ json_encode($santri->toArray()) }}
                                         )"
                                         title="Detail">
                                     <i class="fas fa-eye"></i>
@@ -101,19 +104,6 @@
                                     </button>
                                 @endif
 
-                                <!-- Delete Button -->
-                                @if(auth()->user()->role === 'admin' && isset($p->exists) && $p->exists)
-                                    <button type="button"
-                                            class="btn {{ $buttonSize }} btn-danger d-flex align-items-center px-2"
-                                            onclick="confirmDeletePembayaran(
-                                                '{{ $p->id }}',
-                                                '{{ $month }}',
-                                                '{{ $tahun }}'
-                                            )"
-                                            title="Hapus Pembayaran">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                @endif
                             </div>
                         </td>
                     </tr>

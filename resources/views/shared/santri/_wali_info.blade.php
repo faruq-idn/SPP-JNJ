@@ -19,6 +19,10 @@
                 </td>
             </tr>
             <tr>
+                <th>Nomor HP Wali</th>
+                <td>{{ $santri->wali->no_hp ?? '-' }}</td>
+            </tr>
+            <tr>
                 <th>Email</th>
                 <td>{{ $santri->wali->email ?? '-' }}</td>
             </tr>
@@ -35,5 +39,6 @@
                 </td>
             </tr>
         </table>
+        
     </div>
 </div>

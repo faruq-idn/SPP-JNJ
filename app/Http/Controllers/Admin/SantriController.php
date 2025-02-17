@@ -154,9 +154,42 @@ class SantriController extends Controller
         }
     }
 
+    public function resetPembayaran($id)
+    {
+        $pembayaran = PembayaranSpp::findOrFail($id);
+        
+        try {
+            DB::beginTransaction();
+            // Reset specific fields only
+            $pembayaran->update([
+                'status' => 'unpaid',
+                'tanggal_bayar' => null,
+                'metode_pembayaran_id' => null,
+                'keterangan' => null,
+                'order_id' => null,
+                'transaction_id' => null,
+                'payment_type' => null,
+                'payment_details' => null
+            ]);
+            DB::commit();
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pembayaran berhasil direset'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat reset pembayaran: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function show(Santri $santri)
     {
-        // Load necessary relationships
+        // Load necessary relationships, including wali's no_hp
         $santri->load(['kategori.tarifTerbaru', 'wali']);
         
         $tahunSekarang = date('Y');

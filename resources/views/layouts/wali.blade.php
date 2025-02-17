@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ asset('css/wali-responsive.css') }}" rel="stylesheet">
     <!-- Midtrans -->
     <script type="text/javascript"
             src="https://app.sandbox.midtrans.com/snap/snap.js"
@@ -80,7 +82,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="wali-layout bg-light pt-3">
+<body class="wali-layout bg-light">
     <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
         <div class="container-fluid">
@@ -120,16 +122,14 @@
 
     <!-- Main Content -->
     <div class="content-wrapper">
-        <div class="container">
-           <main class="container pt-4">
-               @yield('content')
-           </main>
-        </div>
+        <main>
+            @yield('content')
+        </main>
     </div>
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav bg-white border-top fixed-bottom">
-        <div class="container">
+        <div class="container-fluid px-0">
             <div class="row g-0 justify-content-around">
                 <div class="col-4 text-center">
                     <a href="{{ route('wali.dashboard') }}"
@@ -187,7 +187,7 @@
     </script>
 
     <!-- Profile Modal -->
-    <div class="modal fade" id="profileModal" tabindex="-1">
+    <div class="modal fade" id="profileModal" tabindex="-1" inert>
         <div class="modal-dialog">
             <div class="modal-content" style="background-color: white;">
                 <div class="modal-header">
@@ -312,9 +312,18 @@
         });
     @endif
 
+    // Tangani atribut inert untuk modal profil
+    const profileModal = document.getElementById('profileModal');
+    profileModal.addEventListener('shown.bs.modal', function () {
+        profileModal.removeAttribute('inert');
+    });
+    
+    profileModal.addEventListener('hidden.bs.modal', function () {
+        profileModal.setAttribute('inert', '');
+    });
+
     // Tampilkan modal jika ada error validasi
     @if($errors->any())
-        const profileModal = document.getElementById('profileModal');
         if (profileModal) {
             const modal = new bootstrap.Modal(profileModal);
             modal.show();

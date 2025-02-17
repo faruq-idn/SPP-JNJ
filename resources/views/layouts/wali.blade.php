@@ -128,29 +128,35 @@
     </div>
 
     <!-- Bottom Navigation -->
-    <nav class="bottom-nav bg-white border-top fixed-bottom">
-        <div class="container-fluid px-0">
+    <nav class="bottom-nav fixed-bottom">
+        <div class="container-fluid">
             <div class="row g-0 justify-content-around">
-                <div class="col-4 text-center">
-                    <a href="{{ route('wali.dashboard') }}"
-                       class="nav-link {{ Route::is('wali.dashboard') ? 'active' : '' }}">
-                        <i class="fas fa-home fa-lg"></i>
-                        <span class="d-block">Home</span>
-                    </a>
+                <div class="col-4">
+                    <div class="text-center">
+                        <a href="{{ route('wali.dashboard') }}"
+                           class="nav-link {{ Request::routeIs('wali.dashboard') ? 'active' : '' }}">
+                            <i class="fas fa-home"></i>
+                            <span>Home</span>
+                        </a>
+                    </div>
                 </div>
-                <div class="col-4 text-center">
-                    <a href="{{ route('wali.tagihan') }}"
-                       class="nav-link {{ Route::is('wali.tagihan') ? 'active' : '' }}">
-                        <i class="fas fa-file-invoice-dollar fa-lg"></i>
-                        <span class="d-block">Tagihan</span>
-                    </a>
+                <div class="col-4">
+                    <div class="text-center">
+                        <a href="{{ route('wali.tagihan') }}"
+                           class="nav-link {{ Request::routeIs('wali.tagihan') ? 'active' : '' }}">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>Tagihan</span>
+                        </a>
+                    </div>
                 </div>
-                <div class="col-4 text-center">
-                    <a href="{{ route('wali.hubungkan') }}"
-                       class="nav-link {{ Route::is('wali.hubungkan') ? 'active' : '' }}">
-                        <i class="fas fa-link fa-lg"></i>
-                        <span class="d-block">Hubungkan</span>
-                    </a>
+                <div class="col-4">
+                    <div class="text-center">
+                        <a href="{{ route('wali.hubungkan') }}"
+                           class="nav-link {{ Request::routeIs('wali.hubungkan') ? 'active' : '' }}">
+                            <i class="fas fa-link"></i>
+                            <span>Hubungkan</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

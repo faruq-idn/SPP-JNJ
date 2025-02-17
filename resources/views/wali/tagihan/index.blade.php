@@ -20,10 +20,6 @@
             </div>
             @endif
 
-            <h2 class="mb-3">
-                <i class="fas fa-file-invoice-dollar me-2"></i>Tagihan & Riwayat SPP
-            </h2>
-
             @if($santri_list->count() > 1)
             <div class="card shadow-sm rounded-3 border-0 mb-3 mb-md-4">
                 <div class="card-body p-2 p-md-3">

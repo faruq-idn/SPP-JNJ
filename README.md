@@ -23,6 +23,10 @@ Aplikasi manajemen pembayaran SPP berbasis web dengan integrasi payment gateway 
 - [x] Filter santri per kelas
 - [x] Pencarian santri
 - [x] Detail santri dengan riwayat pembayaran
+- [x] Status santri (aktif/non-aktif)
+- [x] Kenaikan kelas santri
+- [x] Riwayat kenaikan kelas
+- [x] Pencatatan tahun tamat
 
 ### 📋 Manajemen Kategori Santri
 - [x] CRUD kategori santri
@@ -140,13 +144,6 @@ Aplikasi manajemen pembayaran SPP berbasis web dengan integrasi payment gateway 
 | Admin   | admin@example.com   | password   |
 | Petugas | petugas@example.com | password   |
 | Wali    | wali@example.com    | password   |
-
-### Akun Default
-| Role | Email | Password |
-|------|--------|----------|
-| Admin | admin@example.com | password |
-| Petugas | petugas@example.com | password |
-| Wali | wali@example.com | password |
 
 ## 📋 Todo
 

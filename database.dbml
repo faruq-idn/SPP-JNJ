@@ -1,0 +1,198 @@
+
+Enum "kenaikan_kelas_history_status_enum" {
+  "aktif"
+  "lulus"
+}
+
+Enum "metode_pembayaran_status_enum" {
+  "aktif"
+  "nonaktif"
+}
+
+Enum "santri_jenis_kelamin_enum" {
+  "L"
+  "P"
+}
+
+Enum "santri_jenjang_enum" {
+  "SMP"
+  "SMA"
+}
+
+Enum "santri_status_enum" {
+  "aktif"
+  "non-aktif"
+  "lulus"
+  "keluar"
+}
+
+Enum "santri_status_spp_enum" {
+  "Lunas"
+  "Belum Lunas"
+}
+
+Enum "users_role_enum" {
+  "admin"
+  "petugas"
+  "wali"
+}
+
+Table "kategori_santri" {
+  "id" bigint(20) [pk, not null]
+  "nama" varchar(255) [not null]
+  "keterangan" text
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "kenaikan_kelas_history" {
+  "id" bigint(20) [pk, not null]
+  "santri_id" bigint(20) [not null]
+  "kelas_sebelum" varchar(255) [not null]
+  "kelas_sesudah" varchar(255) [default: NULL]
+  "status" kenaikan_kelas_history_status_enum [not null, default: 'aktif']
+  "created_by" bigint(20) [not null]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "metode_pembayaran" {
+  "id" bigint(20) [pk, not null]
+  "nama" varchar(255) [not null]
+  "kode" varchar(255) [not null]
+  "status" metode_pembayaran_status_enum [not null, default: 'aktif']
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+
+Table "model_has_permissions" {
+  "permission_id" bigint(20) [not null]
+  "model_type" varchar(255) [not null]
+  "model_id" bigint(20) [not null]
+
+  Indexes {
+    (permission_id, model_id, model_type) [pk]
+  }
+}
+
+Table "model_has_roles" {
+  "role_id" bigint(20) [not null]
+  "model_type" varchar(255) [not null]
+  "model_id" bigint(20) [not null]
+
+  Indexes {
+    (role_id, model_id, model_type) [pk]
+  }
+}
+
+
+Table "pembayaran_spp" {
+  "id" bigint(20) [pk, not null]
+  "santri_id" bigint(20) [not null]
+  "metode_pembayaran_id" bigint(20) [default: NULL]
+  "bulan" varchar(255) [not null]
+  "tahun" year(4) [not null]
+  "nominal" decimal(10,0) [not null]
+  "tanggal_bayar" timestamp [default: NULL]
+  "keterangan" varchar(255) [default: NULL]
+  "snap_token" varchar(255) [default: NULL]
+  "order_id" char(36) [default: NULL]
+  "payment_type" varchar(255) [default: NULL]
+  "transaction_id" varchar(255) [default: NULL]
+  "payment_details" json [default: NULL]
+  "status" varchar(255) [not null, default: 'unpaid']
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "permissions" {
+  "id" bigint(20) [pk, not null]
+  "name" varchar(255) [not null]
+  "guard_name" varchar(255) [not null]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "riwayat_tarif_spp" {
+  "id" bigint(20) [pk, not null]
+  "kategori_id" bigint(20) [not null]
+  "nominal" decimal(10,2) [not null]
+  "berlaku_mulai" date [not null]
+  "berlaku_sampai" date [default: NULL]
+  "keterangan" text
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "roles" {
+  "id" bigint(20) [pk, not null]
+  "name" varchar(255) [not null]
+  "guard_name" varchar(255) [not null]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "role_has_permissions" {
+  "permission_id" bigint(20) [not null]
+  "role_id" bigint(20) [not null]
+
+  Indexes {
+    (permission_id, role_id) [pk]
+  }
+}
+
+Table "santri" {
+  "id" bigint(20) [pk, not null]
+  "nisn" varchar(255) [not null]
+  "nama" varchar(255) [not null]
+  "jenis_kelamin" santri_jenis_kelamin_enum [not null]
+  "tanggal_lahir" date [not null]
+  "alamat" text [not null]
+  "wali_id" bigint(20) [default: NULL]
+  "nama_wali" varchar(255) [default: NULL]
+  "tanggal_masuk" date [not null]
+  "jenjang" santri_jenjang_enum [not null]
+  "kelas" varchar(255) [not null]
+  "status" santri_status_enum [default: 'aktif']
+  "tahun_tamat" year(4) [default: NULL]
+  "kategori_id" bigint(20) [not null]
+  "status_spp" santri_status_spp_enum [not null, default: 'Belum Lunas']
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "users" {
+  "id" bigint(20) [pk, not null]
+  "name" varchar(255) [not null]
+  "email" varchar(255) [not null]
+  "email_verified_at" timestamp [default: NULL]
+  "password" varchar(255) [not null]
+  "remember_token" varchar(100) [default: NULL]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+  "role" users_role_enum [not null, default: 'wali']
+  "no_hp" varchar(255) [default: NULL]
+}
+
+Ref "kenaikan_kelas_history_created_by_foreign":"users"."id" < "kenaikan_kelas_history"."created_by"
+
+Ref "kenaikan_kelas_history_santri_id_foreign":"santri"."id" < "kenaikan_kelas_history"."santri_id" [delete: cascade]
+
+Ref "model_has_permissions_permission_id_foreign":"permissions"."id" < "model_has_permissions"."permission_id" [delete: cascade]
+
+Ref "model_has_roles_role_id_foreign":"roles"."id" < "model_has_roles"."role_id" [delete: cascade]
+
+Ref "pembayaran_spp_metode_pembayaran_id_foreign":"metode_pembayaran"."id" < "pembayaran_spp"."metode_pembayaran_id" [delete: set null]
+
+Ref "pembayaran_spp_santri_id_foreign":"santri"."id" < "pembayaran_spp"."santri_id" [delete: cascade]
+
+Ref "riwayat_tarif_spp_kategori_id_foreign":"kategori_santri"."id" < "riwayat_tarif_spp"."kategori_id"
+
+Ref "role_has_permissions_permission_id_foreign":"permissions"."id" < "role_has_permissions"."permission_id" [delete: cascade]
+
+Ref "role_has_permissions_role_id_foreign":"roles"."id" < "role_has_permissions"."role_id" [delete: cascade]
+
+Ref "santri_kategori_id_foreign":"kategori_santri"."id" < "santri"."kategori_id"
+
+Ref "santri_wali_id_foreign":"users"."id" < "santri"."wali_id" [delete: set null]

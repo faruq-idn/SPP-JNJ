@@ -45,52 +45,73 @@ class PembayaranController extends Controller
     {
         $request->validate([
             'santri_id' => 'required|exists:santri,id',
-            'tahun' => 'required|digits:4',
-            'bulan' => 'required|numeric|min:1|max:12',
+            'tahun' => 'required|digits:4|integer|min:2000|max:' . (date('Y') + 1),
+            'bulan' => 'required|string|min:3|max:20',
+            'nominal' => 'required|numeric|min:0',
+            'metode_pembayaran_id' => 'required|exists:metode_pembayaran,id',
+            'keterangan' => 'nullable|string|max:255'
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Check if payment already exists
-            $exists = PembayaranSpp::where([
-                'santri_id' => $request->santri_id,
-                'tahun' => $request->tahun,
-                'bulan' => $request->bulan
-            ])->exists();
+            // Convert bulan name to number if string
+            try {
+                $bulan_angka = is_numeric($request->bulan) ?
+                    intval($request->bulan) :
+                    Carbon::createFromLocaleFormat('F', 'id', $request->bulan)->month;
+
+                if ($bulan_angka < 1 || $bulan_angka > 12) {
+                    throw new \Exception('Bulan tidak valid');
+                }
+            } catch (\Exception $e) {
+                throw new \Exception('Format bulan tidak valid');
+            }
+
+            // Check if payment already exists for this period
+            $exists = PembayaranSpp::where('santri_id', $request->santri_id)
+                ->where('tahun', $request->tahun)
+                ->where('bulan', $bulan_angka)
+                ->exists();
 
             if ($exists) {
-                return redirect()
-                    ->back()
-                    ->with('error', 'Tagihan untuk periode tersebut sudah ada');
+                throw new \Exception('Tagihan untuk periode tersebut sudah ada');
             }
 
-            // Get santri tarif
-            $santri = Santri::with('kategori.tarifTerbaru')->findOrFail($request->santri_id);
-            if (!$santri->kategori->tarifTerbaru) {
-                return redirect()
-                    ->back()
-                    ->with('error', 'Tarif SPP untuk kategori santri belum diatur');
-            }
-
-            PembayaranSpp::create([
+            // Buat dan verifikasi pembayaran
+            $pembayaran = PembayaranSpp::create([
                 'santri_id' => $request->santri_id,
                 'tahun' => $request->tahun,
-                'bulan' => $request->bulan,
-                'nominal' => $santri->kategori->tarifTerbaru->nominal,
-                'status' => 'unpaid'
+                'bulan' => $bulan_angka,
+                'nominal' => $request->nominal,
+                'status' => 'success',
+                'metode_pembayaran_id' => $request->metode_pembayaran_id,
+                'keterangan' => $request->keterangan,
+                'tanggal_bayar' => now()
             ]);
 
             DB::commit();
-            return redirect()
-                ->route('admin.pembayaran.index')
-                ->with('success', 'Tagihan berhasil dibuat');
+
+            // Load data yang diperlukan
+            $pembayaran->load('metode_pembayaran');
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pembayaran berhasil disimpan',
+                'data' => [
+                    'id' => $pembayaran->id,
+                    'status' => 'success',
+                    'tanggal_bayar' => $pembayaran->tanggal_bayar->format('d/m/Y'),
+                    'metode' => $pembayaran->metode_pembayaran->nama
+                ]
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()
-                ->back()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -103,8 +124,15 @@ class PembayaranController extends Controller
     public function verifikasi(Request $request, $id)
     {
         $request->validate([
-            'metode_pembayaran_id' => 'required|exists:metode_pembayaran,id'
+            'metode_pembayaran_id' => 'required|exists:metode_pembayaran,id',
+            'keterangan' => 'nullable|string|max:255'
         ]);
+
+        // Validasi status pembayaran
+        $pembayaran = PembayaranSpp::findOrFail($id);
+        if ($pembayaran->status === 'success') {
+            throw new \Exception('Pembayaran sudah diverifikasi sebelumnya');
+        }
 
         try {
             DB::beginTransaction();
@@ -119,9 +147,18 @@ class PembayaranController extends Controller
 
             DB::commit();
 
+            // Load relasi yang diperlukan
+            $pembayaran->load('metode_pembayaran');
+            
             return response()->json([
                 'status' => 'success',
-                'message' => 'Pembayaran berhasil diverifikasi'
+                'message' => 'Pembayaran berhasil diverifikasi',
+                'data' => [
+                    'id' => $pembayaran->id,
+                    'status' => 'success',
+                    'tanggal_bayar' => $pembayaran->tanggal_bayar->format('d/m/Y'),
+                    'metode' => $pembayaran->metode_pembayaran->nama
+                ]
             ]);
 
         } catch (\Exception $e) {
@@ -227,23 +264,43 @@ class PembayaranController extends Controller
         }
     }
 
-    public function checkStatus(Request $request)
+    public function checkStatus($id)
     {
-        $pembayaran = PembayaranSpp::find($request->id);
-        
-        if (!$pembayaran) {
+        try {
+            $pembayaran = PembayaranSpp::findOrFail($id);
+            return response()->json([
+                'status' => 'success',
+                'data' => $pembayaran
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Pembayaran tidak ditemukan'
             ], 404);
         }
+    }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => [
-                'status' => $pembayaran->status,
-                'message' => 'Status pembayaran: ' . ucfirst($pembayaran->status)
-            ]
-        ]);
+    public function destroy(PembayaranSpp $pembayaran)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $pembayaran->delete();
+            
+            DB::commit();
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Pembayaran berhasil dihapus'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

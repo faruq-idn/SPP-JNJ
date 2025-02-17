@@ -92,11 +92,12 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
         Route::get('/', [PembayaranController::class, 'index'])->name('index');
         Route::get('/create', [PembayaranController::class, 'create'])->name('create');
         Route::post('/', [PembayaranController::class, 'store'])->name('store');
-        Route::get('/check-status', [PembayaranController::class, 'checkStatus'])->name('check-status');
+        Route::get('/{id}/check-status', [PembayaranController::class, 'checkStatus'])->name('check-status');
         Route::get('/{pembayaran}', [PembayaranController::class, 'show'])->name('show');
         Route::post('/{id}/verifikasi', [PembayaranController::class, 'verifikasi'])->name('verifikasi');
         Route::post('/generate-tagihan', [PembayaranController::class, 'generateTagihan'])->name('generate-tagihan');
         Route::delete('/hapus-tagihan', [PembayaranController::class, 'hapusTagihan'])->name('hapus-tagihan');
+        Route::delete('/{pembayaran}', [PembayaranController::class, 'destroy'])->name('destroy');
     });
 
     // Laporan
@@ -118,6 +119,7 @@ Route::prefix('petugas')->middleware(['auth', 'role:petugas'])->name('petugas.')
     // Pembayaran
     Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
         Route::get('/', [PetugasPembayaranController::class, 'index'])->name('index');
+        Route::get('/{id}/check-status', [PetugasPembayaranController::class, 'checkStatus'])->name('check-status');
         Route::get('/{pembayaran}', [PetugasPembayaranController::class, 'show'])->name('show');
         Route::post('/{id}/verifikasi', [PetugasPembayaranController::class, 'verifikasi'])->name('verifikasi');
     });

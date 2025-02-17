@@ -34,6 +34,22 @@ class PembayaranController extends Controller
         ));
     }
 
+    public function checkStatus($id)
+    {
+        try {
+            $pembayaran = PembayaranSpp::findOrFail($id);
+            return response()->json([
+                'status' => 'success',
+                'data' => $pembayaran
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pembayaran tidak ditemukan'
+            ], 404);
+        }
+    }
+
     public function show(PembayaranSpp $pembayaran)
     {
         $pembayaran->load(['santri', 'metode_pembayaran']);

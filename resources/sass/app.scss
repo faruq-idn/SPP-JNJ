@@ -1,20 +1,11 @@
-// Import Bootstrap
-@import 'bootstrap/scss/bootstrap';
+// Import Layouts and Components
+@use 'layouts/admin';
+@use 'layouts/wali';
+@use 'components/cards';
+@use 'components/tables';
 
-// Base styles
-@import 'base/variables';
-@import 'base/mixins';
-@import 'base/utilities';
+// Fonts
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-// Components
-@import 'components/cards';
-@import 'components/tables';
-@import 'components/alerts';
-@import 'components/buttons';
-@import 'components/forms';
-@import 'components/navigation';
-
-// Layouts
-@import 'layouts/admin';
-@import 'layouts/petugas';
-@import 'layouts/wali';
+// Variables & Utils
+$font-family-base: 'Inter', system-ui, -apple-system, sans-serif;

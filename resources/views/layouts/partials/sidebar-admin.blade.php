@@ -7,69 +7,75 @@
             </a>
         </li>
 
-        <!-- Data Santri dengan navigasi dan dropdown terpisah -->
+        <!-- Data Santri dengan Sub Menu -->
         <li class="nav-item">
-            <div class="d-flex align-items-center">
-                <a href="{{ route('admin.santri.index') }}" 
-                   class="nav-link flex-grow-1 {{ Request::routeIs('admin.santri.index') ? 'active' : '' }}">
-                    <i class="fas fa-users fa-fw me-2"></i> Data Santri
+            <div class="nav-link-wrapper d-flex align-items-center">
+                <a class="nav-link flex-grow-1 {{ Request::is('admin/santri*') ? 'active' : '' }}"
+                   href="{{ route('admin.santri.index') }}">
+                    <i class="fas fa-users fa-fw me-2"></i>
+                    <span>Data Santri</span>
                 </a>
-                <button class="btn btn-link p-0 ms-2 text-light dropdown-toggle-icon"
+                <button class="btn-dropdown ms-2 {{ Request::is('admin/santri*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse"
-                        data-bs-target="#collapseSantri"
-                        aria-expanded="{{ Request::routeIs('admin.santri.kelas') || Request::routeIs('admin.santri.riwayat') ? 'true' : 'false' }}">
+                        data-bs-target="#collapseKelas"
+                        aria-expanded="{{ Request::is('admin/santri*') ? 'true' : 'false' }}">
                     <i class="fas fa-angle-down"></i>
                 </button>
             </div>
-            <div class="collapse {{ Request::routeIs('admin.santri.kelas') || Request::routeIs('admin.santri.riwayat') ? 'show' : '' }}" 
-                 id="collapseSantri">
+            <div id="collapseKelas" class="collapse {{ Request::is('admin/santri*') ? 'show' : '' }}">
                 <div class="submenu">
-                    <!-- Riwayat Kenaikan -->
-                    <a class="submenu-item {{ Request::is('admin/santri/riwayat*') ? 'active' : '' }}"
-                       href="{{ route('admin.santri.riwayat') }}">
-                        <i class="fas fa-history fa-fw me-2"></i>
-                        <span>Riwayat Kenaikan</span>
-                    </a>
-
-                    <!-- Kelas -->
-                    <div class="submenu-section">
-                        <div class="submenu-header">SMP</div>
-                        @php
-                            $kelasSMP = ['7A', '7B', '8A', '8B', '9A', '9B'];
-                        @endphp
-                        @foreach($kelasSMP as $kelas)
-                            <a class="submenu-item {{ isset($currentKelas) && $currentKelas['jenjang'] == 'SMP' && $currentKelas['kelas'] == $kelas ? 'active' : '' }}"
-                               href="{{ route('admin.santri.kelas', ['jenjang' => 'smp', 'kelas' => $kelas]) }}">
-                                <span>Kelas {{ $kelas }}</span>
+                    <div class="submenu-sections">
+                        <div class="submenu-section">
+                            <div class="submenu-header">SMP</div>
+                            <div class="submenu-items">
                                 @php
-                                    $count = \App\Models\Santri::where('jenjang', 'SMP')
-                                        ->where('kelas', $kelas)
-                                        ->where('status', 'aktif')
-                                        ->count();
+                                    $kelasSMP = ['7A', '7B', '8A', '8B', '9A', '9B'];
                                 @endphp
-                                <span class="badge">{{ $count }}</span>
-                            </a>
-                        @endforeach
-                    </div>
+                                @foreach($kelasSMP as $kelas)
+                                    @php
+                                        $count = \App\Models\Santri::where('jenjang', 'SMP')
+                                            ->where('kelas', $kelas)
+                                            ->where('status', 'aktif')
+                                            ->count();
+                                        $isActive = isset($currentKelas) &&
+                                                  $currentKelas['jenjang'] == 'SMP' &&
+                                                  $currentKelas['kelas'] == $kelas;
+                                    @endphp
+                                    <a class="submenu-item d-flex align-items-center {{ $isActive ? 'active' : '' }}"
+                                       href="{{ route('admin.santri.kelas', ['jenjang' => 'smp', 'kelas' => $kelas]) }}"
+                                       title="Kelas {{ $kelas }}">
+                                        <span>Kelas {{ $kelas }}</span>
+                                        <span class="badge ms-auto">{{ $count }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
 
-                    <div class="submenu-section">
-                        <div class="submenu-header">SMA</div>
-                        @php
-                            $kelasSMA = ['10A', '10B', '11A', '11B', '12A', '12B'];
-                        @endphp
-                        @foreach($kelasSMA as $kelas)
-                            <a class="submenu-item {{ isset($currentKelas) && $currentKelas['jenjang'] == 'SMA' && $currentKelas['kelas'] == $kelas ? 'active' : '' }}"
-                               href="{{ route('admin.santri.kelas', ['jenjang' => 'sma', 'kelas' => $kelas]) }}">
-                                <span>Kelas {{ $kelas }}</span>
+                        <div class="submenu-section">
+                            <div class="submenu-header">SMA</div>
+                            <div class="submenu-items">
                                 @php
-                                    $count = \App\Models\Santri::where('jenjang', 'SMA')
-                                        ->where('kelas', $kelas)
-                                        ->where('status', 'aktif')
-                                        ->count();
+                                    $kelasSMA = ['10A', '10B', '11A', '11B', '12A', '12B'];
                                 @endphp
-                                <span class="badge">{{ $count }}</span>
-                            </a>
-                        @endforeach
+                                @foreach($kelasSMA as $kelas)
+                                    @php
+                                        $count = \App\Models\Santri::where('jenjang', 'SMA')
+                                            ->where('kelas', $kelas)
+                                            ->where('status', 'aktif')
+                                            ->count();
+                                        $isActive = isset($currentKelas) &&
+                                                  $currentKelas['jenjang'] == 'SMA' &&
+                                                  $currentKelas['kelas'] == $kelas;
+                                    @endphp
+                                    <a class="submenu-item d-flex align-items-center {{ $isActive ? 'active' : '' }}"
+                                       href="{{ route('admin.santri.kelas', ['jenjang' => 'sma', 'kelas' => $kelas]) }}"
+                                       title="Kelas {{ $kelas }}">
+                                        <span>Kelas {{ $kelas }}</span>
+                                        <span class="badge ms-auto">{{ $count }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

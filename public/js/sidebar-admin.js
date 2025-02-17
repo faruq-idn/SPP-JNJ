@@ -1,37 +1,27 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Animasi ikon dropdown untuk tombol di Data Santri
-    const dropdownButtons = document.querySelectorAll('button[data-bs-toggle="collapse"]');
-    dropdownButtons.forEach(button => {
-        // Inisialisasi state awal
+    // Handle dropdown buttons
+    document.querySelectorAll('.btn-dropdown').forEach(button => {
         const icon = button.querySelector('.fa-angle-down');
-        if (icon && button.getAttribute('aria-expanded') === 'true') {
+
+        // Set initial state
+        if (button.getAttribute('aria-expanded') === 'true') {
             icon.style.transform = 'rotate(180deg)';
         }
 
-        // Event listener untuk animasi
-        button.addEventListener('click', () => {
-            const icon = button.querySelector('.fa-angle-down');
-            if (icon) {
-                icon.style.transition = 'transform 0.2s';
-                icon.style.transform = button.getAttribute('aria-expanded') === 'true' ? 
-                    'rotate(0)' : 'rotate(180deg)';
-            }
-        });
-    });
+        // Set up collapse event listener
+        const collapseId = button.getAttribute('data-bs-target');
+        const collapseElement = document.querySelector(collapseId);
 
-    // Handler khusus untuk Manajemen Pengguna yang masih menggunakan chevron
-    document.querySelectorAll('a[data-bs-toggle="collapse"]').forEach(link => {
-        const icon = link.querySelector('.fa-chevron-down');
-        if (icon && link.getAttribute('aria-expanded') === 'true') {
-            icon.style.transform = 'rotate(180deg)';
+        if (collapseElement) {
+            collapseElement.addEventListener('show.bs.collapse', () => {
+                icon.style.transition = 'transform 0.2s ease';
+                icon.style.transform = 'rotate(180deg)';
+            });
+
+            collapseElement.addEventListener('hide.bs.collapse', () => {
+                icon.style.transition = 'transform 0.2s ease';
+                icon.style.transform = 'rotate(0deg)';
+            });
         }
-
-        link.addEventListener('click', () => {
-            if (icon) {
-                icon.style.transition = 'transform 0.2s';
-                icon.style.transform = link.getAttribute('aria-expanded') === 'true' ? 
-                    'rotate(0)' : 'rotate(180deg)';
-            }
-        });
     });
 });

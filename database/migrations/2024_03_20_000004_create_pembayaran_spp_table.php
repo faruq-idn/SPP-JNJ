@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('transaction_id')->nullable();
             $table->json('payment_details')->nullable();
             $table->string('status')->default(PembayaranSpp::STATUS_FAILED);
+            $table->string('fraud_status')->nullable();
 
             $table->timestamps();
 

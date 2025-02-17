@@ -1,16 +1,16 @@
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{-- Chart.js dengan versi spesifik dan tanpa source map --}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-<!-- jQuery -->
+{{-- jQuery --}}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<!-- Bootstrap JS -->
+{{-- Bootstrap JS --}}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Select2 -->
+{{-- Select2 --}}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<!-- SweetAlert2 -->
+{{-- SweetAlert2 --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Default Select2 Configuration -->
+{{-- Default Select2 Configuration --}}
 <script>
 $(document).ready(function() {
     // Select2 default config
@@ -120,12 +120,16 @@ function confirmLogout() {
 </script>
 
 @if(Auth::user()->role === 'admin' || Auth::user()->role === 'petugas')
-<!-- Admin & Petugas shared scripts -->
+{{-- Admin & Petugas shared scripts --}}
+<script>
+    window.role = '{{ Auth::user()->role }}';
+    window.isAdmin = {{ Auth::user()->role === 'admin' ? 'true' : 'false' }};
+</script>
 <script src="{{ asset('js/pembayaran.js') }}"></script>
 @endif
 
 @if(Auth::user()->role === 'admin')
-<!-- Admin specific scripts -->
+{{-- Admin specific scripts --}}
 <script src="{{ asset('js/kenaikan-kelas.js') }}"></script>
 <script src="{{ asset('js/sidebar-admin.js') }}"></script>
 @endif

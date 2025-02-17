@@ -1,314 +1,508 @@
-let currentPembayaranId = null;
-let currentBulan = '';
-let currentTahun = '';
+// Gunakan IIFE untuk menghindari global scope pollution
+const PaymentManager = (function() {
+    const PAYMENT_STATUS = {
+        SUCCESS: 'success',
+        PENDING: 'pending',
+        UNPAID: 'unpaid'
+    };
 
-function showDetail(id, bulan, nominal, tahun, status, tanggal, metode, paymentDataString = null) {
-    let paymentData = null;
-    if (paymentDataString) {
-        try {
-            paymentData = typeof paymentDataString === 'string' ? JSON.parse(paymentDataString) : paymentDataString;
-        } catch (e) {
-            console.warn('Failed to parse payment data:', e);
+    class PaymentManagerClass {
+        static get PAYMENT_STATUS() {
+            return PAYMENT_STATUS;
         }
-    }
-    const modalElement = document.getElementById('modalPembayaran');
-    const modal = new bootstrap.Modal(modalElement);
-    
-    // Reset form dan info sebelum menampilkan modal
-    const pembayaranInfo = document.getElementById('pembayaran-info');
-    const formPembayaran = document.getElementById('formPembayaran');
-    const selectMetode = formPembayaran.querySelector('[name="metode_pembayaran_id"]');
-    const textareaKeterangan = formPembayaran.querySelector('[name="keterangan"]');
-    const inputId = document.getElementById('pembayaran_id');
-    
-    // Set current values
-    currentPembayaranId = id;
-    currentBulan = bulan;
-    currentTahun = tahun;
-    
-    // Update konten modal tab informasi umum
-    document.getElementById('modalTitle').textContent = 'Detail Pembayaran SPP';
-    document.getElementById('detail-bulan').textContent = bulan;
-    document.getElementById('detail-tahun').textContent = tahun || new Date().getFullYear();
-    document.getElementById('detail-nominal').textContent = nominal.toLocaleString('id-ID');
-    
-    // Update status dengan badge
-    const statusElement = document.getElementById('detail-status');
-    let statusClass = status === PAYMENT_STATUS.SUCCESS ? 'bg-success' : 
-                     (status === PAYMENT_STATUS.PENDING ? 'bg-warning' : 'bg-danger');
-    let statusText = status === PAYMENT_STATUS.SUCCESS ? 'Lunas' : 
-                    (status === PAYMENT_STATUS.PENDING ? 'Pending' : 'Belum Lunas');
-    statusElement.innerHTML = `<span class="badge ${statusClass}">${statusText}</span>`;
-    
-    // Reset form fields
-    selectMetode.value = '';
-    textareaKeterangan.value = '';
-    inputId.value = id;
 
-    // Update online payment tab visibility and content
-    const tabOnline = document.getElementById('tab-online');
-    const noOnlinePayment = document.getElementById('no-online-payment');
-    const onlinePaymentInfo = document.getElementById('online-payment-info');
-    
-    if (paymentData) {
-        tabOnline.classList.remove('d-none');
-        noOnlinePayment.classList.add('d-none');
-        onlinePaymentInfo.classList.remove('d-none');
+        constructor() {
+            this.initializeEventListeners();
+        }
+
+    // UI Update methods
+    static getNamaBulan(bulan) {
+        const months = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        // Handle both numeric and string input
+        if (typeof bulan === 'number' || !isNaN(parseInt(bulan))) {
+            const index = parseInt(bulan) - 1;
+            return months[index] || '-';
+        }
+        return bulan || '-';
+    }
+
+    updateModal(data) {
+        console.log('updateModal received data:', data);
         
-        // Update online payment details
-        document.getElementById('detail-order-id').textContent = paymentData.order_id || '-';
-        document.getElementById('detail-transaction-id').textContent = paymentData.transaction_id || '-';
-        document.getElementById('detail-payment-type').textContent = paymentData.payment_type || '-';
+        const {
+            id, bulan, nominal, tahun, status, tanggal, metode, paymentData
+        } = data;
+
+        console.log('Extracted values:', {
+            id, bulan, nominal, tahun, status, tanggal, metode
+        });
+
+        // Jangan tampilkan error jika ini pembayaran baru (id kosong)
+        if (typeof id !== 'undefined' && id !== '' && id !== null) {
+            if (!id) {
+                console.warn('ID is invalid:', id);
+                this.showError('Pembayaran tidak ditemukan atau sudah dihapus');
+                $('#modalPembayaran').modal('hide');
+                return;
+            }
+        }
+
+        const nominalValue = PaymentManager.parseNominal(nominal);
         
-        // Format payment details
-        const detailsContainer = document.getElementById('detail-payment-details');
-        if (paymentData.payment_details) {
-            try {
-                const details = typeof paymentData.payment_details === 'string' 
-                    ? JSON.parse(paymentData.payment_details) 
-                    : paymentData.payment_details;
-                
-                detailsContainer.innerHTML = formatPaymentDetails(details);
-            } catch (e) {
-                detailsContainer.innerHTML = '<div class="text-muted">Detail pembayaran tidak tersedia</div>';
+        // Update form values
+        $('#pembayaran_id').val(id);
+        $('#detail-tahun').text(tahun || new Date().getFullYear());
+        $('#detail-bulan').text(PaymentManager.getNamaBulan(bulan));
+        $('#detail-nominal').text(PaymentManager.formatCurrency(nominalValue).replace('Rp ', ''));
+        $('[name="nominal"]').val(nominalValue);
+
+        // Update status badge
+        const statusNormalized = status || PaymentManager.PAYMENT_STATUS.UNPAID;
+        const statusClass = this.getStatusClass(statusNormalized);
+        const statusText = this.getStatusText(statusNormalized);
+        $('#detail-status').html(`<span class="badge ${statusClass}" data-status="${statusNormalized}">${statusText}</span>`);
+
+        // Handle form visibility based on status
+        this.toggleFormDisplay(status !== PaymentManager.PAYMENT_STATUS.SUCCESS);
+        
+        // Update payment details if success
+        if (status === PaymentManager.PAYMENT_STATUS.SUCCESS) {
+            $('#detail-tanggal').text(tanggal);
+            $('#detail-metode').text(metode);
+            $('#detail-keterangan').text(paymentData?.keterangan || '-');
+        }
+
+        // Handle online payment details if success
+        const $onlinePaymentInfo = $('#online-payment-info');
+        
+        if (status === PaymentManager.PAYMENT_STATUS.SUCCESS) {
+            $onlinePaymentInfo.show();
+            
+            if (paymentData?.order_id) {
+                // Tampilkan detail pembayaran online
+                $('#detail-order-id').text(paymentData.order_id);
+                $('#detail-transaction-id').text(paymentData.transaction_id || '-');
+                $('#detail-payment-type').text(paymentData.payment_type || '-');
+
+                if (paymentData.payment_details) {
+                    $('#payment-details-section').show();
+                    $('#detail-payment-details').html(paymentData.payment_details);
+                } else {
+                    $('#payment-details-section').hide();
+                }
+            } else {
+                // Tampilkan pesan pembayaran manual
+                $('#online-payment-info').html(`
+                    <div class="text-center py-3 text-muted">
+                        <i class="fas fa-info-circle mb-2"></i>
+                        <p class="mb-0">Pembayaran ini dilakukan secara manual</p>
+                    </div>
+                `);
             }
         } else {
-            detailsContainer.innerHTML = '<div class="text-muted">Detail pembayaran tidak tersedia</div>';
+            $onlinePaymentInfo.hide();
         }
-    } else {
-        noOnlinePayment.classList.remove('d-none');
-        onlinePaymentInfo.classList.add('d-none');
-    }
-    
-    if (status === PAYMENT_STATUS.SUCCESS) {
-        pembayaranInfo.style.display = 'block';
-        formPembayaran.style.display = 'none';
-        document.getElementById('detail-tanggal').textContent = tanggal;
-        document.getElementById('detail-metode').textContent = metode;
-        document.getElementById('detail-keterangan').textContent = paymentData?.keterangan || '-';
-    } else {
-        pembayaranInfo.style.display = 'none';
-        formPembayaran.style.display = 'block';
+
+        // Handle delete button visibility
+        this.updateDeleteButton(id, status);
     }
 
-    modal.show();
-    
-    if (!status || status !== PAYMENT_STATUS.SUCCESS) {
-        setTimeout(() => selectMetode.focus(), 500);
-    }
-}
-
-function formatPaymentDetails(details, level = 0) {
-    if (typeof details !== 'object' || details === null) {
-        return `<span class="text-muted">${details === null ? '-' : details}</span>`;
+    // Event handlers
+    initializeEventListeners() {
+        $('#formPembayaran').on('submit', (e) => this.handleFormSubmit(e));
+        $('#modalPembayaran').on('hidden.bs.modal', () => this.handleModalClose());
     }
 
-    const indent = '  '.repeat(level);
-    let html = '<div class="payment-details">';
-
-    for (const [key, value] of Object.entries(details)) {
-        const formattedKey = key.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    handleFormSubmit(e) {
+        e.preventDefault();
+        const form = $(e.currentTarget);
+        const data = {};
         
-        if (typeof value === 'object' && value !== null) {
-            html += `<div class="mb-2">
-                <strong>${formattedKey}:</strong>
-                ${formatPaymentDetails(value, level + 1)}
-            </div>`;
-        } else {
-            html += `<div class="mb-1">
-                <span class="text-muted">${formattedKey}:</span> 
-                <span class="ms-2">${value || '-'}</span>
-            </div>`;
+        try {
+            form.serializeArray().forEach(item => {
+                if (item.name === 'nominal') {
+                    const nominalValue = PaymentManager.parseNominal(item.value);
+                    if (nominalValue === 0) {
+                        throw new Error('Nominal pembayaran tidak valid');
+                    }
+                    data[item.name] = nominalValue;
+                } else {
+                    data[item.name] = item.value;
+                }
+            });
+
+            this.submitPayment(data);
+        } catch (error) {
+            this.showError(error.message);
         }
     }
 
-    html += '</div>';
-    return html;
-}
+    handleModalClose() {
+        const form = document.getElementById('formPembayaran');
+        if (form) {
+            form.reset();
+            $('#pembayaran_id').val('');
+        }
+        
+        // Reset main displays
+        $('#pembayaran-info').hide();
+        $('#formPembayaran').hide();
+        $('#detail-nominal').text(PaymentManager.formatCurrency(0).replace('Rp ', ''));
+        $('#btn-delete').hide();
 
-function verifikasiPembayaran(id, bulan, nominal) {
-    // Get the current year from the active tab
-    const activeTab = $('.tab-pane.active');
-    const tahun = activeTab.attr('id').replace('tahun-', '');
-    
-    // Reset any previous form data
-    $('#formPembayaran')[0].reset();
-    
-    // Show modal in verification mode
-    showDetail(id, bulan, nominal, tahun, PAYMENT_STATUS.PENDING, '-', '-');
-    
-    // Ensure form is displayed and info is hidden
-    $('#pembayaran-info').hide();
-    $('#formPembayaran').show();
-    
-    // Set the payment ID
-    $('#pembayaran_id').val(id);
-    
-    // Focus on metode pembayaran select
-    setTimeout(() => {
-        $('[name="metode_pembayaran_id"]').focus();
-    }, 500);
-}
+        // Reset online payment content
+        const $onlinePaymentInfo = $('#online-payment-info');
+        $onlinePaymentInfo.hide();
+        $onlinePaymentInfo.html(`
+            <table class="table table-sm table-borderless">
+                <tr>
+                    <td width="40%">Order ID</td>
+                    <td><span id="detail-order-id" class="font-monospace">-</span></td>
+                </tr>
+                <tr>
+                    <td>Transaction ID</td>
+                    <td><span id="detail-transaction-id" class="font-monospace">-</span></td>
+                </tr>
+                <tr>
+                    <td>Payment Type</td>
+                    <td><span id="detail-payment-type" class="badge bg-secondary">-</span></td>
+                </tr>
+            </table>
+            <div class="mt-3" id="payment-details-section" style="display: none;">
+                <h6 class="fw-bold mb-2">Detail Transaksi</h6>
+                <div id="detail-payment-details" class="bg-light p-3 rounded"></div>
+            </div>
+        `);
+    }
 
-function confirmDeletePembayaran() {
-    Swal.fire({
-        title: 'Hapus Pembayaran?',
-        text: `Anda yakin ingin menghapus pembayaran bulan ${currentBulan} ${currentTahun}?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Ya, Hapus!',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: `/${window.role}/pembayaran/${currentPembayaranId}`,
+    // Button Management
+    updateDeleteButton(id, status) {
+        const $btnDelete = $('#btn-delete');
+        if (window.role === 'admin' && id) {
+            $btnDelete.show();
+            $btnDelete.off('click').on('click', () => {
+                const bulan = $('#detail-bulan').text();
+                const tahun = $('#detail-tahun').text();
+                this.confirmDelete(id, bulan, tahun, status);
+            });
+        } else {
+            $btnDelete.hide();
+        }
+    }
+
+    confirmDelete(id, bulan, tahun, status) {
+        if (!id) {
+            this.showError('ID pembayaran tidak valid');
+            return;
+        }
+
+        const statusText = status === PaymentManager.PAYMENT_STATUS.SUCCESS ? 'yang sudah lunas' : 'yang belum lunas';
+
+        Swal.fire({
+            title: 'Reset Status Pembayaran?',
+            text: `Anda yakin ingin mereset pembayaran ${statusText} untuk bulan ${bulan} ${tahun}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Reset!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.deletePayment(id);
+            }
+        });
+    }
+
+    // API Interactions
+    async submitPayment(data) {
+        const pembayaranId = data.pembayaran_id;
+        let baseUrl = window.role === 'admin' ? '/admin' : '/petugas';
+        
+        const url = pembayaranId ?
+            `${baseUrl}/pembayaran/${pembayaranId}/verifikasi` :
+            `${baseUrl}/pembayaran`;
+
+        try {
+            const response = await $.ajax({
+                url,
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data,
+                dataType: 'json'
+            });
+
+            if (response.status === PaymentManager.PAYMENT_STATUS.SUCCESS) {
+                $('#modalPembayaran').modal('hide');
+                this.showSuccess('Pembayaran berhasil diverifikasi', true);
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (error) {
+            this.showError(error.message || 'Terjadi kesalahan saat memproses pembayaran');
+        }
+    }
+
+    async deletePayment(id) {
+        if (!id) {
+            this.showError('ID pembayaran tidak valid');
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: `/admin/pembayaran/${id}`,
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: 'Pembayaran berhasil dihapus',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        location.reload();
-                    });
-                },
-                error: function(xhr) {
-                    const error = xhr.responseJSON;
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: error?.message || 'Terjadi kesalahan saat menghapus pembayaran'
-                    });
-                }
+                dataType: 'json'
             });
+
+            if (response.status === 'success') {
+                $('#modalPembayaran').modal('hide');
+                this.showSuccess(response.message, true);
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (error) {
+            const message = error.responseJSON?.message || 'Terjadi kesalahan saat mereset pembayaran';
+            this.showError(message);
         }
-    });
+    }
+
+    // Helper methods
+    static formatNominal(value) {
+        return new Intl.NumberFormat('id-ID').format(value);
+    }
+
+    static formatCurrency(value) {
+        if (value === null || value === undefined || isNaN(value)) {
+            return 'Rp 0';
+        }
+        const nominalValue = parseInt(value);
+        return `Rp ${PaymentManager.formatNominal(nominalValue)}`;
+    }
+
+    static parseNominal(value) {
+        try {
+            if (!value || value === '-') return 0;
+            
+            // Bersihkan string dari karakter non-digit dan Rp
+            const cleanValue = String(value)
+                .replace(/[Rp\s.]/g, '')  // Hapus Rp, spasi, dan titik
+                .replace(/[^\d]/g, '');   // Hapus karakter non-digit
+            
+            const nominalValue = parseInt(cleanValue);
+            
+            if (isNaN(nominalValue)) {
+                console.warn('Nilai nominal tidak valid:', value);
+                return 0;
+            }
+            
+            if (nominalValue > 1000000000) {
+                console.warn('Nilai nominal terlalu besar:', nominalValue);
+                return 0;
+            }
+            
+            return nominalValue;
+        } catch (e) {
+            console.warn('Error parsing nominal:', e, 'value:', value);
+            return 0;
+        }
+    }
+
+    getStatusClass(status) {
+        return status === PaymentManager.PAYMENT_STATUS.SUCCESS ? 'bg-success' : 
+               (status === PaymentManager.PAYMENT_STATUS.PENDING ? 'bg-warning' : 'bg-danger');
+    }
+
+    getStatusText(status) {
+        return status === PaymentManager.PAYMENT_STATUS.SUCCESS ? 'Lunas' : 
+               (status === PaymentManager.PAYMENT_STATUS.PENDING ? 'Pending' : 'Belum Lunas');
+    }
+
+    showSuccess(message, reload = false) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: message,
+            showConfirmButton: false,
+            timer: 2000
+        }).then(() => {
+            if (reload) location.reload();
+        });
+    }
+
+    showError(message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: message,
+            showConfirmButton: true
+        });
+    }
+
+    toggleFormDisplay(showForm) {
+        const $form = $('#formPembayaran');
+        const $info = $('#pembayaran-info');
+        
+        if (showForm) {
+            $form.show();
+            $info.hide();
+        } else {
+            $form.hide();
+            $info.show();
+        }
+    }
 }
 
-// Handle form submission
-$(document).ready(function() {
-    // Reset form saat modal ditutup
-    $('#modalPembayaran').on('hidden.bs.modal', function() {
-        document.getElementById('formPembayaran').reset();
-        $('#pembayaran_id').val('');
-    });
+    // Return class instance
+    return PaymentManagerClass;
+})();
 
-    $('#formPembayaran').on('submit', function(e) {
-        e.preventDefault();
-        
-        const form = $(this);
-        const pembayaranId = form.find('[name="pembayaran_id"]').val();
-        const formData = form.serializeArray();
-        const data = {};
-        
-        formData.forEach(item => {
-            data[item.name] = item.value;
+// Initialize payment manager
+const paymentManager = new PaymentManager();
+
+// Expose necessary functions to window object
+Object.assign(window, {
+    showDetail: function(id, bulan, nominal, tahun, status, tanggal, metode, paymentDataString) {
+        console.log('showDetail called with params:', {
+            id, bulan, nominal, tahun, status, tanggal, metode, paymentDataString
         });
 
-        // Kirim request ke endpoint verifikasi
-        $.ajax({
-            url: `/${window.role}/santri/pembayaran/${pembayaranId}/verifikasi`,
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            data: data,
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === PAYMENT_STATUS.SUCCESS) {
-                    // Hide modal before updating UI
-                    $('#modalPembayaran').modal('hide');
-                    
-                    // Update tampilan tabel
-                    const row = $(`button[onclick*="verifikasiPembayaran('${pembayaranId}',"]`).closest('tr');
-                    
-                    // Update status cell
-                    row.find('td:eq(4)').html(`
-                        <span class="badge bg-success">Lunas</span>
-                    `);
-                    
-                    // Update metode cell
-                    row.find('td:eq(3)').html(`
-                        <span class="badge bg-info">${response.data.metode}</span>
-                    `);
-                    
-                    // Update tanggal bayar cell
-                    row.find('td:eq(1)').text(response.data.tanggal_bayar);
+        try {
+            const paymentData = paymentDataString ? JSON.parse(paymentDataString) : null;
+            const modal = new bootstrap.Modal(document.getElementById('modalPembayaran'));
+            
+            console.log('Sending to updateModal:', {
+                id, bulan, nominal, tahun, status, tanggal, metode, paymentData
+            });
+            
+            paymentManager.updateModal({
+                id, bulan, nominal, tahun, status, tanggal, metode, paymentData
+            });
+            
+            modal.show();
+        } catch (error) {
+            console.error('Error in showDetail:', error);
+            paymentManager.showError('Terjadi kesalahan saat menampilkan detail pembayaran');
+        }
+    },
 
-                    // Format payment info for detail button
-                    const paymentInfo = {
-                        order_id: null,
-                        transaction_id: null,
-                        payment_type: 'Manual',
-                        payment_details: null,
-                        keterangan: response.data.keterangan || ''
-                    };
+    verifikasiPembayaran: function(id, bulan, nominal) {
+        if (!id) {
+            paymentManager.showError('ID pembayaran tidak valid');
+            return;
+        }
 
-                    // Update tombol aksi
-                    row.find('td:last-child .btn-group').html(`
-                        <button class="btn btn-info" onclick="showDetail('${response.data.id}', '${row.find('td:first').text()}', ${row.find('td:eq(2)').text().replace(/[^\d]/g, '')}, '${currentTahun}', '${PAYMENT_STATUS.SUCCESS}', '${response.data.tanggal_bayar}', '${response.data.metode}', '${JSON.stringify(paymentInfo).replace(/'/g, "\\'")}')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        ${window.role === 'admin' ? `
-                        <button class="btn btn-danger" onclick="confirmDeletePembayaran()">
-                            <i class="fas fa-trash"></i>
-                        </button>` : ''}
-                    `);
+        const row = $(`button[onclick*="verifikasiPembayaran('${id}',"]`).closest('tr');
+        let nominalValue;
+        
+        if (nominal) {
+            nominalValue = PaymentManager.parseNominal(nominal);
+        } else {
+            const nominalText = row.find('td:eq(2)').text().trim();
+            nominalValue = PaymentManager.parseNominal(nominalText);
+        }
+        
+        if (nominalValue === 0) {
+            paymentManager.showError('Nominal tidak valid atau pembayaran tidak ditemukan');
+            return;
+        }
+        
+        const tahun = $('.tab-pane.active').attr('id')?.replace('tahun-', '') ||
+                     row.closest('.tab-pane').attr('id')?.replace('tahun-', '') ||
+                     new Date().getFullYear();
 
-                    // Update badge status di tab
-                    const currentTab = row.closest('.tab-pane');
-                    const tahun = currentTab.attr('id').replace('tahun-', '');
-                    const tabLink = $(`.nav-link[href="#tahun-${tahun}"]`);
-                    const badge = tabLink.find('.badge');
-                    const [lunas, total] = badge.text().split('/');
-                    badge.text(`${parseInt(lunas) + 1}/${total}`);
-                    
-                    if (parseInt(lunas) + 1 === parseInt(total)) {
-                        badge.removeClass('bg-warning bg-danger').addClass('bg-success');
-                    } else {
-                        badge.removeClass('bg-danger').addClass('bg-warning');
-                    }
+        const baseUrl = window.role === 'admin' ? '/admin' : '/petugas';
+        const url = `${baseUrl}/pembayaran/${id}/check-status`;
+        
+        console.log('Checking payment status:', {
+            role: window.role,
+            baseUrl,
+            url,
+            id
+        });
 
-                    // Tampilkan notifikasi
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: response.message,
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
+        $.get(url)
+            .done(function(response) {
+                console.log('Check status response:', response);
+                if (response.status === 'success') {
+                    const bulanName = PaymentManager.getNamaBulan(bulan);
+                    $('#bulan').val(bulanName);
+                    $('#pembayaran_id').val(id);
+                    showDetail(id, bulanName, nominalValue, tahun, PaymentManager.PAYMENT_STATUS.PENDING, '-', '-');
                 } else {
-                    throw new Error(response.message);
+                    paymentManager.showError('Pembayaran tidak ditemukan atau sudah dihapus');
                 }
-            },
-            error: function(xhr) {
-                const error = xhr.responseJSON;
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: error?.message || 'Terjadi kesalahan saat memproses pembayaran'
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('Check status error:', {
+                    status: textStatus,
+                    error: errorThrown,
+                    response: jqXHR.responseText
                 });
-            }
-        });
-    });
+                paymentManager.showError(`Gagal memeriksa status pembayaran: ${textStatus}`);
+            });
+    },
 
-    // Add some styling to payment details
-    const style = document.createElement('style');
-    style.textContent = `
-        .payment-details {
-            font-size: 0.9rem;
+    tambahPembayaran: function(tahun, bulan, nominal, santriId) {
+        const nominalValue = PaymentManager.parseNominal(nominal);
+        if (nominalValue === 0) {
+            paymentManager.showError('Nominal pembayaran tidak valid');
+            return;
         }
-        .payment-details .payment-details {
-            margin-left: 1rem;
-            margin-top: 0.5rem;
-            padding-left: 1rem;
-            border-left: 2px solid #e9ecef;
+
+        const bulanName = PaymentManager.getNamaBulan(bulan);
+        const $form = $('#formPembayaran');
+        
+        if (!$('#santri_id').length) {
+            $form.append(`
+                <input type="hidden" name="santri_id" id="santri_id" value="${santriId}">
+                <input type="hidden" name="tahun" value="${tahun}">
+                <input type="hidden" name="bulan" value="${bulanName}">
+                <input type="hidden" name="nominal" value="${nominalValue}">
+            `);
+        } else {
+            $('#santri_id').val(santriId);
+            $('[name="tahun"]').val(tahun);
+            $('[name="bulan"]').val(bulanName);
+            $('[name="nominal"]').val(nominalValue);
         }
-    `;
-    document.head.appendChild(style);
+        
+        $('#detail-tahun').text(tahun);
+        $('#detail-bulan').text(bulanName);
+        $('#detail-nominal').text(PaymentManager.formatCurrency(nominalValue).replace('Rp ', ''));
+        $('#detail-status').html(`<span class="badge bg-warning">Pending</span>`);
+        
+        $('#modalPembayaran').modal('show');
+        $('#pembayaran-info').hide();
+        $form.show();
+        
+        $('#modalPembayaran').one('shown.bs.modal', () => {
+            $('[name="metode_pembayaran_id"]').focus();
+        });
+    },
+
+    confirmDeletePembayaran: function(id, bulan, tahun) {
+        if (!id) {
+            paymentManager.showError('ID pembayaran tidak valid');
+            return;
+        }
+
+        const row = $(`button[onclick*="${id}"]`).closest('tr');
+        const monthName = row.find('td:first').text().trim();
+        const status = row.find('.badge').hasClass('bg-success')
+            ? PaymentManager.PAYMENT_STATUS.SUCCESS
+            : PaymentManager.PAYMENT_STATUS.UNPAID;
+
+        paymentManager.confirmDelete(id, monthName, tahun, status);
+    }
 });

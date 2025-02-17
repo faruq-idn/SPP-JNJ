@@ -156,6 +156,7 @@ class SantriController extends Controller
 
     public function show(Santri $santri)
     {
+        // Load necessary relationships
         $santri->load(['kategori.tarifTerbaru', 'wali']);
         
         $tahunSekarang = date('Y');
@@ -164,8 +165,24 @@ class SantriController extends Controller
         $pembayaranPerTahun = [];
         $totalTunggakanPerTahun = [];
         
-        // Ambil pembayaran untuk 2 tahun terakhir
-        for ($tahun = $tahunSekarang; $tahun >= $tahunSekarang - 1; $tahun--) {
+        // Get latest tarif from kategori
+        $latestTarif = $santri->kategori->tarifTerbaru;
+        $nominal = $latestTarif ? $latestTarif->nominal : 0;
+        
+        // Ambil semua tahun yang memiliki tagihan
+        $tahunTagihan = $santri->pembayaran()
+            ->select(DB::raw('DISTINCT tahun'))
+            ->orderByDesc('tahun')
+            ->pluck('tahun')
+            ->toArray();
+
+        // Tambahkan tahun sekarang jika belum ada
+        if (!in_array($tahunSekarang, $tahunTagihan)) {
+            array_unshift($tahunTagihan, $tahunSekarang);
+        }
+
+        // Proses setiap tahun
+        foreach ($tahunTagihan as $tahun) {
             $pembayaranList = [];
             $tunggakanTahun = 0;
             
@@ -177,39 +194,19 @@ class SantriController extends Controller
             } elseif ($tahun < $tanggalMasuk->year) {
                 continue; // Skip tahun sebelum santri masuk
             }
-            
-            // Generate data hanya untuk bulan yang sudah lewat atau bulan sekarang
-            $bulanMaksimal = ($tahun == $tahunSekarang) ? $bulanSekarang : 12;
-            
-            for ($bulan = $bulanAwal; $bulan <= $bulanMaksimal; $bulan++) {
-                $pembayaran = $santri->pembayaran()
-                    ->where('tahun', $tahun)
-                    ->where('bulan', $bulan)
-                    ->with('metode_pembayaran')
-                    ->first();
 
-                $nominal = $santri->kategori->tarifTerbaru->nominal ?? 0;
+            // Ambil semua tagihan yang ada untuk tahun ini
+            $tagihanTahunIni = $santri->pembayaran()
+                ->where('tahun', $tahun)
+                ->get()
+                ->keyBy('bulan');
 
-                if ($pembayaran) {
-                    if ($pembayaran->status !== 'success') {
-                        $tunggakanTahun += $pembayaran->nominal;
-                    }
-                    $pembayaranList[] = $pembayaran;
-                } else {
-                    // Tambahkan ke tunggakan
-                    $tunggakanTahun += $nominal;
-                    
-                    // Buat object untuk bulan ini
-                    $pembayaranList[] = (object)[
-                        'bulan' => $bulan,
-                        'nama_bulan' => Carbon::create()->month($bulan)->translatedFormat('F'),
-                        'nominal' => $nominal,
-                        'status' => 'unpaid',
-                        'tahun' => $tahun,
-                        'metode_pembayaran' => null,
-                        'tanggal_bayar' => null
-                    ];
+            // Hanya tampilkan bulan yang sudah ada tagihannya
+            foreach ($tagihanTahunIni as $pembayaran) {
+                if ($pembayaran->status !== 'success') {
+                    $tunggakanTahun += $pembayaran->nominal;
                 }
+                $pembayaranList[] = $pembayaran;
             }
             
             if (!empty($pembayaranList)) {

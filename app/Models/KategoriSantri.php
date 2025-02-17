@@ -31,4 +31,10 @@ class KategoriSantri extends Model
     {
         return $this->hasMany(Santri::class, 'kategori_id');
     }
+
+    // This method should be used instead of direct property access for safety
+    public function getLatestTarif()
+    {
+        return $this->tarifTerbaru;
+    }
 }

@@ -37,6 +37,8 @@ class PembayaranSpp extends Model
         'payment_details' => 'array'
     ];
 
+    protected $appends = ['nama_bulan', 'periode'];
+
     public function santri(): BelongsTo
     {
         return $this->belongsTo(Santri::class);
@@ -49,12 +51,17 @@ class PembayaranSpp extends Model
 
     public function getNamaBulanAttribute(): string
     {
-        return Carbon::createFromDate(null, (int)$this->bulan, 1)->translatedFormat('F');
+        return Carbon::create()
+            ->setMonth((int)$this->bulan)
+            ->locale('id')
+            ->translatedFormat('F');
     }
 
     public function getPeriodeAttribute(): string
     {
-        return Carbon::createFromDate($this->tahun, (int)$this->bulan, 1)->translatedFormat('F Y');
+        return Carbon::create($this->tahun, (int)$this->bulan, 1)
+            ->locale('id')
+            ->translatedFormat('F Y');
     }
 
     public function getIsLunasAttribute(): bool

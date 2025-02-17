@@ -5,6 +5,15 @@
     font-size: 0.875rem;
 }
 
+/* Body Layout */
+.wali-layout {
+    padding-top: 3.5rem; /* Space for fixed top navbar */
+}
+
+.content-wrapper {
+    margin-top: 1rem;
+}
+
 /* Navbar Styles */
 .navbar {
     height: 3.5rem;

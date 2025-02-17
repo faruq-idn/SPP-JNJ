@@ -59,9 +59,9 @@ Aplikasi manajemen pembayaran SPP berbasis web dengan integrasi payment gateway 
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white)
 ![jQuery](https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white)
 
-### 🛠️ Instalasi
+### 🛠️ Instalasi Lokal
 
-#### Prasyarat
+#### Prasyarat untuk Development
 - PHP >= 8.1
 - Composer
 - MySQL/MariaDB
@@ -144,6 +144,127 @@ Aplikasi manajemen pembayaran SPP berbasis web dengan integrasi payment gateway 
 | Admin   | admin@example.com   | password   |
 | Petugas | petugas@example.com | password   |
 | Wali    | wali@example.com    | password   |
+
+### 🚀 Deployment ke Shared Hosting
+
+#### Persiapan
+1. Pastikan shared hosting memenuhi requirements:
+   - PHP >= 8.1
+   - MySQL/MariaDB
+   - Ekstensi PHP yang diperlukan (BCMath, Ctype, dll)
+   - Composer (jika tersedia)
+   
+2. Siapkan subdomain atau domain yang akan digunakan
+
+#### Langkah Deployment
+
+1. **Persiapkan File Upload:**
+   ```bash
+   # Build assets produksi
+   npm run build
+   
+   # Optimize autoloader composer
+   composer install --optimize-autoloader --no-dev
+   ```
+
+2. **Upload File ke Hosting:**
+   - Upload semua file proyek ke hosting KECUALI:
+     - folder `node_modules/`
+     - folder `vendor/` (akan diinstall ulang)
+     - file `.env`
+     - folder `.git/`
+   - File dapat diupload via FTP atau File Manager hosting
+
+3. **Setup Direktori Publik:**
+   - Pindahkan semua isi folder `public/` ke `public_html/` atau root folder yang ditentukan hosting
+   - Edit file `index.php` yang dipindah, sesuaikan path ke `bootstrap/app.php`:
+   ```php
+   require __DIR__.'/../bootstrap/app.php';
+   // menjadi (sesuaikan dengan struktur folder):
+   require __DIR__.'/../[nama-folder-aplikasi]/bootstrap/app.php';
+   ```
+
+4. **Install Dependencies:**
+   - Jika hosting mendukung SSH:
+     ```bash
+     composer install --optimize-autoloader --no-dev
+     ```
+   - Jika tidak ada SSH:
+     - Upload folder `vendor/` yang sudah di-generate lokal
+     
+5. **Setup Database:**
+   - Buat database baru di hosting
+   - Import database dari backup lokal atau
+   - Jalankan migration (jika hosting mendukung SSH):
+     ```bash
+     php artisan migrate --seed
+     ```
+
+6. **Konfigurasi Aplikasi:**
+   - Copy `.env.example` menjadi `.env`
+   - Sesuaikan konfigurasi di `.env`:
+     ```env
+     APP_ENV=production
+     APP_DEBUG=false
+     APP_URL=https://domain-anda.com
+     
+     DB_HOST=localhost
+     DB_DATABASE=nama_database
+     DB_USERNAME=username_database
+     DB_PASSWORD=password_database
+     
+     MIDTRANS_IS_PRODUCTION=true # jika sudah siap live
+     MIDTRANS_NOTIFICATION_URL=https://domain-anda.com/wali/pembayaran/notification
+     ```
+   - Generate app key baru:
+     ```bash
+     php artisan key:generate
+     ```
+
+7. **Optimasi Production:**
+   ```bash
+   # Clear & cache konfigurasi
+   php artisan config:cache
+   
+   # Cache routes
+   php artisan route:cache
+   
+   # Cache views
+   php artisan view:cache
+   ```
+
+8. **Pengaturan Permission:**
+   ```bash
+   chmod -R 755 storage bootstrap/cache
+   ```
+
+9. **Setup Cronjob** (opsional, jika hosting mendukung):
+   - Tambahkan cronjob untuk menjalankan scheduler Laravel:
+     ```
+     * * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1
+     ```
+
+10. **Verifikasi Deployment:**
+    - Buka domain/subdomain yang sudah dikonfigurasi
+    - Test login dengan akun default
+    - Test fitur pembayaran dengan akun Midtrans Sandbox
+    - Periksa error log di `storage/logs/laravel.log`
+
+#### Troubleshooting
+
+1. **Halaman 500 Internal Server Error:**
+   - Periksa permission folder `storage/` dan `bootstrap/cache/`
+   - Periksa error log di `storage/logs/laravel.log`
+   - Pastikan `.env` sudah ada dan terkonfigurasi dengan benar
+
+2. **Assets (CSS/JS) Tidak Loading:**
+   - Pastikan path di `APP_URL` sudah benar
+   - Periksa file `.htaccess` di public folder
+   - Jalankan `npm run build` ulang jika perlu
+
+3. **Midtrans Callback Tidak Berfungsi:**
+   - Pastikan URL callback di `.env` dan dashboard Midtrans sudah benar
+   - Periksa firewall/security hosting tidak memblokir request dari Midtrans
 
 ## 📋 Todo
 

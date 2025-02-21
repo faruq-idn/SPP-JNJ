@@ -37,8 +37,15 @@ export default defineConfig({
         }
     },
     server: {
-        hmr: {
-            host: 'localhost',
+        fs: {
+            allow: ['public/vendor', 'resources'],
         },
+        host: true,
+        hmr: {
+            host: 'localhost'
+        },
+        watch: {
+            usePolling: true
+        }
     }
 });

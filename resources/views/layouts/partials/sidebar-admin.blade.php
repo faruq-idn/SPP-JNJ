@@ -11,15 +11,17 @@
         <!-- Data Santri dengan Sub Menu -->
         <li class="nav-item">
             <div class="nav-link-wrapper">
-                <a class="nav-link flex-grow-1 {{ Request::is('admin/santri*') ? 'active' : '' }}"
+                <a class="nav-link {{ Request::is('admin/santri*') ? 'active' : '' }}"
                    href="{{ route('admin.santri.index') }}">
                     <i class="fas fa-users"></i>
                     <span>Data Santri</span>
                 </a>
-                <button class="btn-dropdown {{ Request::is('admin/santri*') ? '' : 'collapsed' }}"
+                <button type="button" 
+                        class="btn-dropdown {{ Request::is('admin/santri*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse"
                         data-bs-target="#collapseKelas"
-                        aria-expanded="{{ Request::is('admin/santri*') ? 'true' : 'false' }}">
+                        aria-expanded="{{ Request::is('admin/santri*') ? 'true' : 'false' }}"
+                        aria-label="Toggle navigation">
                     <i class="fas fa-angle-down"></i>
                 </button>
             </div>
@@ -111,14 +113,21 @@
 
         <!-- Manajemen Pengguna -->
         <li class="nav-item">
-            <a class="nav-link {{ Request::routeIs('admin.users.*') ? 'active' : '' }}"
-               href="#userSubmenu"
-               data-bs-toggle="collapse"
-               aria-expanded="{{ Request::routeIs('admin.users.*') ? 'true' : 'false' }}">
-                <i class="fas fa-users-cog"></i>
-                <span>Manajemen Pengguna</span>
-                <i class="fas fa-chevron-down ms-auto"></i>
-            </a>
+            <div class="nav-link-wrapper">
+                <a class="nav-link {{ Request::routeIs('admin.users.*') ? 'active' : '' }}"
+                   href="#userSubmenu">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Manajemen Pengguna</span>
+                </a>
+                <button type="button" 
+                        class="btn-dropdown {{ Request::routeIs('admin.users.*') ? '' : 'collapsed' }}"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#userSubmenu"
+                        aria-expanded="{{ Request::routeIs('admin.users.*') ? 'true' : 'false' }}"
+                        aria-label="Toggle navigation">
+                    <i class="fas fa-angle-down"></i>
+                </button>
+            </div>
             <div class="collapse {{ Request::routeIs('admin.users.*') ? 'show' : '' }}" id="userSubmenu">
                 <div class="submenu">
                     <a class="submenu-item {{ request()->query('type') == 'petugas' ? 'active' : '' }}"

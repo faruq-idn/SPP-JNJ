@@ -1,0 +1,13 @@
+@echo off
+echo Stopping running processes...
+taskkill /F /IM node.exe >nul 2>&1
+
+echo Cleaning cache...
+rmdir /S /Q "node_modules/.vite" 2>nul
+rmdir /S /Q "public/build" 2>nul
+
+echo Installing dependencies...
+call npm install
+
+echo Starting development server...
+call npm run dev

@@ -1,38 +1,53 @@
-{{-- Chart.js dengan versi spesifik dan tanpa source map --}}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{{-- Chart.js --}}
+<script src="{{ asset('vendor/chartjs/chart.umd.min.js') }}"></script>
 
 {{-- jQuery --}}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
 {{-- Bootstrap JS --}}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 {{-- Select2 --}}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ asset('vendor/select2/js/select2.min.js') }}"></script>
 {{-- SweetAlert2 --}}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ asset('vendor/sweetalert2/sweetalert2.min.js') }}"></script>
 
 {{-- Default Select2 Configuration --}}
 <script>
-$(document).ready(function() {
+// Pastikan jQuery loaded sebelum menjalankan script
+function initializeComponents() {
+    if (typeof jQuery === 'undefined') {
+        setTimeout(initializeComponents, 100);
+        return;
+    }
+
     // Select2 default config
-    $.fn.select2.defaults.set("theme", "bootstrap-5");
-    $.fn.select2.defaults.set("language", "id");
+    if ($.fn.select2) {
+        $.fn.select2.defaults.set("theme", "bootstrap-5");
+        $.fn.select2.defaults.set("language", "id");
+    }
 
     // SweetAlert2 toast config
-    const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-    });
-
-    // Show success toast if exists
-    @if(session('success'))
-        Toast.fire({
-            icon: 'success',
-            title: '{{ session('success') }}'
+    if (typeof Swal !== 'undefined') {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
         });
-    @endif
+
+        // Show success toast if exists
+        @if(session('success'))
+            Toast.fire({
+                icon: 'success',
+                title: '{{ session('success') }}'
+            });
+        @endif
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeComponents();
 });
 
 // Prevent back button

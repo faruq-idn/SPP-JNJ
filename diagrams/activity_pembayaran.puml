@@ -1,0 +1,54 @@
+@startuml Proses Pembayaran SPP
+
+|Wali Santri|
+start
+:Login ke Sistem;
+
+|Sistem|
+:Tampilkan Dashboard;
+:Tampilkan Tagihan SPP;
+
+|Wali Santri|
+:Pilih Tagihan yang akan Dibayar;
+:Pilih Metode Pembayaran;
+
+|Sistem|
+if (Metode Pembayaran?) then (Online)
+    :Generate Payment Token;
+    :Redirect ke Payment Gateway;
+    
+    |Payment Gateway|
+    :Proses Pembayaran;
+    if (Pembayaran Berhasil?) then (ya)
+        :Kirim Callback ke Sistem;
+        
+        |Sistem|
+        :Update Status Pembayaran;
+        :Generate Kuitansi Digital;
+        :Kirim Notifikasi ke Wali;
+        
+    else (tidak)
+        :Kirim Notifikasi Gagal;
+        
+        |Sistem|
+        :Update Status Gagal;
+    endif
+    
+else (Offline)
+    |Petugas|
+    :Verifikasi Data Santri;
+    :Input Pembayaran;
+    :Cetak Kuitansi;
+    
+    |Sistem|
+    :Update Status Pembayaran;
+    :Catat Histori Transaksi;
+endif
+
+|Sistem|
+:Update Riwayat Pembayaran;
+:Update Status SPP Santri;
+
+stop
+
+@enduml

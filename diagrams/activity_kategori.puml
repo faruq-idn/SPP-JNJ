@@ -1,0 +1,101 @@
+@startuml Kelola Kategori Santri
+
+|Admin|
+start
+
+|Sistem|
+:Tampilkan List Kategori;
+:Load Data Tarif SPP;
+
+|Admin|
+if (Aksi?) then (Tambah)
+    :Klik Tambah Kategori;
+    
+    |Sistem|
+    :Tampilkan Form Kategori;
+    
+    |Admin|
+    :Input Nama Kategori;
+    :Input Keterangan;
+    :Input Tarif SPP;
+    :Submit Form;
+    
+    |Sistem|
+    :Validasi Input;
+    
+    if (Valid?) then (tidak)
+        :Tampilkan Error Message;
+        stop
+    else (ya)
+        :Simpan Kategori;
+        :Buat Riwayat Tarif;
+    endif
+    
+elseif (Edit)
+    :Pilih Kategori;
+    :Klik Edit;
+    
+    |Sistem|
+    :Load Data Kategori;
+    :Tampilkan Form Edit;
+    
+    |Admin|
+    :Update Data Kategori;
+    :Update Tarif (Optional);
+    :Submit Perubahan;
+    
+    |Sistem|
+    :Validasi Perubahan;
+    
+    if (Valid?) then (tidak)
+        :Tampilkan Error Message;
+        stop
+    else (ya)
+        :Update Kategori;
+        if (Tarif Berubah?) then (ya)
+            :Catat Riwayat Tarif Baru;
+            :Set Tanggal Berakhir Tarif Lama;
+        endif
+    endif
+    
+elseif (Hapus)
+    :Pilih Kategori;
+    :Klik Hapus;
+    
+    |Sistem|
+    :Cek Penggunaan Kategori;
+    
+    if (Sedang Digunakan?) then (ya)
+        :Tampilkan Pesan Error;
+        stop
+    else (tidak)
+        :Konfirmasi Penghapusan;
+        
+        |Admin|
+        if (Konfirmasi?) then (tidak)
+            stop
+        else (ya)
+            |Sistem|
+            :Hapus Kategori;
+            :Hapus Riwayat Tarif Terkait;
+        endif
+    endif
+    
+else (Lihat Riwayat)
+    :Pilih Kategori;
+    :Klik Riwayat Tarif;
+    
+    |Sistem|
+    :Tampilkan Riwayat Tarif;
+    :Tampilkan Grafik Perubahan;
+endif
+
+|Sistem|
+:Refresh Data Kategori;
+:Tampilkan Status Operasi;
+
+|Admin|
+:Melihat Hasil;
+stop
+
+@enduml

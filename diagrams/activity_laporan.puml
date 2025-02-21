@@ -1,0 +1,93 @@
+@startuml Kelola Laporan
+
+|Admin/Petugas|
+start
+
+:Akses Menu Laporan;
+
+|Sistem|
+:Tampilkan Dashboard Laporan;
+:Load Filter Options;
+
+|Admin/Petugas|
+if (Jenis Laporan?) then (Pembayaran)
+    :Pilih Laporan Pembayaran;
+    
+    |Sistem|
+    :Tampilkan Filter Pembayaran;
+    
+    |Admin/Petugas|
+    :Set Filter Periode;
+    :Set Filter Status (Optional);
+    :Set Filter Metode (Optional);
+    
+else (Tunggakan)
+    :Pilih Laporan Tunggakan;
+    
+    |Sistem|
+    :Tampilkan Filter Tunggakan;
+    
+    |Admin/Petugas|
+    :Set Filter Kelas;
+    :Set Filter Kategori (Optional);
+    :Set Status Santri (Optional);
+endif
+
+|Admin/Petugas|
+:Submit Filter;
+
+|Sistem|
+:Validasi Filter;
+:Proses Data Laporan;
+:Generate Statistics;
+:Tampilkan Preview;
+
+|Admin/Petugas|
+if (Format Output?) then (PDF)
+    :Klik Export PDF;
+    
+    |Sistem|
+    :Generate PDF;
+    :Format Data Tabel;
+    :Tambah Header & Footer;
+    :Tambah Grafik (jika ada);
+    :Compress PDF;
+    
+elseif (Excel)
+    :Klik Export Excel;
+    
+    |Sistem|
+    :Generate Excel;
+    :Format Cells & Data;
+    :Tambah Formula;
+    :Tambah Pivot Tables;
+    :Protect Worksheet;
+    
+else (Print)
+    :Klik Print Preview;
+    
+    |Sistem|
+    :Format Print Layout;
+    :Set Page Options;
+    :Preview Document;
+endif
+
+|Sistem|
+if (Generate Berhasil?) then (ya)
+    :Simpan File Temporary;
+    :Provide Download Link;
+    
+    |Admin/Petugas|
+    :Download/Print Laporan;
+else (tidak)
+    :Tampilkan Error Message;
+    
+    |Admin/Petugas|
+    :Lihat Error;
+endif
+
+|Admin/Petugas|
+:Konfirmasi Hasil;
+stop
+
+@enduml

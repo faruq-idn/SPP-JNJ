@@ -1,0 +1,91 @@
+@startuml Sequence Pembayaran SPP Online
+
+skinparam sequence {
+    ParticipantBorderColor #2C3E50
+    ParticipantBackgroundColor #FFFFFF
+    LifeLineBorderColor #2C3E50
+    LifeLineBackgroundColor #FFFFFF
+}
+
+actor "Wali Santri" as wali
+participant "Frontend\nWeb App" as web
+participant "SPP\nController" as controller
+participant "Payment\nService" as payment
+participant "Midtrans\nGateway" as midtrans
+database "Database" as db
+
+autonumber
+
+wali -> web: Akses Halaman Pembayaran
+activate web
+
+web -> controller: Get Data Tagihan
+activate controller
+controller -> db: Query Tagihan SPP
+activate db
+db --> controller: Data Tagihan
+deactivate db
+controller --> web: Tampilkan Data Tagihan
+deactivate controller
+
+wali -> web: Pilih Tagihan & Metode Pembayaran
+web -> controller: Request Pembayaran
+activate controller
+
+controller -> payment: Inisiasi Pembayaran
+activate payment
+payment -> midtrans: Create Transaction
+activate midtrans
+midtrans --> payment: Payment Token
+deactivate midtrans
+
+payment -> db: Simpan Token & Order ID
+activate db
+db --> payment: Konfirmasi
+deactivate db
+
+payment --> controller: Payment Token
+deactivate payment
+
+controller --> web: Redirect URL
+deactivate controller
+
+web -> midtrans: Redirect ke Payment Page
+activate midtrans
+wali -> midtrans: Proses Pembayaran
+
+alt Pembayaran Berhasil
+    midtrans -> payment: Payment Callback (success)
+    activate payment
+    payment -> db: Update Status Pembayaran
+    activate db
+    db --> payment: OK
+    deactivate db
+    
+    payment -> controller: Notifikasi Sukses
+    activate controller
+    controller -> web: Redirect ke Success Page
+    web --> wali: Tampilkan Bukti Pembayaran
+    deactivate controller
+    deactivate payment
+
+else Pembayaran Gagal
+    midtrans -> payment: Payment Callback (failed)
+    activate payment
+    payment -> db: Update Status Gagal
+    activate db
+    db --> payment: OK
+    deactivate db
+    
+    payment -> controller: Notifikasi Gagal
+    activate controller
+    controller -> web: Redirect ke Error Page
+    web --> wali: Tampilkan Pesan Gagal
+    deactivate controller
+    deactivate payment
+end
+
+deactivate midtrans
+deactivate web
+
+@enduml

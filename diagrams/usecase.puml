@@ -1,0 +1,80 @@
+@startuml SPP Management System
+
+' Styling
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    ArrowColor #2C3E50
+    ActorBorderColor #2C3E50
+}
+
+' Actors
+actor "Admin" as admin #BFEFFF
+actor "Petugas" as petugas #BFECC0
+actor "Wali Santri" as wali #FFE5CC
+
+' Use cases for Admin
+rectangle "Sistem Pembayaran SPP" {
+    ' Authentication
+    usecase "Login" as UC1
+    
+    ' Admin Use Cases
+    usecase "Kelola Data Santri" as UC2
+    usecase "Kelola Kategori Santri" as UC3
+    usecase "Kelola Tarif SPP" as UC4
+    usecase "Kelola Pengguna" as UC5
+    usecase "Generate Laporan" as UC6
+    usecase "Kelola Metode Pembayaran" as UC7
+    usecase "Proses Kenaikan Kelas" as UC8
+    usecase "Kelola Pembayaran SPP" as UC9
+    
+    ' Petugas Use Cases
+    usecase "Lihat Data Santri" as UC10
+    usecase "Proses Pembayaran" as UC11
+    usecase "Cetak Kuitansi" as UC12
+    usecase "Lihat Laporan Harian" as UC13
+    
+    ' Wali Use Cases
+    usecase "Lihat Tagihan SPP" as UC14
+    usecase "Bayar SPP Online" as UC15
+    usecase "Lihat Riwayat Pembayaran" as UC16
+    usecase "Hubungkan ke Santri" as UC17
+}
+
+' Relationships
+' Admin relationships
+admin --> UC1
+admin --> UC2
+admin --> UC3
+admin --> UC4
+admin --> UC5
+admin --> UC6
+admin --> UC7
+admin --> UC8
+admin --> UC9
+
+' Petugas relationships
+petugas --> UC1
+petugas --> UC10
+petugas --> UC11
+petugas --> UC12
+petugas --> UC13
+
+' Wali relationships
+wali --> UC1
+wali --> UC14
+wali --> UC15
+wali --> UC16
+wali --> UC17
+
+' Include relationships
+UC15 ..> UC14 : <<include>>
+UC11 ..> UC12 : <<include>>
+UC9 ..> UC12 : <<include>>
+
+' Extend relationships
+UC13 .> UC6 : <<extend>>
+UC16 .> UC14 : <<extend>>
+
+@enduml

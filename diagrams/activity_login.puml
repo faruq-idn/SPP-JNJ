@@ -1,0 +1,40 @@
+@startuml Login Process
+
+|User|
+start
+:Akses Halaman Login;
+
+|Sistem|
+:Tampilkan Form Login;
+
+|User|
+:Input Email dan Password;
+
+|Sistem|
+:Validasi Input;
+if (Input Valid?) then (tidak)
+    :Tampilkan Error Message;
+    stop
+else (ya)
+    :Cek Kredensial;
+    if (Kredensial Benar?) then (tidak)
+        :Tampilkan Pesan Error Login;
+        stop
+    else (ya)
+        :Set Session User;
+        :Cek Role User;
+        if (Role?) then (admin)
+            :Redirect ke Dashboard Admin;
+        elseif (petugas)
+            :Redirect ke Dashboard Petugas;
+        else (wali)
+            :Redirect ke Dashboard Wali;
+        endif
+    endif
+endif
+
+|User|
+:Melihat Dashboard;
+stop
+
+@enduml

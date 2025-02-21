@@ -1,0 +1,148 @@
+@startuml Class Diagram SPP Management System
+
+skinparam class {
+    BackgroundColor White
+    ArrowColor #2C3E50
+    BorderColor #2C3E50
+}
+
+' Models
+class User {
+    + id: bigint
+    + name: string
+    + email: string
+    + password: string
+    + role: enum
+    + no_hp: string
+    + remember_token: string
+    + email_verified_at: timestamp
+    + created_at: timestamp
+    + updated_at: timestamp
+    --
+    + santri(): HasMany
+    + isAdmin(): boolean
+    + isPetugas(): boolean
+    + isWali(): boolean
+}
+
+class Santri {
+    + id: bigint
+    + nisn: string
+    + nama: string
+    + jenis_kelamin: enum
+    + tanggal_lahir: date
+    + alamat: text
+    + wali_id: bigint
+    + nama_wali: string
+    + tanggal_masuk: date
+    + jenjang: enum
+    + kelas: string
+    + status: enum
+    + tahun_tamat: year
+    + kategori_id: bigint
+    + status_spp: enum
+    --
+    + wali(): BelongsTo
+    + kategori(): BelongsTo
+    + pembayaran(): HasMany
+    + kenaikanKelas(): HasMany
+    + hitungTunggakan(): decimal
+}
+
+class KategoriSantri {
+    + id: bigint
+    + nama: string
+    + keterangan: text
+    --
+    + santri(): HasMany
+    + riwayatTarif(): HasMany
+    + getTarifAktif(): decimal
+}
+
+class PembayaranSPP {
+    + id: bigint
+    + santri_id: bigint
+    + metode_pembayaran_id: bigint
+    + bulan: string
+    + tahun: year
+    + nominal: decimal
+    + tanggal_bayar: timestamp
+    + keterangan: string
+    + snap_token: string
+    + order_id: string
+    + payment_type: string
+    + transaction_id: string
+    + payment_details: json
+    + status: string
+    --
+    + santri(): BelongsTo
+    + metodePembayaran(): BelongsTo
+    + generateOrderId(): string
+    + createMidtransTransaction(): void
+}
+
+class MetodePembayaran {
+    + id: bigint
+    + nama: string
+    + kode: string
+    + status: enum
+    --
+    + pembayaran(): HasMany
+    + isActive(): boolean
+}
+
+class RiwayatTarifSPP {
+    + id: bigint
+    + kategori_id: bigint
+    + nominal: decimal
+    + berlaku_mulai: date
+    + berlaku_sampai: date
+    + keterangan: text
+    --
+    + kategori(): BelongsTo
+    + isAktif(): boolean
+}
+
+class KenaikanKelasHistory {
+    + id: bigint
+    + santri_id: bigint
+    + kelas_sebelum: string
+    + kelas_sesudah: string
+    + status: enum
+    + created_by: bigint
+    --
+    + santri(): BelongsTo
+    + creator(): BelongsTo
+}
+
+' Services
+class PaymentService {
+    - midtransConfig: array
+    --
+    + createTransaction(): array
+    + handleCallback(): void
+    + checkStatus(): array
+}
+
+' Controllers
+class PembayaranController {
+    + index(): View
+    + create(): View
+    + store(): Response
+    + show(): View
+    + processPayment(): Response
+    + handleCallback(): Response
+}
+
+' Relationships
+User "1" -- "0..*" Santri : has
+Santri "1" -- "0..*" PembayaranSPP : makes
+Santri "1" -- "0..*" KenaikanKelasHistory : has
+KategoriSantri "1" -- "0..*" Santri : categorizes
+KategoriSantri "1" -- "0..*" RiwayatTarifSPP : has
+MetodePembayaran "1" -- "0..*" PembayaranSPP : processes
+
+PembayaranController ..> PaymentService : uses
+PaymentService ..> PembayaranSPP : manages
+
+@enduml

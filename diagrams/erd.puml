@@ -1,0 +1,124 @@
+@startuml Entity Relationship Diagram SPP
+
+!define TABLE(x) class x << (T,#FFAAAA) >>
+!define PRIMARY_KEY(x) <u>x</u>
+!define FOREIGN_KEY(x) <i>x</i>
+
+skinparam class {
+    BackgroundColor White
+    ArrowColor #2C3E50
+    BorderColor #2C3E50
+}
+
+' Entities
+TABLE(users) {
+    PRIMARY_KEY(id)
+    --
+    name
+    email
+    password
+    role
+    no_hp
+    email_verified_at
+    remember_token
+    created_at
+    updated_at
+}
+
+TABLE(santri) {
+    PRIMARY_KEY(id)
+    --
+    nisn
+    nama
+    jenis_kelamin
+    tanggal_lahir
+    alamat
+    FOREIGN_KEY(wali_id)
+    nama_wali
+    tanggal_masuk
+    jenjang
+    kelas
+    status
+    tahun_tamat
+    FOREIGN_KEY(kategori_id)
+    status_spp
+    created_at
+    updated_at
+}
+
+TABLE(kategori_santri) {
+    PRIMARY_KEY(id)
+    --
+    nama
+    keterangan
+    created_at
+    updated_at
+}
+
+TABLE(pembayaran_spp) {
+    PRIMARY_KEY(id)
+    --
+    FOREIGN_KEY(santri_id)
+    FOREIGN_KEY(metode_pembayaran_id)
+    bulan
+    tahun
+    nominal
+    tanggal_bayar
+    keterangan
+    snap_token
+    order_id
+    payment_type
+    transaction_id
+    payment_details
+    status
+    created_at
+    updated_at
+}
+
+TABLE(metode_pembayaran) {
+    PRIMARY_KEY(id)
+    --
+    nama
+    kode
+    status
+    created_at
+    updated_at
+}
+
+TABLE(riwayat_tarif_spp) {
+    PRIMARY_KEY(id)
+    --
+    FOREIGN_KEY(kategori_id)
+    nominal
+    berlaku_mulai
+    berlaku_sampai
+    keterangan
+    created_at
+    updated_at
+}
+
+TABLE(kenaikan_kelas_history) {
+    PRIMARY_KEY(id)
+    --
+    FOREIGN_KEY(santri_id)
+    kelas_sebelum
+    kelas_sesudah
+    status
+    FOREIGN_KEY(created_by)
+    created_at
+    updated_at
+}
+
+' Relationships
+users ||--o{ santri : "wali"
+users ||--o{ kenaikan_kelas_history : "created_by"
+
+santri }|--|| kategori_santri : "belongs to"
+santri ||--o{ pembayaran_spp : "has"
+santri ||--o{ kenaikan_kelas_history : "has"
+
+kategori_santri ||--o{ riwayat_tarif_spp : "has"
+
+pembayaran_spp }o--|| metode_pembayaran : "uses"
+
+@enduml

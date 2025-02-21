@@ -1,0 +1,67 @@
+@startuml Tambah Data Santri
+
+|Admin/Petugas|
+start
+
+if (Metode Input?) then (Manual)
+    :Pilih Menu Tambah Santri;
+    
+    |Sistem|
+    :Tampilkan Form Santri;
+    :Load Data Kategori;
+    :Load Data Wali;
+    
+    |Admin/Petugas|
+    :Input Data Santri;
+    :Pilih Kategori;
+    :Pilih/Input Wali;
+    :Submit Form;
+    
+    |Sistem|
+    :Validasi Input;
+    
+else (Import Excel)
+    :Pilih Menu Import Santri;
+    
+    |Sistem|
+    :Tampilkan Form Upload;
+    
+    |Admin/Petugas|
+    :Upload File Excel;
+    
+    |Sistem|
+    :Validasi Format File;
+    if (Format Valid?) then (tidak)
+        :Tampilkan Error Format;
+        stop
+    else (ya)
+        :Baca Data Excel;
+        :Validasi Data Santri;
+        
+        if (Data Valid?) then (tidak)
+            :Generate Error Report;
+            :Download Error Report;
+            stop
+        endif
+    endif
+endif
+
+|Sistem|
+:Simpan Data Santri;
+:Generate NIS/Identitas;
+:Set Status Aktif;
+:Create User Wali;
+    
+if (Berhasil?) then (ya)
+    :Kirim Email ke Wali;
+    :Tampilkan Success Message;
+else (tidak)
+    :Rollback Transaksi;
+    :Tampilkan Error Message;
+endif
+
+|Admin/Petugas|
+:Melihat Hasil;
+stop
+
+@enduml

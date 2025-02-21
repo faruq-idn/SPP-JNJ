@@ -1,5 +1,4 @@
 import './bootstrap';
-import zxcvbn from 'zxcvbn';
 
 // Tambahkan script global disini
 
@@ -21,8 +20,3 @@ function areCookiesEnabled() {
 if (!areCookiesEnabled()) {
     console.warn('Cookies dibutuhkan untuk fungsi optimal aplikasi');
 }
-
-
-
-
-

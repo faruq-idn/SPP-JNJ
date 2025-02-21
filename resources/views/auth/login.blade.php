@@ -36,12 +36,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="password-strength mb-3">
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="4"></div>
-                            </div>
-                            <p class="password-strength-text mt-2 small text-muted">Kekuatan Password: Belum diuji</p>
-                        </div>
 
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <div class="form-check">
@@ -74,7 +68,6 @@
 </div>
 
 @push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
 <script>
 $(document).ready(function() {
     // Toggle password visibility
@@ -91,7 +84,6 @@ $(document).ready(function() {
         }
     });
 
-
     // Animation on load
     $('.card').hide().fadeIn(1000);
 
@@ -101,35 +93,6 @@ $(document).ready(function() {
     }).blur(function() {
         if (!$(this).val()) {
             $(this).parent().removeClass('focused');
-        }
-    });
-
-    // Password strength check
-    $('#password').on('input', function() {
-        const password = $(this).val();
-        const result = zxcvbn(password);
-        const progressBar = $('.progress-bar');
-        const strengthText = $('.password-strength-text');
-        const strengthPercentage = (result.score / 4) * 100;
-
-        progressBar.attr('aria-valuenow', result.score);
-        progressBar.width(strengthPercentage + '%');
-
-        if (result.score === 0) {
-            progressBar.removeClass('bg-success bg-warning bg-danger').addClass('bg-danger');
-            strengthText.text('Kekuatan Password: Sangat Lemah');
-        } else if (result.score === 1) {
-            progressBar.removeClass('bg-success bg-warning bg-danger').addClass('bg-danger');
-            strengthText.text('Kekuatan Password: Lemah');
-        } else if (result.score === 2) {
-            progressBar.removeClass('bg-success bg-warning bg-danger').addClass('bg-warning');
-            strengthText.text('Kekuatan Password: Cukup');
-        } else if (result.score === 3) {
-            progressBar.removeClass('bg-success bg-warning bg-danger').addClass('bg-success');
-            strengthText.text('Kekuatan Password: Kuat');
-        } else if (result.score === 4) {
-            progressBar.removeClass('bg-success bg-warning bg-danger').addClass('bg-success');
-            strengthText.text('Kekuatan Password: Sangat Kuat');
         }
     });
 

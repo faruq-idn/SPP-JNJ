@@ -1,101 +1,43 @@
-# KATA PENGANTAR
+KATA PENGANTAR
 
-Pesantren sebagai lembaga pendidikan Islam memiliki peran penting dalam pembentukan karakter dan pendidikan generasi muda Indonesia. Seiring dengan perkembangan zaman dan teknologi, pengelolaan administrasi dan keuangan pesantren perlu ditingkatkan untuk mendukung transparansi dan efisiensi operasional lembaga.
+Bismillahirrahmanirrahim
 
-Pesantren Jabal Nur Jadid yang berlokasi di Aceh Barat Daya merupakan salah satu lembaga pendidikan Islam yang terus berkomitmen untuk memberikan pendidikan berkualitas kepada para santrinya. Dalam upaya meningkatkan kualitas pengelolaan keuangan dan pembukuan, diperlukan sebuah sistem informasi yang dapat membantu proses administrasi keuangan secara digital.
+Alhamdulillah, segala puji dan syukur penulis panjatkan ke hadirat Allah SWT yang telah melimpahkan rahmat, hidayah, dan karunia-Nya sehingga penulis dapat menyelesaikan skripsi ini. Shalawat beserta salam semoga senantiasa tercurah kepada Nabi Muhammad SAW yang telah membawa umat manusia dari zaman kebodohan menuju zaman yang penuh dengan ilmu pengetahuan.
 
-## Fitur dan Kemampuan Sistem
+Skripsi ini disusun untuk memenuhi salah satu syarat memperoleh gelar Sarjana Komputer pada Program Studi Teknik Informatika. Dalam proses penyelesaian skripsi ini, penulis telah banyak mendapat bantuan, bimbingan, dan dukungan dari berbagai pihak. Oleh karena itu, dengan segala kerendahan hati penulis menyampaikan ucapan terima kasih yang sebesar-besarnya kepada:
 
-Sistem Informasi Manajemen Keuangan (Pembukuan) berbasis website ini dirancang khusus untuk memenuhi kebutuhan Pesantren Jabal Nur Jadid dalam mengelola pembayaran SPP dan administrasi keuangan lainnya. Sistem ini mengintegrasikan berbagai fitur seperti:
+1. Allah SWT atas segala rahmat dan karunia-Nya.
 
-1. Manajemen data santri dan wali santri
-2. Pengelolaan kategori dan tarif SPP
-3. Pencatatan dan pelacakan pembayaran
-4. Pelaporan keuangan yang komprehensif
-5. Integrasi pembayaran online
-6. Multi-role user (admin, petugas, wali santri)
+2. Kedua orang tua tercinta, Ayahanda [Nama Ayah] dan Ibunda [Nama Ibu] yang telah memberikan kasih sayang yang tak terhingga, dukungan moral dan materil, serta doa yang tiada henti untuk keberhasilan penulis.
 
-## Manfaat dan Tujuan
+3. Bapak/Ibu [Nama], selaku Rektor Universitas [Nama Universitas].
 
-Dengan diimplementasikannya sistem ini, diharapkan dapat memberikan manfaat berupa:
+4. Bapak/Ibu [Nama], selaku Dekan Fakultas [Nama Fakultas].
 
-1. Peningkatan efisiensi pengelolaan keuangan
-2. Transparansi pembayaran SPP
-3. Kemudahan akses informasi bagi wali santri
-4. Pengurangan kesalahan pencatatan manual
-5. Pelaporan yang lebih akurat dan tepat waktu
-6. Pengambilan keputusan yang lebih baik berdasarkan data
+5. Bapak/Ibu [Nama], selaku Ketua Program Studi Teknik Informatika.
 
-## Metodologi Pengembangan
+6. Bapak/Ibu [Nama], selaku dosen pembimbing yang telah meluangkan waktu, tenaga, dan pikiran dalam memberikan bimbingan, arahan, kritik, dan saran yang sangat berharga kepada penulis.
 
-Sistem ini dikembangkan menggunakan metodologi Agile dengan pendekatan iteratif dan inkremental, yang memungkinkan:
-1. Pengembangan yang adaptif terhadap kebutuhan pesantren
-2. Feedback loop yang cepat untuk perbaikan
-3. Delivery fitur secara bertahap
-4. Testing yang menyeluruh di setiap iterasi
+7. Bapak/Ibu [Nama], selaku penguji yang telah memberikan masukan yang berharga untuk penyempurnaan skripsi ini.
 
-## Teknologi yang Digunakan
+8. Seluruh Dosen Program Studi Teknik Informatika yang telah memberikan ilmu yang sangat bermanfaat selama masa perkuliahan.
 
-Pengembangan sistem menggunakan stack teknologi modern:
-1. Laravel Framework - Backend development
-2. Bootstrap & Tailwind CSS - Frontend styling
-3. JavaScript & Alpine.js - Interactive features
-4. MySQL Database - Data storage
-5. Midtrans Payment Gateway - Online payment
-6. Git - Version control
-7. Automated Testing - Quality assurance
+9. Staf dan karyawan [Nama Universitas] yang telah membantu dalam proses administrasi.
 
-## Keamanan dan Privasi
+10. Keluarga besar yang selalu memberikan dukungan dan motivasi kepada penulis.
 
-Sistem dirancang dengan memperhatikan aspek keamanan:
-1. Enkripsi data sensitif
-2. Role-based access control
-3. Proteksi terhadap serangan umum
-4. Audit trail untuk aktivitas penting
-5. Backup data reguler
+11. Teman-teman seperjuangan Teknik Informatika angkatan [Tahun] yang telah memberikan semangat dan dukungan.
 
-## Rencana Pengembangan
+12. Semua pihak yang tidak dapat disebutkan satu per satu yang telah membantu dalam penyelesaian skripsi ini.
 
-Untuk memastikan keberlanjutan dan peningkatan sistem, beberapa rencana pengembangan telah disusun:
+Penulis menyadari bahwa dalam penulisan skripsi ini masih terdapat banyak kekurangan dan keterbatasan. Oleh karena itu, penulis mengharapkan kritik dan saran yang membangun untuk perbaikan di masa yang akan datang.
 
-1. Jangka Pendek (6 bulan):
-   - Implementasi fitur notifikasi WhatsApp
-   - Penambahan metode pembayaran
-   - Optimasi performa sistem
+Akhir kata, penulis berharap semoga skripsi ini dapat memberikan manfaat bagi pengembangan ilmu pengetahuan dan bagi semua pihak yang membutuhkan.
 
-2. Jangka Menengah (1 tahun):
-   - Integrasi dengan sistem akademik
-   - Pengembangan mobile app
-   - Peningkatan fitur pelaporan
+[Kota], [Tanggal]
 
-3. Jangka Panjang (2 tahun):
-   - Ekspansi ke modul keuangan lainnya
-   - Implementasi AI untuk analisis data
-   - Pengembangan API untuk integrasi pihak ketiga
+Penulis,
 
-## Maintenance dan Support
 
-Untuk menjamin keberlangsungan sistem, disediakan layanan:
-1. Technical support 24/7
-2. Pembaruan berkala untuk keamanan
-3. Backup otomatis harian
-4. Training untuk pengguna baru
-5. Dokumentasi yang selalu diperbarui
-
-## Penutup
-
-Kami berharap sistem ini dapat memberikan kontribusi positif bagi perkembangan Pesantren Jabal Nur Jadid dan menjadi model pengelolaan keuangan yang dapat diadopsi oleh pesantren-pesantren lainnya di Indonesia.
-
-Pengembangan sistem ini tidak akan mungkin terlaksana tanpa dukungan dan kerjasama dari berbagai pihak. Untuk itu, kami mengucapkan terima kasih kepada:
-
-1. Pimpinan dan pengurus Pesantren Jabal Nur Jadid
-2. Tim pengembang dan pengujian sistem
-3. Para wali santri yang telah memberikan masukan
-4. Semua pihak yang telah berkontribusi
-
-Semoga sistem ini dapat bermanfaat bagi kemajuan pendidikan Islam di Indonesia.
-
-Hormat kami,
-
-[Nama Pengembang]
-[Tanggal]
+[Nama Lengkap]
+[NIM]

@@ -3,19 +3,20 @@
         <!-- Dashboard -->
         <li class="nav-item">
             <a class="nav-link {{ Request::is('admin/dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
             </a>
         </li>
 
         <!-- Data Santri dengan Sub Menu -->
         <li class="nav-item">
-            <div class="nav-link-wrapper d-flex align-items-center">
+            <div class="nav-link-wrapper">
                 <a class="nav-link flex-grow-1 {{ Request::is('admin/santri*') ? 'active' : '' }}"
                    href="{{ route('admin.santri.index') }}">
-                    <i class="fas fa-users fa-fw me-2"></i>
+                    <i class="fas fa-users"></i>
                     <span>Data Santri</span>
                 </a>
-                <button class="btn-dropdown ms-2 {{ Request::is('admin/santri*') ? '' : 'collapsed' }}"
+                <button class="btn-dropdown {{ Request::is('admin/santri*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse"
                         data-bs-target="#collapseKelas"
                         aria-expanded="{{ Request::is('admin/santri*') ? 'true' : 'false' }}">
@@ -41,11 +42,11 @@
                                                   $currentKelas['jenjang'] == 'SMP' &&
                                                   $currentKelas['kelas'] == $kelas;
                                     @endphp
-                                    <a class="submenu-item d-flex align-items-center {{ $isActive ? 'active' : '' }}"
+                                    <a class="submenu-item {{ $isActive ? 'active' : '' }}"
                                        href="{{ route('admin.santri.kelas', ['jenjang' => 'smp', 'kelas' => $kelas]) }}"
                                        title="Kelas {{ $kelas }}">
                                         <span>Kelas {{ $kelas }}</span>
-                                        <span class="badge ms-auto">{{ $count }}</span>
+                                        <span class="badge">{{ $count }}</span>
                                     </a>
                                 @endforeach
                             </div>
@@ -67,11 +68,11 @@
                                                   $currentKelas['jenjang'] == 'SMA' &&
                                                   $currentKelas['kelas'] == $kelas;
                                     @endphp
-                                    <a class="submenu-item d-flex align-items-center {{ $isActive ? 'active' : '' }}"
+                                    <a class="submenu-item {{ $isActive ? 'active' : '' }}"
                                        href="{{ route('admin.santri.kelas', ['jenjang' => 'sma', 'kelas' => $kelas]) }}"
                                        title="Kelas {{ $kelas }}">
                                         <span>Kelas {{ $kelas }}</span>
-                                        <span class="badge ms-auto">{{ $count }}</span>
+                                        <span class="badge">{{ $count }}</span>
                                     </a>
                                 @endforeach
                             </div>
@@ -85,7 +86,8 @@
         <li class="nav-item">
             <a class="nav-link {{ Request::routeIs('admin.pembayaran.*') ? 'active' : '' }}"
                href="{{ route('admin.pembayaran.index') }}">
-                <i class="fas fa-money-bill"></i> Pembayaran SPP
+                <i class="fas fa-money-bill"></i>
+                <span>Pembayaran SPP</span>
             </a>
         </li>
 
@@ -93,7 +95,8 @@
         <li class="nav-item">
             <a class="nav-link {{ Request::routeIs('admin.laporan.*') ? 'active' : '' }}"
                href="{{ route('admin.laporan.index') }}">
-                <i class="fas fa-file-alt"></i> Laporan
+                <i class="fas fa-file-alt"></i>
+                <span>Laporan</span>
             </a>
         </li>
 
@@ -101,36 +104,34 @@
         <li class="nav-item">
             <a class="nav-link {{ Request::routeIs('admin.kategori.*') ? 'active' : '' }}"
                href="{{ route('admin.kategori.index') }}">
-                <i class="fas fa-tags"></i> Kategori Santri
+                <i class="fas fa-tags"></i>
+                <span>Kategori Santri</span>
             </a>
         </li>
 
         <!-- Manajemen Pengguna -->
         <li class="nav-item">
-            <a class="nav-link {{ Request::routeIs('admin.users.*') ? 'active' : '' }} d-flex align-items-center justify-content-between"
+            <a class="nav-link {{ Request::routeIs('admin.users.*') ? 'active' : '' }}"
                href="#userSubmenu"
                data-bs-toggle="collapse"
                aria-expanded="{{ Request::routeIs('admin.users.*') ? 'true' : 'false' }}">
-                <span>
-                    <i class="fas fa-users-cog"></i> Manajemen Pengguna
-                </span>
-                <i class="fas fa-chevron-down"></i>
+                <i class="fas fa-users-cog"></i>
+                <span>Manajemen Pengguna</span>
+                <i class="fas fa-chevron-down ms-auto"></i>
             </a>
             <div class="collapse {{ Request::routeIs('admin.users.*') ? 'show' : '' }}" id="userSubmenu">
-                <ul class="nav flex-column ms-3">
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->query('type') == 'petugas' ? 'active' : '' }}"
-                           href="{{ route('admin.users.index') }}?type=petugas">
-                            <i class="fas fa-user-tie"></i> Petugas
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->query('type') == 'wali' ? 'active' : '' }}"
-                           href="{{ route('admin.users.index') }}?type=wali">
-                            <i class="fas fa-user-friends"></i> Wali Santri
-                        </a>
-                    </li>
-                </ul>
+                <div class="submenu">
+                    <a class="submenu-item {{ request()->query('type') == 'petugas' ? 'active' : '' }}"
+                       href="{{ route('admin.users.index') }}?type=petugas">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Petugas</span>
+                    </a>
+                    <a class="submenu-item {{ request()->query('type') == 'wali' ? 'active' : '' }}"
+                       href="{{ route('admin.users.index') }}?type=wali">
+                        <i class="fas fa-user-friends"></i>
+                        <span>Wali Santri</span>
+                    </a>
+                </div>
             </div>
         </li>
     </ul>

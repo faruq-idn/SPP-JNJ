@@ -12,6 +12,10 @@
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet">
 
+<!-- Custom CSS -->
+<link href="{{ asset('css/custom.css') }}" rel="stylesheet">
+<link href="{{ asset('css/sidebar.css') }}" rel="stylesheet">
+
 <!-- Tambahkan CSS ini untuk memastikan font segera digunakan -->
 <style>
     body {

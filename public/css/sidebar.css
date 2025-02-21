@@ -1,0 +1,107 @@
+/* Sidebar Styles */
+.sidebar {
+    width: 250px;
+    min-height: 100vh;
+    background: #f8f9fc;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.nav-item {
+    margin-bottom: 0.25rem;
+}
+
+.nav-link {
+    display: flex !important;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: #6e707e;
+    border-radius: 0.35rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.nav-link i {
+    font-size: 1rem;
+    width: 1.25rem;
+    text-align: center;
+    margin-right: 0.75rem;
+    color: #6e707e;
+}
+
+.nav-link:hover {
+    background: #eaecf4;
+    color: #4e73df;
+}
+
+.nav-link:hover i {
+    color: #4e73df;
+}
+
+.nav-link.active {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    color: #fff;
+}
+
+.nav-link.active i {
+    color: #fff;
+}
+
+/* Submenu Styles */
+.submenu {
+    padding: 0.5rem 0 0.5rem 2.5rem;
+}
+
+.submenu-item {
+    padding: 0.5rem 1rem;
+    color: #6e707e;
+    text-decoration: none;
+    display: block;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.submenu-item:hover {
+    background: #eaecf4;
+    color: #4e73df;
+}
+
+.submenu-item.active {
+    background: #eaecf4;
+    color: #4e73df;
+}
+
+/* Button Dropdown */
+.btn-dropdown {
+    background: transparent;
+    border: none;
+    padding: 0.25rem;
+    color: #6e707e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.btn-dropdown.collapsed i {
+    transform: rotate(-90deg);
+}
+
+/* Nested Navigation */
+.nav-link-wrapper {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.35rem;
+}
+
+.nav-link-wrapper:hover {
+    background: #eaecf4;
+}
+
+/* Badge in Submenu */
+.submenu-item .badge {
+    background: rgba(78, 115, 223, 0.1);
+    color: #4e73df;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}

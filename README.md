@@ -253,6 +253,19 @@ Aplikasi manajemen pembayaran SPP berbasis web dengan integrasi payment gateway 
    - Clear cache browser
    - Rebuild asset jika perlu
 
+   d. **Content Security Policy (CSP) Error:**
+   - Jika muncul error CSP untuk CDN seperti Bootstrap atau Font Awesome, tambahkan header berikut di file .htaccess:
+     ```apache
+     <IfModule mod_headers.c>
+         Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https:;"
+     </IfModule>
+     ```
+   - Atau lebih baik, download asset CDN dan gunakan secara lokal:
+     1. Download Bootstrap dan Font Awesome
+     2. Simpan di folder public/vendor/
+     3. Update referensi di blade template
+     4. Rebuild asset dengan npm run build
+
 4. **Prosedur Rollback:**
    - Backup file dan database sebelum setiap perubahan besar
    - Simpan file .env original

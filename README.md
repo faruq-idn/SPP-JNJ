@@ -145,126 +145,141 @@ Aplikasi manajemen pembayaran SPP berbasis web dengan integrasi payment gateway 
 | Petugas | petugas@example.com | password   |
 | Wali    | wali@example.com    | password   |
 
-### 🚀 Deployment ke Shared Hosting
+### 🚀 Deployment untuk Testing di Shared Hosting
 
-#### Persiapan
-1. Pastikan shared hosting memenuhi requirements:
+#### Persiapan dan Backup
+1. **Backup Database Lokal:**
+   ```bash
+   # Export database
+   mysqldump -u root -p spp_jnj > backup_local.sql
+   
+   # Export dengan data sensitif yang sudah dimodifikasi (opsional)
+   mysqldump -u root -p --replace --skip-extended-insert \
+   --replace-regex="s/nomor_hp_asli/08123456789/g" \
+   spp_jnj > backup_modified.sql
+   ```
+
+2. **Pastikan Hosting Mendukung:**
    - PHP >= 8.1
    - MySQL/MariaDB
-   - Ekstensi PHP yang diperlukan (BCMath, Ctype, dll)
-   - Composer (jika tersedia)
+   - Ekstensi PHP: BCMath, Ctype, JSON, Mbstring, OpenSSL, PDO, XML
+   - File Manager untuk upload
+   - phpMyAdmin atau tools database serupa
    
-2. Siapkan subdomain atau domain yang akan digunakan
+3. **Persiapkan Domain Testing:**
+   - Gunakan subdomain khusus untuk testing (misal: test.domain.com)
+   - Pastikan SSL tersedia untuk testing pembayaran
 
-#### Langkah Deployment
+#### Langkah Deployment Testing
 
-1. **Persiapkan File Upload:**
+1. **Build dan Persiapan File:**
    ```bash
-   # Build assets produksi
-   npm run build
+   # Install dependencies
+   composer install
+   npm install
    
-   # Optimize autoloader composer
-   composer install --optimize-autoloader --no-dev
+   # Build assets
+   npm run build
    ```
 
 2. **Upload File ke Hosting:**
-   - Upload semua file proyek ke hosting KECUALI:
-     - folder `node_modules/`
-     - folder `vendor/` (akan diinstall ulang)
-     - file `.env`
-     - folder `.git/`
-   - File dapat diupload via FTP atau File Manager hosting
+   - Upload semua file proyek KECUALI:
+     - `node_modules/`
+     - `vendor/` (install manual di hosting)
+     - `.env`
+     - `.git/`
+     - `tests/`
+   - Gunakan File Manager hosting atau FTP
 
-3. **Setup Direktori Publik:**
-   - Pindahkan semua isi folder `public/` ke `public_html/` atau root folder yang ditentukan hosting
-   - Edit file `index.php` yang dipindah, sesuaikan path ke `bootstrap/app.php`:
-   ```php
-   require __DIR__.'/../bootstrap/app.php';
-   // menjadi (sesuaikan dengan struktur folder):
-   require __DIR__.'/../[nama-folder-aplikasi]/bootstrap/app.php';
-   ```
-
-4. **Install Dependencies:**
-   - Jika hosting mendukung SSH:
-     ```bash
-     composer install --optimize-autoloader --no-dev
-     ```
-   - Jika tidak ada SSH:
-     - Upload folder `vendor/` yang sudah di-generate lokal
-     
-5. **Setup Database:**
+3. **Setup Database:**
    - Buat database baru di hosting
-   - Import database dari backup lokal atau
-   - Jalankan migration (jika hosting mendukung SSH):
-     ```bash
-     php artisan migrate --seed
-     ```
+   - Import `backup_local.sql` atau `backup_modified.sql` via phpMyAdmin
+   - Catat kredensial database untuk konfigurasi
 
-6. **Konfigurasi Aplikasi:**
-   - Copy `.env.example` menjadi `.env`
-   - Sesuaikan konfigurasi di `.env`:
+4. **Konfigurasi untuk Testing:**
+   - Copy `.env.example` ke `.env` di hosting
+   - Sesuaikan konfigurasi testing:
      ```env
-     APP_ENV=production
-     APP_DEBUG=false
-     APP_URL=https://domain-anda.com
+     APP_ENV=local
+     APP_DEBUG=true
+     APP_URL=https://test.domain.com
      
      DB_HOST=localhost
-     DB_DATABASE=nama_database
-     DB_USERNAME=username_database
-     DB_PASSWORD=password_database
+     DB_DATABASE=nama_database_test
+     DB_USERNAME=user_test
+     DB_PASSWORD=pass_test
      
-     MIDTRANS_IS_PRODUCTION=true # jika sudah siap live
-     MIDTRANS_NOTIFICATION_URL=https://domain-anda.com/wali/pembayaran/notification
-     ```
-   - Generate app key baru:
-     ```bash
-     php artisan key:generate
+     # Tetap gunakan Sandbox Midtrans
+     MIDTRANS_IS_PRODUCTION=false
+     MIDTRANS_NOTIFICATION_URL=https://test.domain.com/wali/pembayaran/notification
      ```
 
-7. **Optimasi Production:**
+5. **Setup Folder dan Permission:**
    ```bash
-   # Clear & cache konfigurasi
-   php artisan config:cache
+   # Buat folder yang diperlukan
+   mkdir -p storage/framework/{sessions,views,cache}
+   mkdir -p storage/logs
    
-   # Cache routes
-   php artisan route:cache
-   
-   # Cache views
-   php artisan view:cache
-   ```
-
-8. **Pengaturan Permission:**
-   ```bash
+   # Set permission
    chmod -R 755 storage bootstrap/cache
    ```
 
-9. **Setup Cronjob** (opsional, jika hosting mendukung):
-   - Tambahkan cronjob untuk menjalankan scheduler Laravel:
-     ```
-     * * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1
-     ```
+#### Panduan Testing & Troubleshooting
 
-10. **Verifikasi Deployment:**
-    - Buka domain/subdomain yang sudah dikonfigurasi
-    - Test login dengan akun default
-    - Test fitur pembayaran dengan akun Midtrans Sandbox
-    - Periksa error log di `storage/logs/laravel.log`
+1. **Cek Konfigurasi:**
+   - Buka `phpinfo.php` untuk verifikasi ekstensi PHP
+   - Test koneksi database melalui phpMyAdmin
+   - Pastikan semua folder memiliki permission yang benar
 
-#### Troubleshooting
+2. **Log dan Debugging:**
+   - Error log Laravel: `storage/logs/laravel.log`
+   - Error log PHP: cek di cPanel atau direktori log hosting
+   - Aktifkan APP_DEBUG=true untuk melihat error detail
 
-1. **Halaman 500 Internal Server Error:**
-   - Periksa permission folder `storage/` dan `bootstrap/cache/`
-   - Periksa error log di `storage/logs/laravel.log`
-   - Pastikan `.env` sudah ada dan terkonfigurasi dengan benar
+3. **Masalah Umum dan Solusi:**
+   
+   a. **500 Internal Server Error:**
+   - Periksa permission storage & cache
+   - Cek error di laravel.log
+   - Validasi format .env (tidak boleh ada spasi setelah value)
 
-2. **Assets (CSS/JS) Tidak Loading:**
-   - Pastikan path di `APP_URL` sudah benar
-   - Periksa file `.htaccess` di public folder
-   - Jalankan `npm run build` ulang jika perlu
+   b. **Database Error:**
+   - Verifikasi kredensial database
+   - Cek prefix table di .env
+   - Pastikan user database punya priviledge yang cukup
 
-3. **Midtrans Callback Tidak Berfungsi:**
-   - Pastikan URL callback di `.env` dan dashboard Midtrans sudah benar
-   - Periksa firewall/security hosting tidak memblokir request dari Midtrans
+   c. **Asset Tidak Loading:**
+   - Periksa path di APP_URL
+   - Clear cache browser
+   - Rebuild asset jika perlu
+
+4. **Prosedur Rollback:**
+   - Backup file dan database sebelum setiap perubahan besar
+   - Simpan file .env original
+   - Catat setiap perubahan untuk mudah di-rollback
+
+5. **Tips Tambahan:**
+   - Gunakan subdomain terpisah untuk setiap fitur besar
+   - Test pembayaran dengan akun Midtrans Sandbox
+   - Monitor penggunaan disk space dan database
+   - Catat semua error dan solusinya untuk referensi
+
+6. **Keamanan Testing:**
+   - Gunakan password yang kuat meski untuk testing
+   - Batasi akses IP jika memungkinkan
+   - Hindari menyimpan data sensitif di environment testing
+   - Regular backup untuk mencegah kehilangan data test
+
+7. **Komunikasi Issue:**
+   - Screenshot error yang muncul
+   - Copy error log yang relevan
+   - Catat langkah-langkah reproduksi masalah
+   - Dokumentasikan solusi yang sudah dicoba
+
+PENTING: Environment ini untuk testing, hindari:
+- Menggunakan data produksi yang sensitif
+- Mengaktifkan fitur notifikasi ke user real
+- Mengubah konfigurasi yang bisa mempengaruhi sistem lain di hosting
 
 ## 📋 Todo
 

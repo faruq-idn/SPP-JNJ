@@ -54,9 +54,11 @@
 <body>
     <div class="header">
         <h2>Laporan Tunggakan SPP</h2>
-        <p>Filter: 
-            {{ request('jenjang') ? 'Jenjang ' . request('jenjang') : 'Semua Jenjang' }}
-            {{ request('kelas') ? ', Kelas ' . request('kelas') : '' }}
+        <p>Filter: Status {{ ucfirst(request('status', 'aktif')) }}
+            @if(request('status') == 'aktif')
+                {{ request('jenjang') ? ', Jenjang ' . request('jenjang') : '' }}
+                {{ request('kelas') ? ', Kelas ' . request('kelas') : '' }}
+            @endif
         </p>
     </div>
 
@@ -72,6 +74,7 @@
                 <th>Nama Santri</th>
                 <th>Kelas</th>
                 <th>Kategori</th>
+                <th>Status</th>
                 <th>Wali Santri</th>
                 <th>No HP</th>
                 <th>Jumlah Bulan</th>
@@ -87,14 +90,32 @@
                 <td>{{ $s->nama }}</td>
                 <td>{{ $s->jenjang }} {{ $s->kelas }}</td>
                 <td>{{ $s->kategori->nama }}</td>
+                <td style="color: {{ $s->status == 'aktif' ? '#28a745' : ($s->status == 'lulus' ? '#17a2b8' : '#dc3545') }}">
+                    {{ ucfirst($s->status) }}
+                </td>
                 <td>{{ $s->wali->name ?? '-' }}</td>
                 <td>{{ $s->wali->no_hp ?? '-' }}</td>
-                <td>{{ $s->tunggakan_count }} bulan</td>
-                <td>Rp {{ number_format($s->pembayaran->sum('nominal'), 0, ',', '.') }}</td>
+                <td>{{ $s->jumlah_bulan_tunggakan }} bulan</td>
+                <td>Rp {{ number_format($s->total_tunggakan, 0, ',', '.') }}</td>
                 <td>
-                    {{ implode(', ', $s->pembayaran->pluck('bulan')->map(function($bulan) {
-                        return Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
-                    })->toArray()) }}
+                    @php
+                        $bulanBelumLunas = collect();
+                        $bulanMasuk = Carbon\Carbon::parse($s->tanggal_masuk)->startOfMonth();
+                        $bulanSekarang = Carbon\Carbon::now()->startOfMonth();
+                        $pembayaranLunas = $s->pembayaran
+                            ->where('status', 'success')
+                            ->map(fn($p) => $p->bulan . '-' . $p->tahun)
+                            ->toArray();
+                        
+                        while ($bulanMasuk <= $bulanSekarang) {
+                            $key = $bulanMasuk->format('m-Y');
+                            if (!in_array($key, $pembayaranLunas)) {
+                                $bulanBelumLunas->push($bulanMasuk->translatedFormat('F Y'));
+                            }
+                            $bulanMasuk->addMonth();
+                        }
+                    @endphp
+                    {{ $bulanBelumLunas->implode(', ') }}
                 </td>
             </tr>
             @endforeach

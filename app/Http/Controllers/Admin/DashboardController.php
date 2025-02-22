@@ -68,36 +68,127 @@ class DashboardController extends Controller
                 ->toArray();
 
             // Statistik Pembayaran
-            $bulanIni = now()->format('m');
-            $tahunIni = now()->format('Y');
+            $totalPembayaran = PembayaranSpp::where('status', 'success')
+                ->whereHas('santri', function($query) {
+                    $query->where('status', 'aktif');
+                })->count();
 
-            $totalPembayaran = PembayaranSpp::where('status', 'success')->count();
-            $totalPenerimaan = PembayaranSpp::where('status', 'success')->sum('nominal');
+            $totalPenerimaan = PembayaranSpp::where('status', 'success')
+                ->whereHas('santri', function($query) {
+                    $query->where('status', 'aktif');
+                })->sum('nominal');
             
             // Total pembayaran bulan yang dipilih (yang sudah lunas)
             $pembayaranBulanIni = PembayaranSpp::query()
                 ->where('status', 'success')
+                ->whereHas('santri', function($query) {
+                    $query->where('status', 'aktif');
+                })
                 ->where('bulan', $selectedDate->format('m'))
                 ->where('tahun', $selectedDate->format('Y'))
                 ->sum('nominal');
 
             // Tunggakan bulan yang dipilih
-            $tunggakanBulanIni = PembayaranSpp::query()
-                ->whereIn('status', ['pending', 'unpaid'])
-                ->where('bulan', $selectedDate->format('m'))
-                ->where('tahun', $selectedDate->format('Y'))
-                ->sum('nominal');
+            $tunggakanBulanIni = 0;
 
-            // Total tunggakan semua santri
-            $totalTunggakan = PembayaranSpp::whereIn('status', ['pending', 'unpaid'])->sum('nominal');
+            $santriAktifBulanIni = Santri::where('status', 'aktif')
+                ->with(['kategori.tarifTerbaru'])
+                ->where('tanggal_masuk', '<=', $selectedDate->endOfMonth())
+                ->get();
 
-            // Jumlah santri yang menunggak untuk bulan yang dipilih
-            $jumlahSantriMenunggak = Santri::whereHas('pembayaran', function($query) use ($selectedDate) {
-                    $query->whereIn('status', ['pending', 'unpaid'])
-                          ->where('bulan', $selectedDate->format('m'))
-                          ->where('tahun', $selectedDate->format('Y'));
+            foreach ($santriAktifBulanIni as $santri) {
+                // Cek pembayaran untuk bulan yang dipilih
+                $pembayaranBulan = $santri->pembayaran()
+                    ->where('bulan', $selectedDate->format('m'))
+                    ->where('tahun', $selectedDate->format('Y'))
+                    ->first();
+
+                if (!$pembayaranBulan) {
+                    // Jika belum ada pembayaran sama sekali
+                    if ($santri->kategori && $santri->kategori->tarifTerbaru) {
+                        $tunggakanBulanIni += $santri->kategori->tarifTerbaru->nominal;
+                    }
+                } elseif ($pembayaranBulan->status !== 'success' && $pembayaranBulan->status !== 'failed') {
+                    // Jika ada pembayaran tapi belum lunas
+                    $tunggakanBulanIni += $pembayaranBulan->nominal;
+                }
+            }
+
+            // Total tunggakan semua santri aktif
+            $totalTunggakan = 0;
+            
+            // 1. Ambil semua santri aktif dengan relasi yang diperlukan
+            $santriAktif = Santri::where('status', 'aktif')
+                ->with(['kategori.tarifTerbaru', 'pembayaran' => function($query) {
+                    $query->where(function($q) {
+                        $q->where('status', '!=', 'success')
+                          ->where('status', '!=', 'failed');
+                    })->orWhere('status', 'success');
+                }])
+                ->get();
+
+            foreach ($santriAktif as $santri) {
+                // Hitung periode aktif santri
+                $bulanMasuk = Carbon::parse($santri->tanggal_masuk)->startOfMonth();
+                $bulanSekarang = Carbon::now()->startOfMonth();
+                
+                // Generate semua bulan yang seharusnya dibayar
+                $periode = collect();
+                $currentMonth = clone $bulanMasuk;
+                
+                while ($currentMonth <= $bulanSekarang) {
+                    $periode->push([
+                        'bulan' => $currentMonth->format('m'),
+                        'tahun' => $currentMonth->format('Y')
+                    ]);
+                    $currentMonth->addMonth();
+                }
+                
+                // Pembayaran yang sudah dilakukan
+                $pembayaranLunas = $santri->pembayaran
+                    ->where('status', 'success')
+                    ->map(function($payment) {
+                        return $payment->bulan . '-' . $payment->tahun;
+                    })
+                    ->toArray();
+                
+                // Hitung tunggakan
+                if ($santri->kategori && $santri->kategori->tarifTerbaru) {
+                    $tarifSpp = floatval($santri->kategori->tarifTerbaru->nominal);
+                    
+                    // Tunggakan dari pembayaran yang belum lunas
+                    $tunggakanDariPembayaran = $santri->pembayaran
+                        ->where('status', '!=', 'success')
+                        ->where('status', '!=', 'failed')
+                        ->sum('nominal');
+                    
+                    $totalTunggakan += $tunggakanDariPembayaran;
+                    
+                    // Tunggakan dari bulan yang belum ada pembayaran
+                    foreach ($periode as $p) {
+                        $key = $p['bulan'] . '-' . $p['tahun'];
+                        if (!in_array($key, $pembayaranLunas)) {
+                            $totalTunggakan += $tarifSpp;
+                        }
+                    }
+                }
+            }
+
+            // Jumlah santri yang menunggak untuk bulan yang dipilih (termasuk yang belum ada record pembayaran)
+            $jumlahSantriMenunggak = Santri::where('status', 'aktif')
+                ->where(function($query) use ($selectedDate) {
+                    $query->whereDoesntHave('pembayaran', function($q) use ($selectedDate) {
+                        $q->where('bulan', $selectedDate->format('m'))
+                          ->where('tahun', $selectedDate->format('Y'))
+                          ->where('status', 'success');
+                    })
+                    ->orWhereHas('pembayaran', function($q) use ($selectedDate) {
+                        $q->where('bulan', $selectedDate->format('m'))
+                          ->where('tahun', $selectedDate->format('Y'))
+                          ->where('status', '!=', 'success')
+                          ->where('status', '!=', 'failed');
+                    });
                 })
-                ->where('status', 'aktif')
                 ->count();
 
             // Pembayaran Terbaru (hanya yang lunas)
@@ -108,13 +199,74 @@ class DashboardController extends Controller
                 ->get();
 
             // Santri dengan Tunggakan Terbanyak
-            $santriTunggakan = Santri::withCount(['pembayaran' => function($query) {
-                    $query->where('status', 'pending');
+            $santriTunggakan = Santri::where('status', 'aktif')
+                ->with(['kategori.tarifTerbaru', 'pembayaran' => function($query) {
+                    $query->where(function($q) {
+                        $q->where('status', '!=', 'success')
+                          ->where('status', '!=', 'failed');
+                    })->orWhere('status', 'success');
                 }])
-                ->having('pembayaran_count', '>', 0)
-                ->orderByDesc('pembayaran_count')
+                ->get()
+                ->map(function($santri) {
+                    // Inisialisasi total tunggakan
+                    $santri->total_tunggakan = 0;
+                    $santri->jumlah_bulan_tunggakan = 0;
+
+                    if (!$santri->kategori || !$santri->kategori->tarifTerbaru) {
+                        return $santri;
+                    }
+
+                    // Konversi nominal ke float untuk perhitungan yang akurat
+                    $tarifSpp = floatval($santri->kategori->tarifTerbaru->nominal);
+                    
+                    // Hitung periode aktif santri
+                    $bulanMasuk = Carbon::parse($santri->tanggal_masuk)->startOfMonth();
+                    $bulanSekarang = Carbon::now()->startOfMonth();
+                    
+                    // Generate periode yang harus dibayar
+                    $periode = collect();
+                    $currentMonth = clone $bulanMasuk;
+                    while ($currentMonth <= $bulanSekarang) {
+                        $periode->push([
+                            'bulan' => $currentMonth->format('m'),
+                            'tahun' => $currentMonth->format('Y')
+                        ]);
+                        $currentMonth->addMonth();
+                    }
+                    
+                    // Pembayaran yang sudah lunas
+                    $pembayaranLunas = $santri->pembayaran
+                        ->where('status', 'success')
+                        ->map(function($payment) {
+                            return $payment->bulan . '-' . $payment->tahun;
+                        })
+                        ->toArray();
+                    
+                    // Hitung tunggakan dari pembayaran yang belum lunas
+                    $tunggakanDariPembayaran = $santri->pembayaran
+                        ->where('status', '!=', 'success')
+                        ->where('status', '!=', 'failed')
+                        ->sum('nominal');
+                    
+                    $santri->total_tunggakan = $tunggakanDariPembayaran;
+                    
+                    // Hitung tunggakan dari bulan yang belum ada pembayaran
+                    foreach ($periode as $p) {
+                        $key = $p['bulan'] . '-' . $p['tahun'];
+                        if (!in_array($key, $pembayaranLunas)) {
+                            $santri->total_tunggakan += $tarifSpp;
+                            $santri->jumlah_bulan_tunggakan++;
+                        }
+                    }
+
+                    return $santri;
+                })
+                ->filter(function($santri) {
+                    return $santri->total_tunggakan > 0;
+                })
+                ->sortByDesc('total_tunggakan')
                 ->take(5)
-                ->get();
+                ->values();
 
             Log::info('Admin dashboard data loaded successfully', [
                 'total_santri' => $totalSantri,

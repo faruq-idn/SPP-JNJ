@@ -260,13 +260,18 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="mb-1">{{ $s->nama }}</h6>
-                                    <small class="text-muted">
+                                    <small class="text-muted d-block">
                                         {{ $s->jenjang }} {{ $s->kelas }} | NISN: {{ $s->nisn }}
                                     </small>
+                                    <small class="text-danger d-block">
+                                        Rp {{ number_format($s->total_tunggakan, 0, ',', '.') }}
+                                    </small>
                                 </div>
-                                <span class="badge bg-danger rounded-pill">
-                                    {{ $s->pembayaran_count }} bulan
-                                </span>
+                                <div class="text-end">
+                                    <span class="badge bg-danger rounded-pill">
+                                        {{ $s->jumlah_bulan_tunggakan }} bulan
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     @empty

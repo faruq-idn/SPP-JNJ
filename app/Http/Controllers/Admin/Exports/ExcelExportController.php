@@ -34,7 +34,7 @@ class ExcelExportController extends BaseExportController
         $this->setHeaderStyle($sheet, 'I');
         
         // Apply styling to the whole sheet
-        $sheet->getStyle('A1:I' . ($pembayaran->count() + 4))->applyFromArray([
+        $sheet->getStyle('A1:J' . ($pembayaran->count() + 4))->applyFromArray([
             'font' => ['size' => 12],
             'borders' => [
                 'allBorders' => ['borderStyle' => Border::BORDER_THIN],
@@ -71,10 +71,10 @@ class ExcelExportController extends BaseExportController
         $spreadsheet = $reader->loadFromString($html, $spreadsheet);
         
         // Set header style
-        $this->setHeaderStyle($sheet, 'J', true);
+        $this->setHeaderStyle($sheet, 'K', true);
         
         // Apply styling to the whole sheet
-        $sheet->getStyle('A1:J' . ($santri->count() + 4))->applyFromArray([
+        $sheet->getStyle('A1:K' . ($santri->count() + 4))->applyFromArray([
             'font' => ['size' => 12],
             'borders' => [
                 'allBorders' => ['borderStyle' => Border::BORDER_THIN],
@@ -89,7 +89,7 @@ class ExcelExportController extends BaseExportController
         $this->setTunggakanColumnWidths($sheet);
 
         // Set warning cell style
-        $sheet->getStyle('A3:J3')->applyFromArray([
+        $sheet->getStyle('A3:K3')->applyFromArray([
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
                 'color' => ['rgb' => 'FFF3CD'],
@@ -130,11 +130,12 @@ class ExcelExportController extends BaseExportController
             'C' => 30,  // Nama Santri
             'D' => 12,  // Kelas
             'E' => 20,  // Kategori
-            'F' => 25,  // Wali Santri
+            'F' => 10,  // Wali Santri
             'G' => 15,  // No HP
             'H' => 12,  // Jumlah Bulan
             'I' => 20,  // Total Tunggakan
-            'J' => 25,  // Bulan Tunggakan
+            'J' => 35,  // Bulan Tunggakan
+            'K' => 20,  // Tahun Tunggakan
         ];
 
         foreach ($widths as $column => $width) {

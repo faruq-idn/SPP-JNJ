@@ -9,12 +9,11 @@
         }
         table {
             border-collapse: collapse;
-            width: 100%;
+            table-layout: auto;
             margin-bottom: 1em;
         }
         th, td {
             border: 1px solid black;
-            padding: 8px;
             vertical-align: middle;
         }
         th {
@@ -75,7 +74,6 @@
             text-align: right;
         }
         .column-fit {
-            width: 1%;
             white-space: nowrap;
         }
     </style>
@@ -83,9 +81,11 @@
 <body>
     <div class="header">
         <h2>Laporan Tunggakan SPP</h2>
-        <p>Filter: 
-            {{ request('jenjang') ? 'Jenjang ' . request('jenjang') : 'Semua Jenjang' }}
-            {{ request('kelas') ? ', Kelas ' . request('kelas') : '' }}
+        <p>Filter: Status {{ ucfirst(request('status', 'aktif')) }}
+            @if(request('status') == 'aktif')
+                {{ request('jenjang') ? ', Jenjang ' . request('jenjang') : '' }}
+                {{ request('kelas') ? ', Kelas ' . request('kelas') : '' }}
+            @endif
         </p>
     </div>
 
@@ -101,11 +101,12 @@
                 <th>Nama Santri</th>
                 <th class="text-nowrap">Kelas</th>
                 <th>Kategori</th>
+                <th>Status</th>
                 <th>Wali Santri</th>
                 <th class="text-nowrap">No HP</th>
                 <th class="text-nowrap">Jumlah Bulan</th>
-                <th class="text-nowrap">Total Tunggakan</th>
                 <th>Bulan Tunggakan</th>
+                <th class="text-nowrap">Total Tunggakan</th>
             </tr>
         </thead>
         <tbody>
@@ -116,21 +117,43 @@
                 <td>{{ $s->nama }}</td>
                 <td class="text-center text-nowrap">{{ $s->jenjang }} {{ $s->kelas }}</td>
                 <td>{{ $s->kategori->nama }}</td>
+                <td class="text-center" style="color: {{ $s->status == 'aktif' ? '#28a745' : ($s->status == 'lulus' ? '#17a2b8' : '#dc3545') }}">
+                    {{ ucfirst($s->status) }}
+                </td>
                 <td>{{ $s->wali->name ?? '-' }}</td>
                 <td class="text-center text-nowrap">{{ $s->wali->no_hp ?? '-' }}</td>
-                <td class="text-center text-nowrap">{{ $s->tunggakan_count }} bulan</td>
-                <td class="currency text-nowrap">Rp {{ number_format($s->pembayaran->sum('nominal'), 0, ',', '.') }}</td>
-                <td>{{ implode(', ', $s->pembayaran->pluck('bulan')->map(function($bulan) {
-                    return Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
-                })->toArray()) }}</td>
+                <td class="text-center text-nowrap">{{ $s->jumlah_bulan_tunggakan }} bulan</td>
+                <td>
+                    @php
+                        $bulanBelumLunas = collect();
+                        $bulanMasuk = Carbon\Carbon::parse($s->tanggal_masuk)->startOfMonth();
+                        $bulanSekarang = Carbon\Carbon::now()->startOfMonth();
+                        $pembayaranLunas = $s->pembayaran
+                            ->where('status', 'success')
+                            ->map(fn($p) => $p->bulan . '-' . $p->tahun)
+                            ->toArray();
+                        
+                        while ($bulanMasuk <= $bulanSekarang) {
+                            $key = $bulanMasuk->format('m-Y');
+                            if (!in_array($key, $pembayaranLunas)) {
+                                $bulanBelumLunas->push($bulanMasuk->translatedFormat('F Y'));
+                            }
+                            $bulanMasuk->addMonth();
+                        }
+                    @endphp
+                    {{ $bulanBelumLunas->implode(', ') }}
+                </td>
+                <td class="currency text-center text-nowrap">
+                    Rp {{ number_format($s->total_tunggakan, 0, ',', '.') }}
+                </td>
             </tr>
             @endforeach
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="8" class="text-right" style="font-weight: bold;">Total Tunggakan:</td>
-                <td class="currency text-nowrap" style="font-weight: bold;">Rp {{ number_format($totalTunggakan, 0, ',', '.') }}</td>
-                <td></td>
+                <td colspan="9" class="text-right" style="font-weight: bold; border: 1px solid black;">Total Tunggakan:</td>
+                <td class="currency text-nowrap" style="font-weight: bold; border-right: 1px solid black; border-top: 1px solid black; border-bottom: 1px solid black;">Rp {{ number_format($totalTunggakan, 0, ',', '.') }}</td>
+                <td style="border: 1px solid black;"></td>
             </tr>
         </tfoot>
     </table>

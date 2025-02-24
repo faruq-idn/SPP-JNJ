@@ -1,54 +1,54 @@
-# Pengujian Black Box - Sistem Pembayaran SPP
+# Pengujian Black Box Sistem Informasi Pembayaran SPP
 
-## 1. Login & Autentikasi
+## 1. Pengujian Modul Autentikasi
 
-| Test Case | Input | Yang Diharapkan | Status |
-|-----------|-------|-----------------|--------|
-| Login Sukses | • Email benar<br>• Password benar | Masuk ke dashboard sesuai role | ✅ |
-| Login Gagal | • Email/password salah | Tampil pesan error | ✅ |
-| Logout | Klik tombol logout | Kembali ke halaman login | ✅ |
+| Kasus Uji | Masukan | Hasil yang Diharapkan | Kesesuaian |
+|-----------|---------|----------------------|------------|
+| Proses Masuk Sistem | • Alamat surel benar<br>• Kata sandi benar | Pengguna masuk ke beranda sesuai peran | Sesuai |
+| Validasi Kredensial | • Alamat surel/kata sandi salah | Sistem menampilkan pesan kesalahan | Sesuai |
+| Keluar Sistem | Menekan tombol keluar | Pengguna kembali ke halaman masuk | Sesuai |
 
-## 2. Pengelolaan Santri
+## 2. Pengujian Modul Santri
 
-| Test Case | Input | Yang Diharapkan | Status |
-|-----------|-------|-----------------|--------|
-| Tambah Santri | Form data santri lengkap | Data tersimpan & tampil di daftar | ✅ |
-| Naik Kelas | Pilih santri & kelas tujuan | Kelas santri terupdate | ✅ |
-| Edit Data | Ubah data santri yang ada | Data berhasil diperbarui | ✅ |
-| Cari Santri | Ketik nama/NIS di pencarian | Tampil data yang sesuai | ✅ |
+| Kasus Uji | Masukan | Hasil yang Diharapkan | Kesesuaian |
+|-----------|---------|----------------------|------------|
+| Penambahan Data Santri | Mengisi formulir data santri | Data tersimpan dalam basis data | Sesuai |
+| Kenaikan Kelas | Memilih santri dan kelas tujuan | Data kelas santri diperbarui | Sesuai |
+| Pengubahan Data | Memperbarui data santri | Data berhasil diperbarui | Sesuai |
+| Pencarian Data | Memasukkan nama/NIS | Menampilkan data yang sesuai | Sesuai |
 
-## 3. Pembayaran SPP
+## 3. Pengujian Modul Pembayaran
 
-| Test Case | Input | Yang Diharapkan | Status |
-|-----------|-------|-----------------|--------|
-| Bayar Tunai | Pilih bulan & input nominal | Status bayar jadi lunas | ✅ |
-| Bayar Online | Pilih metode & proses bayar | Redirect ke payment gateway | ✅ |
-| Lihat History | Klik menu riwayat | Tampil daftar pembayaran | ✅ |
-| Filter Laporan | Pilih bulan & tahun | Tampil data sesuai filter | ✅ |
+| Kasus Uji | Masukan | Hasil yang Diharapkan | Kesesuaian |
+|-----------|---------|----------------------|------------|
+| Pembayaran Tunai | Memilih bulan dan nominal | Status pembayaran menjadi lunas | Sesuai |
+| Pembayaran Daring | Memilih metode pembayaran | Teralihkan ke gerbang pembayaran | Sesuai |
+| Riwayat Pembayaran | Memilih menu riwayat | Menampilkan daftar transaksi | Sesuai |
+| Penyaringan Data | Memilih bulan dan tahun | Menampilkan data sesuai filter | Sesuai |
 
-## 4. Wali Santri
+## 4. Pengujian Modul Wali Santri
 
-| Test Case | Input | Yang Diharapkan | Status |
-|-----------|-------|-----------------|--------|
-| Lihat Tagihan | Buka menu tagihan | Tampil daftar tagihan aktif | ✅ |
-| Bayar SPP | Pilih tagihan & metode bayar | Proses pembayaran berhasil | ✅ |
-| Lihat Riwayat | Buka menu riwayat | Tampil history pembayaran | ✅ |
-| Update Profil | Edit data profil | Data profil terupdate | ✅ |
+| Kasus Uji | Masukan | Hasil yang Diharapkan | Kesesuaian |
+|-----------|---------|----------------------|------------|
+| Melihat Tagihan | Membuka menu tagihan | Menampilkan daftar tagihan aktif | Sesuai |
+| Melakukan Pembayaran | Memilih tagihan dan metode | Transaksi pembayaran berhasil | Sesuai |
+| Melihat Riwayat | Membuka menu riwayat | Menampilkan riwayat transaksi | Sesuai |
+| Memperbarui Profil | Mengubah data profil | Data profil diperbarui | Sesuai |
 
-## 5. Laporan
+## 5. Pengujian Modul Laporan
 
-| Test Case | Input | Yang Diharapkan | Status |
-|-----------|-------|-----------------|--------|
-| Laporan Harian | Pilih tanggal | Tampil transaksi per hari | ✅ |
-| Laporan Bulanan | Pilih bulan & tahun | Tampil rekap bulanan | ✅ |
-| Export PDF | Klik tombol PDF | Download file PDF | ✅ |
-| Export Excel | Klik tombol Excel | Download file Excel | ✅ |
+| Kasus Uji | Masukan | Hasil yang Diharapkan | Kesesuaian |
+|-----------|---------|----------------------|------------|
+| Laporan Harian | Memilih tanggal | Menampilkan transaksi harian | Sesuai |
+| Laporan Bulanan | Memilih bulan dan tahun | Menampilkan rekapitulasi bulanan | Sesuai |
+| Ekspor PDF | Menekan tombol PDF | Mengunduh berkas PDF | Sesuai |
+| Ekspor Excel | Menekan tombol Excel | Mengunduh berkas Excel | Sesuai |
 
-## 6. Pengelolaan User
+## 6. Pengujian Modul Pengguna
 
-| Test Case | Input | Yang Diharapkan | Status |
-|-----------|-------|-----------------|--------|
-| Tambah User | Isi form user baru | User baru tersimpan | ✅ |
-| Edit Role | Ubah role user | Role terupdate | ✅ |
-| Reset Password | Klik reset password | Password direset & email terkirim | ✅ |
-| Nonaktifkan User | Klik nonaktifkan | Status user jadi nonaktif | ✅ |
+| Kasus Uji | Masukan | Hasil yang Diharapkan | Kesesuaian |
+|-----------|---------|----------------------|------------|
+| Penambahan Pengguna | Mengisi formulir pengguna baru | Pengguna baru tersimpan | Sesuai |
+| Pengubahan Peran | Mengubah peran pengguna | Peran pengguna diperbarui | Sesuai |
+| Pengaturan Ulang Kata Sandi | Menekan tombol atur ulang | Kata sandi direset dan surel terkirim | Sesuai |
+| Penonaktifan Pengguna | Menekan tombol nonaktif | Status pengguna dinonaktifkan | Sesuai |

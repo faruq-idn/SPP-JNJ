@@ -11,6 +11,10 @@ class RiwayatTarifSpp extends Model
 
     protected $fillable = [
         'kategori_id',
+        'biaya_makan',
+        'biaya_asrama',
+        'biaya_listrik',
+        'biaya_kesehatan',
         'nominal',
         'berlaku_mulai',
         'berlaku_sampai',
@@ -20,6 +24,10 @@ class RiwayatTarifSpp extends Model
     protected $casts = [
         'berlaku_mulai' => 'datetime',
         'berlaku_sampai' => 'datetime',
+        'biaya_makan' => 'decimal:2',
+        'biaya_asrama' => 'decimal:2',
+        'biaya_listrik' => 'decimal:2',
+        'biaya_kesehatan' => 'decimal:2',
         'nominal' => 'decimal:2'
     ];
 

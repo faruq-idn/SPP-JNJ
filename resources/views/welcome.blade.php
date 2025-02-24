@@ -6,9 +6,9 @@
         <title>Sistem Pembayaran SPP - Pesantren Jabal Nur Jadid</title>
 
         <!-- Bootstrap CSS -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
         <!-- Font Awesome -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <link href="{{ asset('vendor/fontawesome/css/all.min.css') }}" rel="stylesheet">
 
         <style>
             .navbar {
@@ -371,8 +371,7 @@
         </footer>
 
         <!-- Bootstrap JS -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
+        <script src="{{ asset('vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script><script>
         // Smooth scroll untuk menu internal
         document.querySelectorAll('a[href^="#"]:not([href="#"])').forEach(anchor => {
             anchor.addEventListener('click', function (e) {

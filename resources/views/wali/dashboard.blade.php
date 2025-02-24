@@ -45,6 +45,10 @@
                                                 <div class="text-muted small mb-1">Jenis Kelamin</div>
                                                 <div class="fw-semibold fs-7 fs-md-6">{{ $santri->jenis_kelamin }}</div>
                                             </div>
+                                            <div>
+                                                <div class="text-muted small mb-1">Alamat</div>
+                                                <div class="fw-semibold fs-7 fs-md-6">{{ $santri->alamat ?: '-' }}</div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-12 col-md-6">
@@ -55,18 +59,41 @@
                                             </div>
                                             <div>
                                                 <div class="text-muted small mb-1">Tarif SPP Bulanan</div>
-                                                <div class="fw-bold text-primary fs-6">
+                                                <div class="vstack gap-1">
+                                                    <div class="fw-bold text-primary fs-6">
+                                                        @if($santri->kategori->tarifTerbaru)
+                                                            Rp {{ number_format($santri->kategori->tarifTerbaru->nominal, 0, ',', '.') }}
+                                                        @else
+                                                            <span class="text-muted">Belum diatur</span>
+                                                        @endif
+                                                    </div>
                                                     @if($santri->kategori->tarifTerbaru)
-                                                        Rp {{ number_format($santri->kategori->tarifTerbaru->nominal, 0, ',', '.') }}
-                                                    @else
-                                                        <span class="text-muted">Belum diatur</span>
+                                                    <table class="table table-sm small mb-0 table-borderless">
+                                                        <tr class="text-muted">
+                                                            <td style="width: 100px">Makan</td>
+                                                            <td style="width: 20px">:</td>
+                                                            <td>Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_makan, 0, ',', '.') }}</td>
+                                                        </tr>
+                                                        <tr class="text-muted">
+                                                            <td>Asrama</td>
+                                                            <td>:</td>
+                                                            <td>Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_asrama, 0, ',', '.') }}</td>
+                                                        </tr>
+                                                        <tr class="text-muted">
+                                                            <td>Listrik</td>
+                                                            <td>:</td>
+                                                            <td>Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_listrik, 0, ',', '.') }}</td>
+                                                        </tr>
+                                                        <tr class="text-muted">
+                                                            <td>Kesehatan</td>
+                                                            <td>:</td>
+                                                            <td>Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_kesehatan, 0, ',', '.') }}</td>
+                                                        </tr>
+                                                    </table>
                                                     @endif
                                                 </div>
                                             </div>
-                                            <div>
-                                                <div class="text-muted small mb-1">Alamat</div>
-                                                <div class="fw-semibold fs-7 fs-md-6">{{ $santri->alamat ?: '-' }}</div>
-                                            </div>
+                                            
                                         </div>
                                     </div>
                                 </div>

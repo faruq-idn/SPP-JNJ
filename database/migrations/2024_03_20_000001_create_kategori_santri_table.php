@@ -12,6 +12,10 @@ return new class extends Migration
             $table->id();
             $table->string('nama');
             $table->text('keterangan')->nullable();
+            $table->decimal('biaya_makan', 10, 2)->default(0);
+            $table->decimal('biaya_asrama', 10, 2)->default(0);
+            $table->decimal('biaya_listrik', 10, 2)->default(0);
+            $table->decimal('biaya_kesehatan', 10, 2)->default(0);
             $table->timestamps();
         });
     }

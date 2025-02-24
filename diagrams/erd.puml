@@ -90,6 +90,10 @@ TABLE(riwayat_tarif_spp) {
     --
     FOREIGN_KEY(kategori_id)
     nominal
+    biaya_makan
+    biaya_asrama
+    biaya_kesehatan
+    biaya_listrik
     berlaku_mulai
     berlaku_sampai
     keterangan

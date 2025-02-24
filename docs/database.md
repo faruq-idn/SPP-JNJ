@@ -85,6 +85,10 @@ Tabel yang mencatat sejarah perubahan tarif SPP untuk setiap kategori santri, me
 | id | BIGINT(20) | Primary key |
 | kategori_id | BIGINT(20) | ID kategori santri (FK) |
 | nominal | DECIMAL(10,2) | Besaran tarif SPP |
+| biaya_makan | DECIMAL(10,2) | Biaya Makan Santri |
+| biaya_asrama | DECIMAL(10,2) | Biaya Asrama Santri |
+| biaya_listrik | DECIMAL(10,2) | Biaya listrik Santri |
+| biaya_kesehatan | DECIMAL(10,2) | Biaya kesehatan Santri |
 | berlaku_mulai | DATE | Tanggal mulai berlaku |
 | berlaku_sampai | DATE | Tanggal akhir berlaku |
 | keterangan | TEXT | Alasan perubahan tarif |

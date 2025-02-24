@@ -2,7 +2,7 @@
 
 @push('styles')
 <!-- DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link href="{{ asset('vendor/datatables/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
 @endpush
 
 @section('title', 'Riwayat Kenaikan Kelas')
@@ -58,8 +58,8 @@
 
 @push('scripts')
 <!-- DataTables -->
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('vendor/datatables/js/dataTables.bootstrap5.min.js') }}"></script>
 <script>
     $(document).ready(function() {
         // Cek apakah ada data di tabel

@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dataTable) {
         $(dataTable).DataTable({
             language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+                url: '/vendor/datatables/i18n/id.json'
             },
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],

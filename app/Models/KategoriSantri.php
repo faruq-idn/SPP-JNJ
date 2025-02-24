@@ -11,7 +11,11 @@ class KategoriSantri extends Model
 
     protected $fillable = [
         'nama',
-        'keterangan'
+        'keterangan',
+        'biaya_makan',
+        'biaya_asrama',
+        'biaya_listrik',
+        'biaya_kesehatan'
     ];
 
     public function riwayatTarif(): HasMany

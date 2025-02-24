@@ -11,6 +11,10 @@ return new class extends Migration
         Schema::create('riwayat_tarif_spp', function (Blueprint $table) {
             $table->id();
             $table->foreignId('kategori_id')->constrained('kategori_santri');
+            $table->decimal('biaya_makan', 10, 2);
+            $table->decimal('biaya_asrama', 10, 2);
+            $table->decimal('biaya_listrik', 10, 2);
+            $table->decimal('biaya_kesehatan', 10, 2);
             $table->decimal('nominal', 10, 2);
             $table->date('berlaku_mulai');
             $table->date('berlaku_sampai')->nullable();

@@ -3,37 +3,47 @@
 |Wali Santri|
 start
 
-:Buka Menu Utama;
+:Masuk ke Sistem;
 
 |Sistem|
-:Tampilkan Data:
+:Tampilkan Data Santri:
 ----
-• Nama Santri
-• Kelas
-• Total SPP;
+• Nama & NIS
+• Status Tagihan
+• Total Tunggakan;
 
 |Wali Santri|
-if (Pilih Menu?) then (Tagihan)
-    |Sistem|
-    :Tampilkan Tagihan SPP;
+if (Banyak Santri?) then (Ya)
 
-elseif (Bayar)
-    |Sistem|
-    :Tampilkan Form Bayar;
-    
-    |Wali Santri|
-    :Bayar SPP;
-    
-    |Sistem|
-    :Tampilkan Status Bayar;
-
-else (Riwayat)
-    |Sistem|
-    :Tampilkan Riwayat Bayar;
+    :Pilih Santri;
+else (Tidak)
 endif
 
+:Pilih Menu;
+
+if (Menu yang Dipilih?) then (Tagihan)
+    |Sistem|
+    :Tampilkan Tagihan Bulanan;
+else (Bayar)
+    |Sistem|
+    :Tampilkan Form Pembayaran;
+    
+    |Wali Santri|
+    :Pilih Metode Bayar;
+    
+    |Sistem|
+    if (Online?) then (Ya)
+        :Proses di Payment Gateway;
+    else (Tidak)
+        :Tampilkan Info Transfer;
+    endif
+endif
+
+|Sistem|
+:Perbarui Status;
+
 |Wali Santri|
-:Selesai;
+:Lihat Hasil;
 
 stop
 

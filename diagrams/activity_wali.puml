@@ -1,0 +1,40 @@
+@startuml Aktivitas Wali Santri
+
+|Wali Santri|
+start
+
+:Buka Menu Utama;
+
+|Sistem|
+:Tampilkan Data:
+----
+• Nama Santri
+• Kelas
+• Total SPP;
+
+|Wali Santri|
+if (Pilih Menu?) then (Tagihan)
+    |Sistem|
+    :Tampilkan Tagihan SPP;
+
+elseif (Bayar)
+    |Sistem|
+    :Tampilkan Form Bayar;
+    
+    |Wali Santri|
+    :Bayar SPP;
+    
+    |Sistem|
+    :Tampilkan Status Bayar;
+
+else (Riwayat)
+    |Sistem|
+    :Tampilkan Riwayat Bayar;
+endif
+
+|Wali Santri|
+:Selesai;
+
+stop
+
+@enduml

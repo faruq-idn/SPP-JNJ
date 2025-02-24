@@ -1,93 +1,56 @@
-@startuml Kelola Laporan
+@startuml Melihat dan Mengunduh Laporan
 
-|Admin/Petugas|
+|Admin|
 start
 
-:Akses Menu Laporan;
+:Buka Menu Laporan;
 
 |Sistem|
-:Tampilkan Dashboard Laporan;
-:Load Filter Options;
+:Tampilkan Halaman Dashboard Laporan
+--
+• Total Pembayaran Bulan Ini 
+• Jumlah Santri Sudah Bayar
+• Total Tunggakan
+• Jumlah Santri Belum Bayar;
 
-|Admin/Petugas|
+|Admin|
+:Pilih Jenis Laporan;
+
 if (Jenis Laporan?) then (Pembayaran)
-    :Pilih Laporan Pembayaran;
-    
-    |Sistem|
-    :Tampilkan Filter Pembayaran;
-    
-    |Admin/Petugas|
-    :Set Filter Periode;
-    :Set Filter Status (Optional);
-    :Set Filter Metode (Optional);
-    
+    :Pilih Filter:
+    --
+    • Bulan
+    • Tahun
+    • Kategori;
 else (Tunggakan)
-    :Pilih Laporan Tunggakan;
-    
-    |Sistem|
-    :Tampilkan Filter Tunggakan;
-    
-    |Admin/Petugas|
-    :Set Filter Kelas;
-    :Set Filter Kategori (Optional);
-    :Set Status Santri (Optional);
+    :Pilih Filter:
+    --
+    • Status Santri
+    • Jenjang
+    • Kelas;
 endif
 
-|Admin/Petugas|
-:Submit Filter;
+:Klik Tombol Filter;
 
 |Sistem|
-:Validasi Filter;
-:Proses Data Laporan;
-:Generate Statistics;
-:Tampilkan Preview;
+:Tampilkan Data Sesuai Filter;
 
-|Admin/Petugas|
-if (Format Output?) then (PDF)
-    :Klik Export PDF;
-    
+|Admin|
+:Pilih Format Unduh;
+
+if (Format?) then (PDF)
     |Sistem|
-    :Generate PDF;
-    :Format Data Tabel;
-    :Tambah Header & Footer;
-    :Tambah Grafik (jika ada);
-    :Compress PDF;
-    
-elseif (Excel)
-    :Klik Export Excel;
-    
+    :Siapkan Laporan PDF;
+else (Excel)
     |Sistem|
-    :Generate Excel;
-    :Format Cells & Data;
-    :Tambah Formula;
-    :Tambah Pivot Tables;
-    :Protect Worksheet;
-    
-else (Print)
-    :Klik Print Preview;
-    
-    |Sistem|
-    :Format Print Layout;
-    :Set Page Options;
-    :Preview Document;
+    :Siapkan Laporan Excel;
 endif
 
-|Sistem|
-if (Generate Berhasil?) then (ya)
-    :Simpan File Temporary;
-    :Provide Download Link;
-    
-    |Admin/Petugas|
-    :Download/Print Laporan;
-else (tidak)
-    :Tampilkan Error Message;
-    
-    |Admin/Petugas|
-    :Lihat Error;
-endif
+:Proses Unduh Laporan;
 
-|Admin/Petugas|
-:Konfirmasi Hasil;
+|Admin|
+:Terima File Laporan;
+
 stop
 
 @enduml

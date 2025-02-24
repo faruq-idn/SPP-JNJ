@@ -1,53 +1,32 @@
-@startuml Kelola Kategori Santri (Sedikit Lebih Sederhana Lagi)
+@startuml Mengelola Kategori Santri
 
 |Admin|
 start
 
+:Lihat Daftar Kategori;
+
 |Sistem|
-:Tampilkan Daftar Kategori;
+:Tampilkan:
+• Nama Kategori
+• Tarif SPP
+• Jumlah Santri;
 
 |Admin|
-:Melihat Daftar Kategori;
-:Pilih Aksi;
+if (Aksi?) then (Tambah/Edit)
+    :Isi/Ubah Data Kategori;
+    
+    |Sistem|
+    :Simpan Perubahan;
 
-if (Tambah Kategori) then (Tambah)
-    :Klik Tambah & Tampilkan Form;
-    |Admin|
-    :Isi Form Submit;
+else (Hapus)
+    :Klik Hapus & Konfirmasi;
+    
     |Sistem|
-    :Validasi Proses Tambah;
-    if (Validasi Gagal) then (Gagal)
-        :Tampilkan Error Message;
-    else (Berhasil)
-        :Redirect & Tampilkan Sukses;
-    endif
-elseif (Edit Kategori) then (Edit)
-    :Pilih Klik Edit & Tampilkan Form;
-    |Admin|
-    :Update Data & Submit;
-    |Sistem|
-    :Validasi & Proses Edit;
-    if (Validasi Gagal) then (Gagal)
-        :Tampilkan Error Message;
-    else (Berhasil)
-        :Redirect & Tampilkan Sukses;
-    endif
-elseif (Update Tarif) then (Update Tarif)
-    :Pilih & Klik Update Tarif & Tampilkan Form;
-    |Admin|
-    :Isi Form & Submit;
-    |Sistem|
-    :Validasi & Proses Update Tarif;
-    if (Validasi Gagal) then (Gagal)
-        :Tampilkan Error Message;
-    else (Berhasil)
-        :Redirect & Tampilkan Sukses;
-    endif
-else (Lihat Daftar)
-    :Kembali ke Daftar Kategori;
+    :Hapus Kategori;
 endif
 
-|Admin|
+:Tampilkan Daftar Terbaru;
+
 stop
 
 @enduml

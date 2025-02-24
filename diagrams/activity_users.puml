@@ -1,0 +1,45 @@
+@startuml Kelola Pengguna
+
+|Admin|
+start
+
+:Buka Menu Pengguna;
+
+|Sistem|
+:Tampilkan Daftar Pengguna:
+----
+• Nama
+• Email
+• Role (Admin/Petugas/Wali)
+• Status;
+
+|Admin|
+if (Pilih Aksi?) then(Tambah)
+    :Isi Form Pengguna Baru:
+    ----
+    • Nama
+    • Email
+    • Role
+    • Password;
+    
+    |Sistem|
+    :Simpan Pengguna Baru;
+
+else (Edit)
+    :Pilih Pengguna;
+    :Ubah Data;
+    :Reset & Kirim Password Baru;
+    |Sistem|
+    :Perbarui Data Pengguna;
+
+endif
+    :Tampilkan Daftar Terbaru;
+
+
+|Admin|
+
+:Selesai;
+
+stop
+
+@enduml

@@ -1,0 +1,40 @@
+@startuml Kelola Kelas
+
+|Admin|
+start
+
+:Lihat Daftar Santri;
+
+|Sistem|
+:Tampilkan Data per Kelas:
+----
+• Nama & NIS
+• Kelas Sekarang
+• Status;
+
+|Admin|
+if (Pilih Aksi?) then (Naik Kelas)
+    :Pilih Kenaikan Kelas Masal;
+    :Klik Proses Kenaikan;
+    
+    |Sistem|
+    :Proses Pindah Kelas;
+    :Simpan Riwayat Kenaikan;
+
+
+else (Ubah Manual)
+    :Pilih Santri;
+    :Edit Data Kelas;
+    
+    |Sistem|
+    :Update Data Santri;
+endif
+
+:Perbarui Daftar;
+
+|Admin|
+:Lihat Hasil;
+
+stop
+
+@enduml

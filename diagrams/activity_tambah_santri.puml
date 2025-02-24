@@ -1,6 +1,6 @@
 @startuml Tambah Data Santri
 
-|Admin/Petugas|
+|Admin|
 start
 
 if (Metode Input?) then (Manual)
@@ -11,7 +11,7 @@ if (Metode Input?) then (Manual)
     :Load Data Kategori;
     :Load Data Wali;
     
-    |Admin/Petugas|
+    |Admin|
     :Input Data Santri;
     :Pilih Kategori;
     :Pilih/Input Wali;
@@ -26,7 +26,7 @@ else (Import Excel)
     |Sistem|
     :Tampilkan Form Upload;
     
-    |Admin/Petugas|
+    |Admin|
     :Upload File Excel;
     
     |Sistem|
@@ -60,7 +60,7 @@ else (tidak)
     :Tampilkan Error Message;
 endif
 
-|Admin/Petugas|
+|Admin|
 :Melihat Hasil;
 stop
 

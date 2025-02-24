@@ -200,18 +200,18 @@
 </div>
 
 @push('styles')
-<link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-<link href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css" rel="stylesheet">
+<link href="{{ asset('vendor/datatables/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
+<link href="{{ asset('vendor/datatables/css/buttons.bootstrap5.min.css') }}" rel="stylesheet">
 @endpush
 
 @push('scripts')
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('vendor/datatables/js/dataTables.bootstrap5.min.js') }}"></script>
 <script>
 $(document).ready(function() {
     $('#dataTable').DataTable({
         language: {
-            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json'
+            url: '{{ asset("vendor/datatables/i18n/id.json") }}'
         },
         order: [[8, 'desc']] // Sort by jumlah bulan descending
     });

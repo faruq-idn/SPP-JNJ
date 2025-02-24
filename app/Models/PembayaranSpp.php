@@ -14,6 +14,7 @@ class PembayaranSpp extends Model
     const STATUS_SUCCESS = 'success';
     const STATUS_FAILED = 'failed';
     const STATUS_PENDING = 'pending';
+    const STATUS_UNPAID = 'unpaid';
 
     protected $fillable = [
         'santri_id',
@@ -79,12 +80,61 @@ class PembayaranSpp extends Model
         return $query->where('status', '!=', self::STATUS_SUCCESS);
     }
 
+    public function scopeTunggakan($query)
+    {
+        return $query->whereIn('status', [self::STATUS_UNPAID, self::STATUS_PENDING]);
+    }
+
+    public function isTunggakan(): bool
+    {
+        return in_array($this->status, [self::STATUS_UNPAID, self::STATUS_PENDING]);
+    }
+
+    /**
+     * Validasi apakah pembayaran untuk bulan ini terlambat
+     */
+    public function isTerlambat(): bool
+    {
+        $jatuhTempo = Carbon::create($this->tahun, $this->bulan, 10);
+        return $this->isTunggakan() && now()->greaterThan($jatuhTempo);
+    }
+
+    /**
+     * Cek apakah bulan dan tahun valid untuk pembayaran
+     */
+    public function isValidPeriod(): bool
+    {
+        $tanggalMasuk = $this->santri->tanggal_masuk->startOfMonth();
+        $periodePembayaran = Carbon::create($this->tahun, $this->bulan, 1)->startOfMonth();
+        $bulanSekarang = Carbon::now()->startOfMonth();
+
+        return $periodePembayaran >= $tanggalMasuk && $periodePembayaran <= $bulanSekarang;
+    }
+
     protected static function booted()
     {
+        static::creating(function ($pembayaran) {
+            Log::info('Creating payment', [
+                'santri_id' => $pembayaran->santri_id,
+                'bulan' => $pembayaran->bulan,
+                'tahun' => $pembayaran->tahun,
+                'nominal' => $pembayaran->nominal,
+                'status' => $pembayaran->status
+            ]);
+        });
+
         static::updating(function ($pembayaran) {
             Log::info('Updating payment', [
                 'id' => $pembayaran->id,
                 'changes' => $pembayaran->getDirty()
+            ]);
+        });
+
+        static::created(function ($pembayaran) {
+            Log::info('Payment created', [
+                'id' => $pembayaran->id,
+                'santri_id' => $pembayaran->santri_id,
+                'periode' => $pembayaran->periode
             ]);
         });
     }

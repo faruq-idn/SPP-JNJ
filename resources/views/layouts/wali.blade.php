@@ -1,83 +1,99 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, private">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="-1">
     <title>@yield('title') - Wali Panel</title>
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('vendor/fontawesome/css/all.min.css') }}">
     <!-- SweetAlert2 -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="{{ asset('vendor/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{{ asset('css/wali-responsive.css') }}" rel="stylesheet">
     <!-- Midtrans -->
-    <script type="text/javascript"
-            src="https://app.sandbox.midtrans.com/snap/snap.js"
-            data-client-key="{{ config('midtrans.client_key') }}">
-    </script>
+        <script type="text/javascript"
+                src="https://app.sandbox.midtrans.com/snap/snap.js"
+                data-client-key="{{ config('midtrans.client_key') }}">
+        </script>
 
     <style>
-           /* Responsive adjustments - handled by Bootstrap grid and utilities */
-           @media (max-width: 768px) {
-               .container-fluid {
-                   padding-left: 1rem;
-                   padding-right: 1rem;
-               }
+        /* Responsive adjustments - handled by Bootstrap grid and utilities */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
 
-               .table-responsive {
-                   margin: 0;
-                   padding: 0.5rem;
-               }
+            .table-responsive {
+                margin: 0;
+                padding: 0.5rem;
+            }
 
-               .table td,
-               .table th {
-                   padding: 0.75rem;
-                   white-space: nowrap;
-               }
+            .table td,
+            .table th {
+                padding: 0.75rem;
+                white-space: nowrap;
+            }
 
-               .card-body {
-                   padding: 1.25rem;
-               }
+            .card-body {
+                padding: 1.25rem;
+            }
 
-               .card .table-responsive {
-                   margin: 0 0.5rem;
-               }
-           }
+            .card .table-responsive {
+                margin: 0 0.5rem;
+            }
+        }
 
-           @media (max-width: 480px) {
-               .table td,
-               .table th {
-                   min-width: 120px;
-               }
+        @media (max-width: 480px) {
+            .table td,
+            .table th {
+                min-width: 120px;
+            }
 
-               .card-body {
-                   padding: 1rem;
-               }
-           }
+            .card-body {
+                padding: 1rem;
+            }
+        }
 
-           @media (min-width: 768px) {
-               .container-fluid {
-                   padding-left: 1.5rem;
-                   padding-right: 1.5rem;
-               }
+        @media (min-width: 768px) {
+            .container-fluid {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
 
-               .card .table-responsive {
-                   margin: 0;
-                   padding: 0 1rem;
-               }
+            .card .table-responsive {
+                margin: 0;
+                padding: 0 1rem;
+            }
 
-               .table td,
-               .table th {
-                   padding: 1rem;
-               }
-           }
-       </style>
+            .table td,
+            .table th {
+                padding: 1rem;
+            }
+        }
+
+        /* Dropdown animation */
+        .dropdown-menu {
+            display: block;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+    </style>
     @stack('styles')
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -86,7 +102,7 @@
     <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#" class="navbar-brand">
+            <a href="#" class="navbar-brand">
                 <img src="{{ asset('images/logo.png') }}" alt="Logo" height="30" class="d-inline-block align-top">
             </a>
             <div class="ms-auto d-flex align-items-center">
@@ -163,13 +179,37 @@
     </nav>
 
     <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('vendor/sweetalert2/sweetalert2.min.js') }}"></script>
     @stack('scripts')
     <script>
-    document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
-        new bootstrap.Dropdown(element);
+    // Initialize dropdowns
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
+            new bootstrap.Dropdown(element);
+        });
+
+        // Add smooth animation to all dropdowns
+        document.querySelectorAll('.dropdown').forEach(function(dropdown) {
+            dropdown.addEventListener('show.bs.dropdown', function() {
+                const menu = this.querySelector('.dropdown-menu');
+                menu.style.display = 'block';
+                setTimeout(() => {
+                    menu.classList.add('show');
+                }, 0);
+            });
+
+            dropdown.addEventListener('hide.bs.dropdown', function(e) {
+                e.preventDefault();
+                const menu = this.querySelector('.dropdown-menu');
+                menu.classList.remove('show');
+                setTimeout(() => {
+                    menu.style.display = 'none';
+                    bootstrap.Dropdown.getInstance(this.querySelector('.dropdown-toggle')).hide();
+                }, 200);
+            });
+        });
     });
 
     document.getElementById('logout-form').addEventListener('submit', function(e) {
@@ -195,7 +235,7 @@
     <!-- Profile Modal -->
     <div class="modal fade" id="profileModal" tabindex="-1" inert>
         <div class="modal-dialog">
-            <div class="modal-content" style="background-color: white;">
+            <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="fas fa-user-edit me-2"></i>Edit Profil
@@ -227,7 +267,7 @@
                                    name="email"
                                    class="form-control @error('email') is-invalid @enderror"
                                    value="{{ Auth::user()->email }}"
-                                   pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                                   pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
                                    title="Masukkan format email yang valid"
                                    required>
                             @error('email')
@@ -277,7 +317,7 @@
         }
         
         // Validasi email
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
         if (!emailRegex.test(email.value)) {
             Swal.fire('Error', 'Format email tidak valid', 'error');
             return;
@@ -336,5 +376,7 @@
         }
     @endif
     </script>
+
+    
 </body>
 </html>

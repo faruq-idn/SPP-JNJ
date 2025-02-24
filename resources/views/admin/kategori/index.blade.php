@@ -141,7 +141,7 @@
 
 <!-- Modal Edit Kategori -->
 <div class="modal fade" id="editKategoriModal" tabindex="-1" aria-labelledby="editKategoriModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editKategoriModalLabel">Edit Kategori</h5>
@@ -171,6 +171,28 @@
                     </button>
                 </div>
             </form>
+
+            <div class="modal-body border-top pt-4">
+                <h6 class="mb-3">Riwayat Perubahan Tarif</h6>
+                <div class="table-responsive" id="riwayatTarifTable">
+                    <table class="table table-sm table-bordered">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>No</th>
+                                <th>Nominal</th>
+                                <th>Mulai</th>
+                                <th>Berakhir</th>
+                                <th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="riwayatTarifBody">
+                            <tr>
+                                <td colspan="5" class="text-center">Memuat data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -228,7 +250,6 @@
 </div>
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // Fungsi update tarif
 function updateTarif(id) {
@@ -272,7 +293,12 @@ function submitUpdateTarifForm(event) {
                 text: data.message,
                 timer: 1500
             }).then(() => {
-                window.location.reload();
+                // Perbarui tampilan riwayat tarif jika modal edit sedang terbuka
+                if (document.getElementById('editKategoriModal').classList.contains('show')) {
+                    editKategori(id);
+                } else {
+                    window.location.reload();
+                }
             });
         } else {
             Swal.fire({
@@ -356,6 +382,30 @@ function editKategori(id) {
                 document.getElementById('edit_kategori_id').value = kategori.id;
                 document.getElementById('edit_nama').value = kategori.nama;
                 document.getElementById('edit_keterangan').value = kategori.keterangan;
+                
+                // Tampilkan riwayat tarif
+                if (kategori.riwayat_tarif && kategori.riwayat_tarif.length > 0) {
+                    const riwayatHtml = kategori.riwayat_tarif
+                        .sort((a, b) => new Date(b.berlaku_mulai) - new Date(a.berlaku_mulai))
+                        .map((tarif, index) => `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>Rp ${new Intl.NumberFormat('id-ID').format(tarif.nominal)}</td>
+                                <td>${new Date(tarif.berlaku_mulai).toLocaleDateString('id-ID')}</td>
+                                <td>${tarif.berlaku_sampai 
+                                    ? new Date(tarif.berlaku_sampai).toLocaleDateString('id-ID')
+                                    : '<span class="badge bg-success">Sekarang</span>'}</td>
+                                <td>${tarif.keterangan || '-'}</td>
+                            </tr>
+                        `).join('');
+                    document.getElementById('riwayatTarifBody').innerHTML = riwayatHtml;
+                } else {
+                    document.getElementById('riwayatTarifBody').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Belum ada riwayat perubahan tarif</td>
+                        </tr>
+                    `;
+                }
                 
                 const modal = new bootstrap.Modal(document.getElementById('editKategoriModal'));
                 modal.show();

@@ -3,32 +3,11 @@
 @section('title', 'Dashboard')
 
 @section('content')
+@include('layouts.partials.dropdown-santri')
+
 <div class="container-fluid p-2 p-md-4 mb-5 pb-5">
     <div class="row g-2 g-md-3">
-        
-        @if($santri_list->count() > 1)
-        <div class="col-12">
-            <div class="card shadow-sm rounded-3 border-0">
-                <div class="card-body p-2 p-md-3">
-                    <form action="{{ route('wali.change-santri') }}" method="POST">
-                        @csrf
-                        <div class="vstack gap-2 gap-md-3">
-                            <label class="fw-bold fs-6">Pilih Santri:</label>
-                            <select name="santri_id" class="form-select" onchange="this.form.submit()">
-                                @foreach($santri_list as $s)
-                                <option value="{{ $s->id }}" {{ $santri->id == $s->id ? 'selected' : '' }}>
-                                    {{ $s->nama }} ({{ str_pad($s->nisn, 5, '0', STR_PAD_LEFT) }})
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        @endif
-
-        
+        @if($santri)
         <div class="col-12">
             <div class="card shadow-sm rounded-3 border-0">
                 <div class="card-body p-3 p-md-4">
@@ -219,6 +198,7 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 </div>
 
@@ -359,21 +339,21 @@ function bayarSPP(id) {
         }).then((result) => {
             if (result.isConfirmed) {
                 Swal.fire({
-                    title: 'Memproses Pembayaran',
-                    text: 'Mohon tunggu...',
-                    allowOutsideClick: false,
+            title: 'Memproses Pembayaran',
+            text: 'Mohon tunggu...',
+            allowOutsideClick: false,
                     didOpen: () => {
                         Swal.showLoading();
                     }
-                });
+        });
 
                 fetch('{{ route("wali.pembayaran.store") }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
                     body: JSON.stringify({
                         tagihan_id: id
                     })
@@ -392,21 +372,21 @@ function bayarSPP(id) {
                         snap.pay(response.snap_token, {
                             onSuccess: function(result) {
                                 Swal.fire({
-                                    title: 'Pembayaran Berhasil',
-                                    text: 'Halaman akan diperbarui',
-                                    icon: 'success',
-                                    timer: 2000,
-                                    showConfirmButton: false
+                    title: 'Pembayaran Berhasil',
+                    text: 'Halaman akan diperbarui',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
                                 }).then(() => {
-                                    window.location.reload();
+                window.location.reload();
                                 });
                             },
                             onPending: function(result) {
                                 Swal.fire({
-                                    title: 'Pembayaran Pending',
-                                    text: 'Silakan selesaikan pembayaran Anda',
-                                    icon: 'info'
-                                });
+                    title: 'Pembayaran Pending',
+                    text: 'Silakan selesaikan pembayaran Anda',
+                    icon: 'info'
+                });
                             },
                             onError: function(result) {
                                 console.error('Payment Error:', result);
@@ -418,25 +398,25 @@ function bayarSPP(id) {
                             },
                             onClose: function() {
                                 Swal.fire('Info', 'Pembayaran dibatalkan', 'info');
-                            }
+            }
                         });
-                    }
+        }
                 })
                 .catch(err => {
-                    console.error('Error:', err);
-                    Swal.close();
+        console.error('Error:', err);
+        Swal.close();
                     let errorMessage = err.message || 'Gagal memproses pembayaran';
-                    if (err.show_profile_modal) {
-                        const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
-                        profileModal.show();
-                    }
+        if (err.show_profile_modal) {
+            const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
+            profileModal.show();
+        }
                     Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: errorMessage
+            icon: 'error',
+            title: 'Error',
+            text: errorMessage
                     });
-                });
-            }
+        });
+    }
         });
 }
 </script>

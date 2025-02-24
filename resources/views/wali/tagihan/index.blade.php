@@ -2,6 +2,8 @@
 
 @section('title', 'Tagihan & Riwayat SPP')
 
+@include('layouts.partials.dropdown-santri')
+
 @section('content')
 <div class="container-fluid p-2 p-md-4 mb-5">
     <div class="row g-2 g-md-3">
@@ -17,26 +19,6 @@
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 {{ session('error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            @endif
-
-            @if($santri_list->count() > 1)
-            <div class="card shadow-sm rounded-3 border-0 mb-3 mb-md-4">
-                <div class="card-body p-2 p-md-3">
-                    <form action="{{ route('wali.change-santri') }}" method="POST">
-                        @csrf
-                        <div class="vstack gap-2">
-                            <label class="fw-bold fs-7 fs-md-6">Pilih Santri:</label>
-                            <select name="santri_id" class="form-select fs-7 fs-md-6" onchange="this.form.submit()">
-                                @foreach($santri_list as $s)
-                                <option value="{{ $s->id }}" {{ $santri->id == $s->id ? 'selected' : '' }}>
-                                    {{ $s->nama }} ({{ str_pad($s->nisn, 5, '0', STR_PAD_LEFT) }})
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </form>
-                </div>
             </div>
             @endif
 

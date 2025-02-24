@@ -5,10 +5,10 @@
 @push('styles')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <!-- DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link href="{{ asset('vendor/datatables/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet">
 <!-- Select2 -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<link href="{{ asset('vendor/select2/css/select2.min.css') }}" rel="stylesheet">
+<link href="{{ asset('vendor/select2/css/select2-bootstrap-5-theme.min.css') }}" rel="stylesheet">
 <style>
     /* DataTable specific styles */
     #dataTable tbody tr td:not(:last-child) {
@@ -52,20 +52,19 @@
 @include('admin.santri._form_modal')
 @endsection
 
-
 @push('scripts')
 <!-- DataTables -->
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('vendor/datatables/js/dataTables.bootstrap5.min.js') }}"></script>
 <script src="{{ asset('js/kenaikan-kelas.js') }}"></script>
 <!-- Select2 -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ asset('vendor/select2/js/select2.min.js') }}"></script>
 <script>
 // Inisialisasi DataTable khusus untuk halaman ini
 $(document).ready(function() {
     $('#dataTable').DataTable({
         language: {
-            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+            url: "{{ asset('vendor/datatables/i18n/id.json') }}"
         },
         pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],

@@ -40,12 +40,9 @@ export default defineConfig({
         fs: {
             allow: ['public/vendor', 'resources'],
         },
-        host: true,
-        hmr: {
-            host: 'localhost'
-        },
-        watch: {
-            usePolling: true
-        }
+        host: 'localhost',
+        hmr: false,
+        port: 5173,
+        strictPort: true
     }
 });

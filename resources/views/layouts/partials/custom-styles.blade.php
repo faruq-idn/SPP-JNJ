@@ -1,5 +1,5 @@
 <!-- Select2 Bootstrap 5 Theme -->
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+<link href="{{ asset('vendor/select2/css/select2-bootstrap-5-theme.min.css') }}" rel="stylesheet">
 
 <!-- Custom CSS -->
 <link href="{{ asset('css/custom.css') }}" rel="stylesheet">

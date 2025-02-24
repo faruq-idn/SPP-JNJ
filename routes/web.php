@@ -87,6 +87,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     
     // User Management
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
+    Route::get('users/{user}/get-data', [UserController::class, 'getData'])->name('users.getData');
     Route::resource('users', UserController::class);
     
     // Pembayaran

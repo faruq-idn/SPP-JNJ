@@ -20,6 +20,8 @@
     "dependencies": {
         "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.3",
+        "datatables.net": "^2.2.2",
+        "datatables.net-bs5": "^2.2.2",
         "sweetalert2": "11.17.2"
     },
     "overrides": {

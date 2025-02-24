@@ -1,101 +1,53 @@
-@startuml Kelola Kategori Santri
+@startuml Kelola Kategori Santri (Sedikit Lebih Sederhana Lagi)
 
 |Admin|
 start
 
 |Sistem|
-:Tampilkan List Kategori;
-:Load Data Tarif SPP;
+:Tampilkan Daftar Kategori;
 
 |Admin|
-if (Aksi?) then (Tambah)
-    :Klik Tambah Kategori;
-    
-    |Sistem|
-    :Tampilkan Form Kategori;
-    
+:Melihat Daftar Kategori;
+:Pilih Aksi;
+
+if (Tambah Kategori) then (Tambah)
+    :Klik Tambah & Tampilkan Form;
     |Admin|
-    :Input Nama Kategori;
-    :Input Keterangan;
-    :Input Tarif SPP;
-    :Submit Form;
-    
+    :Isi Form Submit;
     |Sistem|
-    :Validasi Input;
-    
-    if (Valid?) then (tidak)
+    :Validasi Proses Tambah;
+    if (Validasi Gagal) then (Gagal)
         :Tampilkan Error Message;
-        stop
-    else (ya)
-        :Simpan Kategori;
-        :Buat Riwayat Tarif;
+    else (Berhasil)
+        :Redirect & Tampilkan Sukses;
     endif
-    
-elseif (Edit)
-    :Pilih Kategori;
-    :Klik Edit;
-    
-    |Sistem|
-    :Load Data Kategori;
-    :Tampilkan Form Edit;
-    
+elseif (Edit Kategori) then (Edit)
+    :Pilih Klik Edit & Tampilkan Form;
     |Admin|
-    :Update Data Kategori;
-    :Update Tarif (Optional);
-    :Submit Perubahan;
-    
+    :Update Data & Submit;
     |Sistem|
-    :Validasi Perubahan;
-    
-    if (Valid?) then (tidak)
+    :Validasi & Proses Edit;
+    if (Validasi Gagal) then (Gagal)
         :Tampilkan Error Message;
-        stop
-    else (ya)
-        :Update Kategori;
-        if (Tarif Berubah?) then (ya)
-            :Catat Riwayat Tarif Baru;
-            :Set Tanggal Berakhir Tarif Lama;
-        endif
+    else (Berhasil)
+        :Redirect & Tampilkan Sukses;
     endif
-    
-elseif (Hapus)
-    :Pilih Kategori;
-    :Klik Hapus;
-    
+elseif (Update Tarif) then (Update Tarif)
+    :Pilih & Klik Update Tarif & Tampilkan Form;
+    |Admin|
+    :Isi Form & Submit;
     |Sistem|
-    :Cek Penggunaan Kategori;
-    
-    if (Sedang Digunakan?) then (ya)
-        :Tampilkan Pesan Error;
-        stop
-    else (tidak)
-        :Konfirmasi Penghapusan;
-        
-        |Admin|
-        if (Konfirmasi?) then (tidak)
-            stop
-        else (ya)
-            |Sistem|
-            :Hapus Kategori;
-            :Hapus Riwayat Tarif Terkait;
-        endif
+    :Validasi & Proses Update Tarif;
+    if (Validasi Gagal) then (Gagal)
+        :Tampilkan Error Message;
+    else (Berhasil)
+        :Redirect & Tampilkan Sukses;
     endif
-    
-else (Lihat Riwayat)
-    :Pilih Kategori;
-    :Klik Riwayat Tarif;
-    
-    |Sistem|
-    :Tampilkan Riwayat Tarif;
-    :Tampilkan Grafik Perubahan;
+else (Lihat Daftar)
+    :Kembali ke Daftar Kategori;
 endif
 
-|Sistem|
-:Refresh Data Kategori;
-:Tampilkan Status Operasi;
-
 |Admin|
-:Melihat Hasil;
 stop
 
 @enduml

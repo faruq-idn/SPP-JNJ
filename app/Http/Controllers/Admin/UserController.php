@@ -7,20 +7,20 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::query();
-
-        // Filter berdasarkan tipe user (petugas/wali)
-        if ($request->has('type')) {
-            $query->where('role', $request->type);
-        }
-
-        $users = $query->latest()->paginate(10);
+        $users = User::latest()->get();
         return view('admin.users.index', compact('users'));
+    }
+
+    public function getData(User $user)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
     }
 
     public function search(Request $request)
@@ -49,82 +49,75 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-    public function create()
-    {
-        $roles = [
-            'admin' => 'Admin',
-            'petugas' => 'Petugas',
-            'wali' => 'Wali Santri'
-        ];
-        
-        return view('admin.users.create', compact('roles'));
-    }
-
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:admin,petugas,wali',
-            'no_hp' => 'required|string|max:15'
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => 'required|string|min:8|confirmed',
+                'role' => 'required|in:admin,petugas,wali',
+                'no_hp' => 'required|string|max:15'
+            ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-            'role' => $request->role,
-            'no_hp' => $request->no_hp
-        ]);
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => bcrypt($validated['password']),
+                'role' => $validated['role'],
+                'no_hp' => $validated['no_hp']
+            ]);
 
-        return redirect()
-            ->route('admin.users.index')
-            ->with('success', 'User berhasil ditambahkan');
-    }
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengguna berhasil ditambahkan',
+                'data' => $user
+            ]);
 
-    public function show(User $user)
-    {
-        return view('admin.users.show', compact('user'));
-    }
-
-    public function edit(User $user)
-    {
-        $roles = [
-            'admin' => 'Admin',
-            'petugas' => 'Petugas',
-            'wali' => 'Wali Santri'
-        ];
-        
-        return view('admin.users.edit', compact('user', 'roles'));
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 
     public function update(Request $request, User $user)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'role' => 'required|in:admin,petugas,wali',
-            'no_hp' => 'required|string|max:15',
-            'password' => 'nullable|string|min:8|confirmed'
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+                'role' => 'required|in:admin,petugas,wali',
+                'no_hp' => 'required|string|max:15',
+                'password' => 'nullable|string|min:8|confirmed'
+            ]);
 
-        $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'role' => $request->role,
-            'no_hp' => $request->no_hp
-        ];
+            $data = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'role' => $validated['role'],
+                'no_hp' => $validated['no_hp']
+            ];
 
-        if ($request->filled('password')) {
-            $data['password'] = bcrypt($request->password);
+            if ($request->filled('password')) {
+                $data['password'] = bcrypt($validated['password']);
+            }
+
+            $user->update($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengguna berhasil diperbarui',
+                'data' => $user
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
         }
-
-        $user->update($data);
-
-        return redirect()
-            ->route('admin.users.index')
-            ->with('success', 'User berhasil diperbarui');
     }
 
     public function destroy(User $user)
@@ -137,6 +130,6 @@ class UserController extends Controller
 
         return redirect()
             ->route('admin.users.index')
-            ->with('success', 'User berhasil dihapus');
+            ->with('success', 'Pengguna berhasil dihapus');
     }
 }

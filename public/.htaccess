@@ -22,6 +22,6 @@
 
 <IfModule mod_headers.c>
 
-    Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http://localhost:* http://127.0.0.1:*; style-src 'self' 'unsafe-inline' https: *.jsdelivr.net *.cloudflare.com http://localhost:* http://127.0.0.1:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: *.jsdelivr.net http://localhost:* http://127.0.0.1:*; img-src 'self' data: https:; font-src 'self' https: data: *.cloudflare.com *.jsdelivr.net; connect-src 'self' https: *.datatables.net http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*;"
+    Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* http://127.0.0.1:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* http://127.0.0.1:* *.jsdelivr.net *.google-analytics.com; script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* http://127.0.0.1:* *.jsdelivr.net; style-src 'self' 'unsafe-inline' *.jsdelivr.net *.cloudflare.com fonts.bunny.net http://localhost:* http://127.0.0.1:*; style-src-elem 'self' 'unsafe-inline' *.jsdelivr.net *.cloudflare.com fonts.bunny.net http://localhost:* http://127.0.0.1:*; img-src 'self' data: blob:; font-src 'self' data: *.cloudflare.com *.jsdelivr.net fonts.bunny.net; connect-src 'self' http://localhost:* http://127.0.0.1:* *.datatables.net *.google-analytics.com fonts.bunny.net; worker-src 'self' blob:;"
 
 </IfModule>

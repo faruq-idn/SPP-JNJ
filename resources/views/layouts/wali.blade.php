@@ -233,11 +233,11 @@
     </script>
 
     <!-- Profile Modal -->
-    <div class="modal fade" id="profileModal" tabindex="-1" inert>
+    <div class="modal fade" id="profileModal" tabindex="-1" role="dialog" aria-labelledby="profileModalTitle">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
+                    <h5 class="modal-title" id="profileModalTitle">
                         <i class="fas fa-user-edit me-2"></i>Edit Profil
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -267,8 +267,6 @@
                                    name="email"
                                    class="form-control @error('email') is-invalid @enderror"
                                    value="{{ Auth::user()->email }}"
-                                   pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
-                                   title="Masukkan format email yang valid"
                                    required>
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -341,16 +339,13 @@
 
     // Handle response after form submission
     @if(session('success'))
-        const profileModal = document.getElementById('profileModal');
-        const modalInstance = profileModal ? bootstrap.Modal.getInstance(profileModal) : null;
-
         Swal.fire({
             title: 'Berhasil',
             text: '{{ session('success') }}',
             icon: 'success'
         }).then(() => {
-            if (modalInstance) {
-                modalInstance.hide();
+            if (profileModalInstance) {
+                profileModalInstance.hide();
             }
             if (window.location.pathname === '/wali/profil') {
                 window.location.href = '{{ route("wali.dashboard") }}';
@@ -358,21 +353,31 @@
         });
     @endif
 
-    // Tangani atribut inert untuk modal profil
-    const profileModal = document.getElementById('profileModal');
-    profileModal.addEventListener('shown.bs.modal', function () {
-        profileModal.removeAttribute('inert');
-    });
+    // Variable untuk modal profil
+    let profileModalElement = document.getElementById('profileModal');
+    let profileModalInstance = null;
     
-    profileModal.addEventListener('hidden.bs.modal', function () {
-        profileModal.setAttribute('inert', '');
-    });
+    // Inisialisasi instance modal dan event handlers
+    if (profileModalElement) {
+        profileModalInstance = new bootstrap.Modal(profileModalElement);
+        
+        // Hapus aria-hidden saat modal terbuka
+        profileModalElement.addEventListener('shown.bs.modal', function () {
+            profileModalElement.removeAttribute('aria-hidden');
+        });
+
+        // Handle focus pada button di dalam modal
+        profileModalElement.querySelectorAll('button').forEach(button => {
+            button.addEventListener('focus', function() {
+                profileModalElement.removeAttribute('aria-hidden');
+            });
+        });
+    }
 
     // Tampilkan modal jika ada error validasi
     @if($errors->any())
-        if (profileModal) {
-            const modal = new bootstrap.Modal(profileModal);
-            modal.show();
+        if (profileModalInstance) {
+            profileModalInstance.show();
         }
     @endif
     </script>

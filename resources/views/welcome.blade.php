@@ -11,6 +11,12 @@
         <link href="{{ asset('vendor/fontawesome/css/all.min.css') }}" rel="stylesheet">
 
         <style>
+            html {
+                scroll-behavior: smooth;
+            }
+            section[id] {
+                scroll-margin-top: 80px;
+            }
             .navbar {
                 background-color: rgba(255, 255, 255, 0.95);
                 box-shadow: 0 2px 4px rgba(0,0,0,.08);
@@ -265,8 +271,33 @@
             </div>
         </section>
 
-        <!-- Content Section -->
+        <!-- Tentang Section -->
         <section class="py-5" id="tentang">
+            <div class="container">
+                <h2 class="text-center mb-5">Tentang Kami</h2>
+                <div class="row align-items-center">
+                    <div class="col-md-6 mb-4 mb-md-0">
+                        <h3>Pesantren Jabal Nur Jadid</h3>
+                        <p class="lead">Mendidik generasi dengan nilai-nilai Islam dan teknologi modern.</p>
+                        <p>Pesantren Jabal Nur Jadid adalah lembaga pendidikan Islam yang mengintegrasikan pendidikan agama dengan teknologi modern. Kami berkomitmen untuk memberikan pendidikan berkualitas dan layanan terbaik bagi santri dan wali santri.</p>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <div class="p-4 bg-light rounded-3">
+                            <h4 class="mb-3">Visi & Misi</h4>
+                            <ul class="list-unstyled text-start">
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Membentuk generasi yang berakhlak mulia</li>
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Mengembangkan potensi santri secara optimal</li>
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Menerapkan teknologi dalam pembelajaran</li>
+                                <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Memberikan pelayanan pendidikan terbaik</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Section -->
+        <section class="py-5" id="fitur">
             <div class="container">
                 <h2 class="text-center mb-5">Mengapa Menggunakan Sistem Kami?</h2>
                 <div class="row g-4">
@@ -300,6 +331,7 @@
                 </div>
             </div>
         </section>
+         
 
         <!-- Informasi Section -->
         <section class="bg-light py-5" id="informasi">

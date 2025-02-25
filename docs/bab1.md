@@ -159,4 +159,6 @@ Penelitian ini memiliki beberapa aspek kebaruan yang membedakannya dari peneliti
    - Desain responsif untuk akses mobile
    - Interface yang mudah digunakan
 
+Pengembangan sistem informasi ini menggunakan metodologi Waterfall, sebuah pendekatan pengembangan perangkat lunak yang sistematis dan berurutan. Metode ini dipilih karena kebutuhan sistem telah didefinisikan dengan jelas dari awal dan perubahan di tengah pengembangan dapat diminimalisir. Proses pengembangan dimulai dari tahap analisis kebutuhan berdasarkan sistem manual yang berjalan, dilanjutkan dengan perancangan sistem menggunakan berbagai diagram UML untuk memperjelas alur dan struktur sistem. Setelah perancangan selesai, tahap implementasi dilakukan dengan mengembangkan sistem sesuai rancangan yang telah dibuat. Pengujian sistem dilakukan dengan metode black box untuk memastikan setiap fungsi berjalan sesuai kebutuhan. Dengan metodologi ini, pengembangan sistem dapat berjalan terstruktur dan menghasilkan sistem yang sesuai dengan kebutuhan pengguna.
+
 Dengan demikian, meskipun terdapat beberapa penelitian serupa sebelumnya, penelitian ini memiliki keunikan dan nilai tambah tersendiri, terutama dalam konteks penerapannya di lingkungan pesantren dengan kebutuhan spesifik mereka.

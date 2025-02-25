@@ -3,6 +3,17 @@
 @section('title', 'Dashboard')
 
 @section('content')
+<style>
+.icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+</style>
 @include('layouts.partials.dropdown-santri')
 
 <div class="container-fluid p-2 p-md-4 mb-5 pb-5">
@@ -29,69 +40,117 @@
 
                                 <div class="row g-2 g-md-3">
                                     <div class="col-12 col-md-6">
-                                        <div class="vstack gap-2 gap-md-3">
-                                            <div>
-                                                <div class="text-muted small mb-1">Jenjang & Kelas</div>
-                                                <div class="d-flex align-items-center gap-2 flex-wrap">
-                                                    <span class="badge bg-info fs-7 fs-md-6">{{ $santri->jenjang }}</span>
-                                                    <span class="badge bg-primary fs-7 fs-md-6">Kelas {{ $santri->kelas }}</span>
+                                        <div class="vstack gap-3">
+                                            <div class="info-item p-2 bg-light rounded-3">
+                                                <div class="d-flex align-items-start gap-2">
+                                                    <div class="icon-circle bg-info bg-opacity-10 text-info">
+                                                        <i class="fas fa-graduation-cap"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="text-muted small">Jenjang & Kelas</div>
+                                                        <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                                            <span class="badge bg-info fs-7 fs-md-6">{{ $santri->jenjang }}</span>
+                                                            <span class="badge bg-primary fs-7 fs-md-6">Kelas {{ $santri->kelas }}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <div class="text-muted small mb-1">Tanggal Masuk</div>
-                                                <div class="fw-semibold fs-7 fs-md-6">{{ $santri->tanggal_masuk->format('d F Y') }}</div>
+                                            <div class="info-item p-2 bg-light rounded-3">
+                                                <div class="d-flex align-items-start gap-2">
+                                                    <div class="icon-circle bg-success bg-opacity-10 text-success">
+                                                        <i class="fas fa-calendar-alt"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-muted small">Tanggal Masuk</div>
+                                                        <div class="fw-semibold fs-7 fs-md-6 mt-1">{{ $santri->tanggal_masuk->format('d F Y') }}</div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <div class="text-muted small mb-1">Jenis Kelamin</div>
-                                                <div class="fw-semibold fs-7 fs-md-6">{{ $santri->jenis_kelamin }}</div>
+                                            <div class="info-item p-2 bg-light rounded-3">
+                                                <div class="d-flex align-items-start gap-2">
+                                                    <div class="icon-circle bg-primary bg-opacity-10 text-primary">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-muted small">Jenis Kelamin</div>
+                                                        <div class="fw-semibold fs-7 fs-md-6 mt-1">{{ $santri->jenis_kelamin }}</div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <div class="text-muted small mb-1">Alamat</div>
-                                                <div class="fw-semibold fs-7 fs-md-6">{{ $santri->alamat ?: '-' }}</div>
+                                            <div class="info-item p-2 bg-light rounded-3">
+                                                <div class="d-flex align-items-start gap-2">
+                                                    <div class="icon-circle bg-warning bg-opacity-10 text-warning">
+                                                        <i class="fas fa-map-marker-alt"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-muted small">Alamat</div>
+                                                        <div class="fw-semibold fs-7 fs-md-6 mt-1">{{ $santri->alamat ?: '-' }}</div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-12 col-md-6">
-                                        <div class="vstack gap-2 gap-md-3">
-                                            <div>
-                                                <div class="text-muted small mb-1">Kategori Santri</div>
-                                                <div class="fw-semibold fs-7 fs-md-6">{{ $santri->kategori->nama }}</div>
-                                            </div>
-                                            <div>
-                                                <div class="text-muted small mb-1">Tarif SPP Bulanan</div>
-                                                <div class="vstack gap-1">
-                                                    <div class="fw-bold text-primary fs-6">
-                                                        @if($santri->kategori->tarifTerbaru)
-                                                            Rp {{ number_format($santri->kategori->tarifTerbaru->nominal, 0, ',', '.') }}
-                                                        @else
-                                                            <span class="text-muted">Belum diatur</span>
-                                                        @endif
+                                        <div class="vstack gap-3">
+                                            <div class="info-item p-2 bg-light rounded-3">
+                                                <div class="d-flex align-items-start gap-2">
+                                                    <div class="icon-circle bg-success bg-opacity-10 text-success">
+                                                        <i class="fas fa-layer-group"></i>
                                                     </div>
-                                                    @if($santri->kategori->tarifTerbaru)
-                                                    <table class="table table-sm small mb-0 table-borderless">
-                                                        <tr class="text-muted">
-                                                            <td style="width: 100px">Makan</td>
-                                                            <td style="width: 20px">:</td>
-                                                            <td>Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_makan, 0, ',', '.') }}</td>
-                                                        </tr>
-                                                        <tr class="text-muted">
-                                                            <td>Asrama</td>
-                                                            <td>:</td>
-                                                            <td>Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_asrama, 0, ',', '.') }}</td>
-                                                        </tr>
-                                                        <tr class="text-muted">
-                                                            <td>Listrik</td>
-                                                            <td>:</td>
-                                                            <td>Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_listrik, 0, ',', '.') }}</td>
-                                                        </tr>
-                                                        <tr class="text-muted">
-                                                            <td>Kesehatan</td>
-                                                            <td>:</td>
-                                                            <td>Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_kesehatan, 0, ',', '.') }}</td>
-                                                        </tr>
-                                                    </table>
-                                                    @endif
+                                                    <div>
+                                                        <div class="text-muted small">Kategori Santri</div>
+                                                        <div class="fw-semibold fs-7 fs-md-6 mt-1">{{ $santri->kategori->nama }}</div>
+                                                    </div>
                                                 </div>
+                                            </div>
+
+                                            <div class="info-item p-3 bg-light rounded-3">
+                                                <div class="d-flex align-items-start gap-2 mb-3">
+                                                    <div class="icon-circle bg-primary bg-opacity-10 text-primary">
+                                                        <i class="fas fa-money-bill"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-muted small">Tarif SPP Bulanan</div>
+                                                        <div class="fw-bold text-primary fs-6 mt-1">
+                                                            @if($santri->kategori->tarifTerbaru)
+                                                                Rp {{ number_format($santri->kategori->tarifTerbaru->nominal, 0, ',', '.') }}
+                                                            @else
+                                                                <span class="text-muted">Belum diatur</span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                @if($santri->kategori->tarifTerbaru)
+                                                <div class="rounded-3 bg-white p-2">
+                                                    <div class="row g-2">
+                                                        <div class="col-6">
+                                                            <div class="p-2 rounded bg-success bg-opacity-10">
+                                                                <div class="text-muted small">Makan</div>
+                                                                <div class="fw-semibold">Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_makan, 0, ',', '.') }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="p-2 rounded bg-info bg-opacity-10">
+                                                                <div class="text-muted small">Asrama</div>
+                                                                <div class="fw-semibold">Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_asrama, 0, ',', '.') }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="p-2 rounded bg-warning bg-opacity-10">
+                                                                <div class="text-muted small">Listrik</div>
+                                                                <div class="fw-semibold">Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_listrik, 0, ',', '.') }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="p-2 rounded bg-danger bg-opacity-10">
+                                                                <div class="text-muted small">Kesehatan</div>
+                                                                <div class="fw-semibold">Rp {{ number_format($santri->kategori->tarifTerbaru->biaya_kesehatan, 0, ',', '.') }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @endif
                                             </div>
                                             
                                         </div>
@@ -205,7 +264,7 @@
                                 </div>
                                 
                                 <div class="col-12 col-sm-3">
-                                    <button class="btn btn-primary btn-sm btn-md-lg w-100" onclick="showPembayaranOptions({{ $pembayaran->id }}, '{{ $pembayaran->tahun }}')">
+                                    <button class="btn btn-primary btn-sm btn-md-lg w-100" onclick="showDetailPembayaran({{ $pembayaran->id }}, '{{ $pembayaran->nama_bulan }}', {{ $pembayaran->nominal }}, 'unpaid', '-', '-', '{{ $pembayaran->tahun }}')">
                                         <i class="fas fa-money-bill me-1"></i>Bayar
                                     </button>
                                 </div>
@@ -229,223 +288,5 @@
     </div>
 </div>
 
-<!-- Modal Detail Pembayaran -->
-<div class="modal fade" id="modalDetailPembayaran" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detail Pembayaran SPP</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-4">
-                    <h6 class="mb-3 fw-bold text-primary">Informasi Tagihan</h6>
-                    <table class="table table-sm table-borderless">
-                        <tr>
-                            <td width="40%">Periode</td>
-                            <td><span id="detail-bulan" class="fw-bold"></span> <span id="detail-tahun"></span></td>
-                        </tr>
-                        <tr>
-                            <td>Status</td>
-                            <td><span id="detail-status"></span></td>
-                        </tr>
-                        <tr>
-                            <td>Nominal</td>
-                            <td class="fw-bold text-primary">Rp <span id="detail-nominal"></span></td>
-                        </tr>
-                    </table>
-                </div>
-                
-                @php
-                    $metode_manual = App\Models\MetodePembayaran::where('kode', 'like', 'MANUAL_%')->get();
-                    $metode_online = App\Models\MetodePembayaran::where('kode', 'MIDTRANS')->first();
-                @endphp
-                <div id="pembayaran-options" class="mt-3">
-                    <h6 class="mb-3">Pilih Metode Pembayaran:</h6>
-                    <div class="d-grid gap-2">
-                        @foreach($metode_manual as $metode)
-                            <button class="btn {{ $metode->kode == 'MANUAL_TUNAI' ? 'btn-outline-primary' : 'btn-outline-info' }} btn-block" 
-                                    onclick="bayarManual('{{ $metode->kode }}', '{{ $metode->nama }}')">
-                                <i class="fas {{ $metode->kode == 'MANUAL_TUNAI' ? 'fa-money-bill' : 'fa-exchange-alt' }} me-2"></i>{{ $metode->nama }}
-                            </button>
-                        @endforeach
-                        @if($metode_online)
-                            <button class="btn btn-primary btn-block" onclick="bayarOnline()">
-                                <i class="fas fa-globe me-2"></i>{{ $metode_online->nama }}
-                            </button>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@push('scripts')
-<script>
-let selectedPembayaranId = null;
-
-function showPembayaranOptions(id, tahun) {
-    // Cek nomor HP dulu
-    @if(!auth()->user()->no_hp)
-        Swal.fire({
-            title: 'Nomor HP Belum Terdaftar',
-            text: 'Anda harus menambahkan nomor HP terlebih dahulu',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Tambahkan Sekarang',
-            cancelButtonText: 'Nanti Saja',
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#6c757d'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const profileModal = document.getElementById('profileModal');
-                const modal = new bootstrap.Modal(profileModal);
-                modal.show();
-            }
-        });
-        return;
-    @endif
-
-    selectedPembayaranId = id;
-    
-    // Update tampilan modal detail
-    document.getElementById('detail-nominal').textContent = document.querySelector(`button[onclick*="${id}"]`).closest('.bg-light').querySelector('.fw-bold').textContent.replace('Rp ', '');
-    document.getElementById('detail-bulan').textContent = document.querySelector(`button[onclick*="${id}"]`).closest('.bg-light').querySelector('.fw-bold.text-primary').textContent;
-    document.getElementById('detail-tahun').textContent = tahun;
-
-    // Set status badge di modal
-    const statusBadge = document.createElement('span');
-    statusBadge.className = 'badge bg-warning';
-    statusBadge.textContent = 'Belum Lunas';
-    document.getElementById('detail-status').innerHTML = '';
-    document.getElementById('detail-status').appendChild(statusBadge);
-    
-    const modal = new bootstrap.Modal(document.getElementById('modalDetailPembayaran'));
-    modal.show();
-}
-
-function bayarManual(kode, nama) {
-    let pesan = '';
-    if (kode === 'MANUAL_TUNAI') {
-        pesan = 'Silakan lakukan pembayaran langsung ke bagian administrasi pondok.';
-    } else if (kode === 'MANUAL_TRANSFER') {
-        pesan = `Silakan transfer ke rekening berikut:<br><br>
-            <b>Bank BRI</b><br>
-            No. Rek: 1234-5678-9012-3456<br>
-            A.n: Yayasan Pondok<br><br>
-            Setelah transfer, harap konfirmasi dengan mengirimkan bukti transfer ke administrasi.`;
-    }
-
-    const modalPembayaran = bootstrap.Modal.getInstance(document.getElementById('modalDetailPembayaran'));
-    modalPembayaran.hide();
-
-    Swal.fire({
-        title: `Pembayaran ${nama}`,
-        html: pesan,
-        icon: 'info',
-        confirmButtonText: 'Mengerti'
-    });
-}
-
-function bayarOnline() {
-    if (selectedPembayaranId) {
-        const modalPembayaran = bootstrap.Modal.getInstance(document.getElementById('modalDetailPembayaran'));
-        modalPembayaran.hide();
-        bayarSPP(selectedPembayaranId);
-    }
-}
-function bayarSPP(id) {
-    Swal.fire({
-            title: 'Konfirmasi Pembayaran',
-            text: 'Anda akan melanjutkan ke halaman pembayaran online?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Ya, Lanjutkan',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal.fire({
-            title: 'Memproses Pembayaran',
-            text: 'Mohon tunggu...',
-            allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-        });
-
-                fetch('{{ route("wali.pembayaran.store") }}', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-                    body: JSON.stringify({
-                        tagihan_id: id
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => Promise.reject(err));
-                    }
-                    return response.json();
-                })
-                .then(response => {
-                    Swal.close();
-                    if (response.redirect_url) {
-                        window.location.href = response.redirect_url;
-                    } else if (response.snap_token) {
-                        snap.pay(response.snap_token, {
-                            onSuccess: function(result) {
-                                Swal.fire({
-                    title: 'Pembayaran Berhasil',
-                    text: 'Halaman akan diperbarui',
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                                }).then(() => {
-                window.location.reload();
-                                });
-                            },
-                            onPending: function(result) {
-                                Swal.fire({
-                    title: 'Pembayaran Pending',
-                    text: 'Silakan selesaikan pembayaran Anda',
-                    icon: 'info'
-                });
-                            },
-                            onError: function(result) {
-                                console.error('Payment Error:', result);
-                                let errorMessage = 'Pembayaran gagal';
-                                if (result.status_message) {
-                                    errorMessage += ': ' + result.status_message;
-                                }
-                                Swal.fire('Error', errorMessage, 'error');
-                            },
-                            onClose: function() {
-                                Swal.fire('Info', 'Pembayaran dibatalkan', 'info');
-            }
-                        });
-        }
-                })
-                .catch(err => {
-        console.error('Error:', err);
-        Swal.close();
-                    let errorMessage = err.message || 'Gagal memproses pembayaran';
-        if (err.show_profile_modal) {
-            const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
-            profileModal.show();
-        }
-                    Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: errorMessage
-                    });
-        });
-    }
-        });
-}
-</script>
-@endpush
+@include('layouts.partials.modal-detail-pembayaran')
 @endsection

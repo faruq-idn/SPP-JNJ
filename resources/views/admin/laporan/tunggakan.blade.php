@@ -19,45 +19,45 @@
         </div>
     </div>
 
-    <!-- Table Card -->
-    <div class="card shadow mb-4">
-        <!-- Summary Card -->
-        <div class="row mb-4">
-            <div class="col-xl-6 col-md-6 mb-4">
-                <div class="card border-left-warning shadow h-100 py-2">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Santri Nunggak</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ count($santri) }} Santri</div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-user-times fa-2x text-gray-300"></i>
-                            </div>
+    <!-- Summary Card -->
+    <div class="row mb-4">
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Santri Nunggak</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ count($santri) }} Santri</div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-6 col-md-6 mb-4">
-                <div class="card border-left-primary shadow h-100 py-2">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tunggakan Tertinggi</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                   {{ $santri->max('jumlah_bulan_tunggakan') }} Bulan
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
-                            </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-times fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
+
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tunggakan Tertinggi</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                               {{ $santri->max('jumlah_bulan_tunggakan') }} Bulan
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card shadow mb-4">
         <!-- Info Filter Card -->
         <div>
             <div class="card-body py-3">

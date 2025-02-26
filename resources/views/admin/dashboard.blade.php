@@ -20,7 +20,7 @@
                             <i class="fas fa-users text-primary fa-2x"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h6 class="card-subtitle text-muted mb-1">Total Santri</h6>
+                            <h6 class="card-subtitle text-muted mb-1">Total Santri Aktif</h6>
                             <h4 class="card-title mb-0">{{ number_format($totalSantri) }}</h4>
                         </div>
                     </div>

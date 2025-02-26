@@ -27,6 +27,10 @@
             </div>
             <div id="collapseKelas" class="collapse {{ Request::is('admin/santri*') ? 'show' : '' }}">
                 <div class="submenu">
+                    <a class="submenu-item {{ Request::is('admin/santri/kenaikan-kelas/riwayat') ? 'active' : '' }}"
+                       href="{{ route('admin.santri.riwayat') }}">
+                        <span>Riwayat Kenaikan Kelas</span>
+                    </a>
                     <div class="submenu-sections">
                         <div class="submenu-section">
                             <div class="submenu-header">SMP</div>
@@ -115,7 +119,7 @@
         <li class="nav-item">
             <div class="nav-link-wrapper">
                 <a class="nav-link {{ Request::routeIs('admin.users.*') ? 'active' : '' }}"
-                   href="#userSubmenu">
+                   href="{{ route('admin.users.index') }}">
                     <i class="fas fa-users-cog"></i>
                     <span>Manajemen Pengguna</span>
                 </a>

@@ -7,10 +7,10 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Laporan</h1>
         <div class="btn-group" role="group">
-            <a href="{{ route('admin.laporan.pembayaran') }}" class="btn btn-primary">
+            <a href="{{ route('petugas.laporan.pembayaran') }}" class="btn btn-primary">
                 <i class="fas fa-money-bill me-1"></i> Pembayaran
             </a>
-            <a href="{{ route('admin.laporan.tunggakan') }}" class="btn btn-warning">
+            <a href="{{ route('petugas.laporan.tunggakan') }}" class="btn btn-warning">
                 <i class="fas fa-exclamation-triangle me-1"></i> Tunggakan
             </a>
         </div>
@@ -80,7 +80,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Santri Menunggak</div>
+                                Santri Belum Bayar</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                 {{ $santriNunggak }} Santri
                             </div>

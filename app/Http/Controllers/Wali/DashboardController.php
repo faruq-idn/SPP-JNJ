@@ -21,18 +21,18 @@ class DashboardController extends Controller
         ]);
 
         // Ambil semua santri yang terhubung dengan wali
-        $santri_list = Santri::with(['kategori.tarifTerbaru'])
+        $santri_list = Santri::with(['kategori.tarifTerbaru', 'riwayatKenaikanKelas'])
             ->where('wali_id', Auth::id())
             ->get();
 
         // Ambil santri yang belum terhubung tapi memiliki nama wali yang sama
-        $unlinked_santri = Santri::with(['kategori.tarifTerbaru'])
+        $unlinked_santri = Santri::with(['kategori.tarifTerbaru', 'riwayatKenaikanKelas'])
             ->whereNull('wali_id')
             ->where('nama_wali', Auth::user()->name)
             ->get();
 
         // Ambil santri yang belum terhubung dan belum ada nama wali
-        $available_santri = Santri::with(['kategori.tarifTerbaru'])
+        $available_santri = Santri::with(['kategori.tarifTerbaru', 'riwayatKenaikanKelas'])
             ->whereNull('wali_id')
             ->whereNull('nama_wali')
             ->get();
@@ -71,88 +71,40 @@ class DashboardController extends Controller
                 'tanggal_masuk' => $santri->tanggal_masuk
             ]);
 
-            // Generate periode pembayaran
-            $bulanMasuk = Carbon::parse($santri->tanggal_masuk)->startOfMonth();
-            $bulanSekarang = Carbon::now()->startOfMonth();
+            // Ambil semua pembayaran yang ada dan grouping per tahun
+            $existingPembayaran = PembayaranSpp::where('santri_id', $santri->id)->get();
+            $pembayaranPerTahun = $existingPembayaran->groupBy('tahun');
+            
+            // Hitung tunggakan
             $total_tunggakan = 0;
-
-            // Ambil semua pembayaran yang sudah ada
-            $pembayaranPerTahun = PembayaranSpp::where('santri_id', $santri->id)
-                ->get()
-                ->groupBy('tahun');
-
-            // Hitung tunggakan per tahun
             $totalTunggakanPerTahun = [];
             $tunggakanBulanan = collect();
-            
-            // Iterasi per periode
-            while ($bulanMasuk <= $bulanSekarang) {
-                $tahun = $bulanMasuk->format('Y');
-                $bulan = $bulanMasuk->format('m');
 
-                // Cek apakah ada pembayaran lunas untuk bulan ini
-                $pembayaran = PembayaranSpp::where([
-                    'santri_id' => $santri->id,
-                    'tahun' => $tahun,
-                    'bulan' => $bulan
-                ])->first();
+            foreach ($existingPembayaran as $pembayaran) {
+                if ($pembayaran->status !== PembayaranSpp::STATUS_SUCCESS) {
+                    $tahun = $pembayaran->tahun;
+                    $nominal = $pembayaran->nominal;
 
-                // Jika tidak ada pembayaran atau bukan lunas
-                if ((!$pembayaran || !$pembayaran->isLunas) && $santri->kategori && $santri->kategori->tarifTerbaru) {
-                    $nominal = $santri->kategori->tarifTerbaru->nominal;
+                    // Update tunggakan
+                    $total_tunggakan += $nominal;
                     
-                    // Buat objek pembayaran baru jika tidak ada
-                    if (!$pembayaran) {
-                        $pembayaran = new PembayaranSpp([
-                            'santri_id' => $santri->id,
-                            'bulan' => $bulan,
-                            'tahun' => $tahun,
-                            'nominal' => $nominal,
-                            'status' => PembayaranSpp::STATUS_UNPAID
-                        ]);
+                    if (!isset($totalTunggakanPerTahun[$tahun])) {
+                        $totalTunggakanPerTahun[$tahun] = 0;
                     }
+                    $totalTunggakanPerTahun[$tahun] += $nominal;
 
-                    // Tambahkan ke tunggakan jika periode valid
-                    if ($pembayaran->isValidPeriod()) {
-                        $total_tunggakan += $nominal;
-                        
-                        // Update tunggakan per tahun
-                        if (!isset($totalTunggakanPerTahun[$tahun])) {
-                            $totalTunggakanPerTahun[$tahun] = 0;
-                        }
-                        $totalTunggakanPerTahun[$tahun] += $nominal;
-
-                        // Tambahkan ke koleksi tunggakan bulanan
-                        $tunggakanBulanan->push($pembayaran);
-
-                        Log::debug('Added tunggakan', [
-                            'santri_id' => $santri->id,
-                            'bulan' => $bulan,
-                            'tahun' => $tahun,
-                            'nominal' => $nominal,
-                            'status' => $pembayaran->status,
-                            'terlambat' => $pembayaran->isTerlambat()
-                        ]);
-                    }
+                    // Tambahkan ke koleksi tunggakan bulanan
+                    $tunggakanBulanan->push($pembayaran);
                 }
-
-                $bulanMasuk->addMonth();
             }
 
             // Urutkan tunggakan dari yang terbaru dan ambil 5
             $pembayaran_terbaru = $tunggakanBulanan
-                ->filter(function($pembayaran) {
-                    return $pembayaran->isValidPeriod();
-                })
                 ->sortByDesc(function($pembayaran) {
                     return sprintf('%d%02d', $pembayaran->tahun, $pembayaran->bulan);
                 })
                 ->take(5)
                 ->values();
-
-            // Group pembayaran per tahun yang sudah ada
-            $existingPembayaran = PembayaranSpp::where('santri_id', $santri->id)->get();
-            $pembayaranPerTahun = $existingPembayaran->groupBy('tahun');
 
             Log::info('Dashboard data processed successfully', [
                 'santri_id' => $santri->id,

@@ -373,12 +373,22 @@ const paymentManager = new PaymentManager();
 // Expose necessary functions to window object
 Object.assign(window, {
     showDetail: function(id, bulan, nominal, tahun, status, tanggal, metode, paymentDataString) {
-        console.log('showDetail called with params:', {
-            id, bulan, nominal, tahun, status, tanggal, metode, paymentDataString
-        });
-
         try {
-            const paymentData = paymentDataString ? JSON.parse(paymentDataString) : null;
+            let paymentData = null;
+            
+            // Konversi paymentDataString menjadi objek jika valid
+            if (paymentDataString) {
+                if (typeof paymentDataString === 'string') {
+                    try {
+                        paymentData = JSON.parse(paymentDataString);
+                    } catch (e) {
+                        console.warn('Invalid payment data string:', paymentDataString);
+                    }
+                } else if (typeof paymentDataString === 'object') {
+                    paymentData = paymentDataString;
+                }
+            }
+
             const modal = new bootstrap.Modal(document.getElementById('modalPembayaran'));
             
             console.log('Sending to updateModal:', {

@@ -92,34 +92,36 @@ class DashboardController extends Controller
             $tunggakanBulanIni = 0;
 
             $santriAktifBulanIni = Santri::where('status', 'aktif')
-                ->with(['kategori.tarifTerbaru'])
+                ->with(['kategori.tarifTerbaru', 'pembayaran'])
                 ->where('tanggal_masuk', '<=', $selectedDate->endOfMonth())
                 ->get();
 
             foreach ($santriAktifBulanIni as $santri) {
+                if (!$santri->kategori || !$santri->kategori->tarifTerbaru) continue;
+
                 // Cek pembayaran untuk bulan yang dipilih
-                $pembayaranBulan = $santri->pembayaran()
+                $pembayaranBulan = $santri->pembayaran
                     ->where('bulan', $selectedDate->format('m'))
                     ->where('tahun', $selectedDate->format('Y'))
                     ->first();
 
-                if (!$pembayaranBulan) {
-                    // Jika belum ada pembayaran sama sekali
-                    if ($santri->kategori && $santri->kategori->tarifTerbaru) {
-                        $tunggakanBulanIni += $santri->kategori->tarifTerbaru->nominal;
-                    }
-                } elseif ($pembayaranBulan->status !== 'success' && $pembayaranBulan->status !== 'failed') {
+                // Ambil tarif yang berlaku
+                $tarifBulanIni = $santri->kategori->tarifTerbaru->nominal;
+
+                if (!$pembayaranBulan || $pembayaranBulan->status === 'failed') {
+                    // Jika belum ada pembayaran atau gagal
+                    $tunggakanBulanIni += $tarifBulanIni;
+                } elseif ($pembayaranBulan->status !== 'success') {
                     // Jika ada pembayaran tapi belum lunas
-                    $tunggakanBulanIni += $pembayaranBulan->nominal;
+                    $tunggakanBulanIni += ($tarifBulanIni - $pembayaranBulan->nominal);
                 }
             }
 
-            // Total tunggakan semua santri aktif
+            // Total tunggakan dari seluruh santri (aktif/lulus/keluar)
             $totalTunggakan = 0;
             
-            // 1. Ambil semua santri aktif dengan relasi yang diperlukan
-            $santriAktif = Santri::where('status', 'aktif')
-                ->with(['kategori.tarifTerbaru', 'pembayaran' => function($query) {
+            // Ambil semua santri dengan relasi yang diperlukan
+            $santriAll = Santri::with(['kategori.tarifTerbaru', 'pembayaran' => function($query) {
                     $query->where(function($q) {
                         $q->where('status', '!=', 'success')
                           ->where('status', '!=', 'failed');
@@ -127,7 +129,11 @@ class DashboardController extends Controller
                 }])
                 ->get();
 
-            foreach ($santriAktif as $santri) {
+            foreach ($santriAll as $santri) {
+                if (!$santri->kategori || !$santri->kategori->tarifTerbaru) continue;
+
+                $tarifSpp = $santri->kategori->tarifTerbaru->nominal;
+                
                 // Hitung periode aktif santri
                 $bulanMasuk = Carbon::parse($santri->tanggal_masuk)->startOfMonth();
                 $bulanSekarang = Carbon::now()->startOfMonth();
@@ -161,16 +167,18 @@ class DashboardController extends Controller
                         ->where('status', '!=', 'success')
                         ->where('status', '!=', 'failed')
                         ->sum('nominal');
-                    
+
                     $totalTunggakan += $tunggakanDariPembayaran;
                     
                     // Tunggakan dari bulan yang belum ada pembayaran
                     foreach ($periode as $p) {
                         $key = $p['bulan'] . '-' . $p['tahun'];
                         if (!in_array($key, $pembayaranLunas)) {
-                            $totalTunggakan += $tarifSpp;
+                        $totalTunggakan += $tarifSpp;
                         }
                     }
+
+                    $currentMonth->addMonth();
                 }
             }
 

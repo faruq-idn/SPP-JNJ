@@ -7,23 +7,19 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-gray-800">Laporan Tunggakan</h1>
         <div class="btn-group">
-            <a href="{{ route('admin.laporan.index') }}" class="btn btn-secondary">
+            <a href="{{ route('petugas.laporan.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-1"></i>Kembali
             </a>
-            <a href="{{ route('admin.laporan.tunggakan', array_merge(request()->all(), ['export' => 'pdf'])) }}" class="btn btn-danger">
+            <a href="{{ route('petugas.laporan.tunggakan', array_merge(request()->all(), ['export' => 'pdf'])) }}" class="btn btn-danger">
                 <i class="fas fa-file-pdf me-1"></i>PDF
             </a>
-            <a href="{{ route('admin.laporan.tunggakan', array_merge(request()->all(), ['export' => 'excel'])) }}" class="btn btn-success">
+            <a href="{{ route('petugas.laporan.tunggakan', array_merge(request()->all(), ['export' => 'excel'])) }}" class="btn btn-success">
                 <i class="fas fa-file-excel me-1"></i>Excel
             </a>
         </div>
     </div>
 
-    
-
-    <!-- Table Card -->
-    <div class="card shadow mb-4">
-        <!-- Summary Card -->
+    <!-- Summary Card -->
     <div class="row mb-4">
         <div class="col-xl-6 col-md-6 mb-4">
             <div class="card border-left-warning shadow h-100 py-2">
@@ -59,6 +55,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Table Card -->
+    <div class="card shadow mb-4">
         <!-- Info Filter Card -->
         <div>
             <div class="card-body py-3">
@@ -86,7 +85,7 @@
         {{-- Filter Form --}}
         <div>
             <div class="card-body">
-                <form method="GET" action="{{ route('admin.laporan.tunggakan') }}" class="row g-3">
+                <form method="GET" action="{{ route('petugas.laporan.tunggakan') }}" class="row g-3">
                     <div class="col-md-3">
                         <label for="status" class="form-label">Status Santri</label>
                         <select class="form-select" name="status" id="status">
@@ -128,7 +127,7 @@
                     </div>
                     <div class="col-md-3">
                         <button type="submit" class="btn btn-primary me-2 mt-4">Filter</button>
-                        <a href="{{ route('admin.laporan.tunggakan') }}" class="btn btn-secondary mt-4">Reset</a>
+                        <a href="{{ route('petugas.laporan.tunggakan') }}" class="btn btn-secondary mt-4">Reset</a>
                     </div>
                 </form>
             </div>
@@ -214,6 +213,8 @@ $(document).ready(function() {
         language: {
             url: '{{ asset("vendor/datatables/i18n/id.json") }}'
         },
+        pageLength: 10,
+        lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Semua"]],
         order: [[8, 'desc']] // Sort by jumlah bulan descending
     });
 
@@ -254,7 +255,6 @@ $(document).ready(function() {
         }
     });
 });
-
 </script>
 @endpush
 @endsection

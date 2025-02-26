@@ -56,26 +56,39 @@
 <!-- DataTables -->
 <script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('vendor/datatables/js/dataTables.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('js/kenaikan-kelas.js') }}"></script>
-<!-- Select2 -->
-<script src="{{ asset('vendor/select2/js/select2.min.js') }}"></script>
 <script>
-// Inisialisasi DataTable khusus untuk halaman ini
-$(document).ready(function() {
-    $('#dataTable').DataTable({
-        language: {
-            url: "{{ asset('vendor/datatables/i18n/id.json') }}"
-        },
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
-        order: [[1, 'asc']], // Urutkan berdasarkan nama
-        columnDefs: [{
-            targets: -1, // Kolom terakhir (aksi)
-            orderable: false,
-            searchable: false
-        }]
-    });
-});
+function initializeDataTable() {
+    if (typeof jQuery === 'undefined' || typeof jQuery.fn.DataTable === 'undefined') {
+        setTimeout(initializeDataTable, 100);
+        return;
+    }
+
+    if (!$.fn.DataTable.isDataTable('#dataTable')) {
+        $('#dataTable').DataTable({
+            language: {
+                url: "{{ asset('vendor/datatables/i18n/id.json') }}"
+            },
+            pageLength: 10,
+            lengthMenu: [[3, 10, 25, 50, -1], [3, 10, 25, 50, "Semua"]],
+            order: [[1, 'asc']], // Urutkan berdasarkan nama
+            columnDefs: [{
+                targets: -1, // Kolom terakhir (aksi)
+                orderable: false,
+                searchable: false
+            }],
+            dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                 "<'row'<'col-sm-12'tr>>" +
+                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            processing: true,
+            searching: true,
+            info: true
+        });
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeDataTable);
+
 </script>
 <script>
 function hapusSantri(id) {

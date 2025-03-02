@@ -9,7 +9,6 @@ composer.lock
 /.git/
 /.idea/
 /.vscode/
-/bootstrap/cache/*
 .env*
 *.log
 *.cache

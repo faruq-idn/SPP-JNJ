@@ -1,15 +1,10 @@
 {
     "require": {
-        "php": "^7.4|^8.0",
-        "ext-mbstring": "*",
-        "ext-pgsql": "*",
-        "ext-json": "*",
+        "php": "^8.0",
         "ext-pdo": "*"
     },
     "config": {
         "optimize-autoloader": true,
-        "preferred-install": "dist",
-        "sort-packages": true
-    },
-    "prefer-stable": true
+        "preferred-install": "dist"
+    }
 }

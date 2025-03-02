@@ -1,11 +1,15 @@
-vendor/
-node_modules/
-storage/
-tests/
-docs/
-diagrams/
-.git/
+# Minimal .vercelignore for testing
+composer.lock
+/vendor/
+/node_modules/
+/storage/
+/tests/
+/docs/
+/diagrams/
+/.git/
+/.idea/
+/.vscode/
+/bootstrap/cache/*
 .env*
-.gitignore
-.gitattributes
 *.log
+*.cache

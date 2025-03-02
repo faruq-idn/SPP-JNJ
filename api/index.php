@@ -1,24 +1,11 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
+// Just testing PHP runtime
+header('Content-Type: text/plain');
 
-// Basic temp directory
-if (!is_dir('/tmp/cache')) {
-    mkdir('/tmp/cache', 0777, true);
-}
-
-// Test PHP availability
-echo "PHP is working. Version: " . phpversion();
-
-// Handle Laravel application
-require __DIR__ . '/../vendor/autoload.php';
-$app = require_once __DIR__ . '/../bootstrap/app.php';
-
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-
-$response = $kernel->handle(
-    $request = Illuminate\Http\Request::capture()
-);
-
-$response->send();
-$kernel->terminate($request, $response);
+echo "Basic PHP Test\n";
+echo "-------------\n";
+echo "Time: " . date('Y-m-d H:i:s') . "\n";
+echo "PHP Version: " . PHP_VERSION . "\n";
+echo "Server Software: " . $_SERVER['SERVER_SOFTWARE'] . "\n";
+echo "Document Root: " . $_SERVER['DOCUMENT_ROOT'] . "\n";
+echo "Script Path: " . __FILE__ . "\n";

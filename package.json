@@ -22,7 +22,10 @@
         "bootstrap": "^5.3.3",
         "datatables.net": "^2.2.2",
         "datatables.net-bs5": "^2.2.2",
-        "sweetalert2": "11.17.2"
+        "glob": "^11.0.1",
+        "lru-cache": "^11.0.2",
+        "sweetalert2": "11.17.2",
+        "uuid": "^11.1.0"
     },
     "overrides": {
         "vite": {

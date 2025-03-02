@@ -9,7 +9,7 @@
     }
   },
   "installCommand": "npm install",
-  "buildCommand": "chmod +x vercel-install.sh; ./vercel-install.sh",
+  "buildCommand": "npm run build",
   "outputDirectory": "public",
   "routes": [
     {

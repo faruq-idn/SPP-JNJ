@@ -5,16 +5,37 @@
     "api/*.php": {
       "runtime": "vercel-php@0.7.1",
       "maxDuration": 60,
-      "memory": 1024
+      "memory": 1024,
+      "excludeFiles": "{.env,.env.*,composer.lock}"
     }
   },
+  "outputDirectory": "public",
   "installCommand": "npm install",
   "buildCommand": "npm run build",
-  "outputDirectory": "public",
   "routes": [
     {
-      "src": "/test",
-      "dest": "/api/test.php"
+      "src": "/build/(.*)",
+      "dest": "/public/build/$1"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/public/css/$1"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "/public/js/$1"
+    },
+    {
+      "src": "/images/(.*)",
+      "dest": "/public/images/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/public/favicon.ico"
+    },
+    {
+      "src": "/robots.txt",
+      "dest": "/public/robots.txt"
     },
     {
       "src": "/(.*)",
@@ -24,7 +45,14 @@
   "env": {
     "APP_ENV": "development",
     "APP_DEBUG": "true",
-    "VERCEL_FORCE_NO_BUILD_CACHE": "1",
-    "VERCEL_DEBUG_BUILD": "1"
+    "CACHE_DRIVER": "array",
+    "SESSION_DRIVER": "cookie",
+    "VIEW_COMPILED_PATH": "/tmp/views",
+    "CACHE_PATH": "/tmp/cache",
+    "SESSION_PATH": "/tmp/sessions",
+    "BOOTSTRAP_CACHE_PATH": "/tmp/bootstrap/cache",
+    "LOG_CHANNEL": "stderr",
+    "FILESYSTEM_DRIVER": "null",
+    "VERCEL_FORCE_NO_BUILD_CACHE": "1"
   }
 }

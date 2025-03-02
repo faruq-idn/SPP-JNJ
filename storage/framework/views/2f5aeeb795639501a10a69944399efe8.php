@@ -1,0 +1,2 @@
+<?php $__env->startSection('title', 'Petugas Panel'); ?>
+<?php echo $__env->make('layouts.admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\laragon\www\SPP-JNJ\resources\views\layouts\petugas.blade.php ENDPATH**/ ?>

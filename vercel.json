@@ -1,15 +1,10 @@
 {
   "version": 2,
   "framework": null,
-  "buildCommand": "node vercel-pre-build.js",
   "builds": [
     {
       "src": "api/*.php",
-      "use": "vercel-php@0.7.1",
-      "config": {
-        "maxDuration": 60,
-        "memory": 1024
-      }
+      "use": "vercel-php@0.7.1"
     },
     {
       "src": "public/**",
@@ -34,14 +29,6 @@
       "dest": "/public/images/$1"
     },
     {
-      "src": "/favicon.ico",
-      "dest": "/public/favicon.ico"
-    },
-    {
-      "src": "/robots.txt",
-      "dest": "/public/robots.txt"
-    },
-    {
       "src": "/test",
       "dest": "/api/test.php"
     },
@@ -51,16 +38,14 @@
     }
   ],
   "env": {
-    "APP_ENV": "development",
+    "APP_NAME": "SPP-JNJ",
+    "APP_ENV": "local",
     "APP_DEBUG": "true",
+    "APP_KEY": "base64:5CpEbqPQx/+FinF+ztkQzfAQHjvzYDp03+49/6+8V30=",
+    "LOG_CHANNEL": "stderr",
+    "LOG_LEVEL": "debug",
     "CACHE_DRIVER": "array",
     "SESSION_DRIVER": "cookie",
-    "VIEW_COMPILED_PATH": "/tmp/views",
-    "CACHE_PATH": "/tmp/cache",
-    "SESSION_PATH": "/tmp/sessions",
-    "BOOTSTRAP_CACHE_PATH": "/tmp/bootstrap/cache",
-    "LOG_CHANNEL": "stderr",
-    "FILESYSTEM_DRIVER": "null",
-    "NODE_ENV": "production"
+    "VIEW_COMPILED_PATH": "/tmp/views"
   }
 }

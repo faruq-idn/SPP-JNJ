@@ -1,0 +1,9 @@
+vendor/
+node_modules/
+storage/
+tests/
+.git/
+.env*
+.gitignore
+.gitattributes
+*.log

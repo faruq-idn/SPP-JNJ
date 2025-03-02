@@ -2,6 +2,12 @@
     "require": {
         "php": "^8.1",
         "ext-mbstring": "*",
-        "ext-pgsql": "*"
+        "ext-pgsql": "*",
+        "ext-json": "*"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
     }
 }

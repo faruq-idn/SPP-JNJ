@@ -1,18 +1,15 @@
 {
   "version": 2,
   "framework": null,
-  "functions": {
-    "api/*.php": {
-      "runtime": "vercel-php@0.7.1",
-      "maxDuration": 60,
-      "memory": 1024
-    }
-  },
-  "buildCommand": "node build.js",
+  "buildCommand": "node vercel-pre-build.js",
   "builds": [
     {
-      "src": "api/index.php",
-      "use": "@vercel/php"
+      "src": "api/*.php",
+      "use": "vercel-php@0.7.1",
+      "config": {
+        "maxDuration": 60,
+        "memory": 1024
+      }
     },
     {
       "src": "public/**",
@@ -64,8 +61,6 @@
     "BOOTSTRAP_CACHE_PATH": "/tmp/bootstrap/cache",
     "LOG_CHANNEL": "stderr",
     "FILESYSTEM_DRIVER": "null",
-    "VERCEL_FORCE_NO_BUILD_CACHE": "1",
-    "PATH": "/usr/local/bin:/usr/bin:/bin",
     "NODE_ENV": "production"
   }
 }

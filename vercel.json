@@ -2,12 +2,11 @@
   "version": 2,
   "functions": {
     "api/*.php": {
-      "runtime": "vercel-php@0.6.1"
+      "runtime": "vercel-php@0.3.3"
     }
   },
   "outputDirectory": "public",
-  "installCommand": "npm install",
-  "buildCommand": "npm run build",
+  "buildCommand": "chmod +x vercel.build.sh && ./vercel.build.sh",
   "routes": [
     { 
       "src": "/build/(.*)", 
@@ -32,6 +31,10 @@
     { 
       "src": "/robots.txt", 
       "dest": "/public/robots.txt"
+    },
+    {
+      "src": "/test",
+      "dest": "/api/test.php"
     },
     {
       "src": "/(.*)",

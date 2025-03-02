@@ -1,12 +1,10 @@
 {
     "require": {
-        "php": "^8.1",
+        "php": "^7.4|^8.0",
         "ext-mbstring": "*",
         "ext-pgsql": "*",
         "ext-json": "*",
-        "ext-openssl": "*",
-        "ext-pdo": "*",
-        "ext-tokenizer": "*"
+        "ext-pdo": "*"
     },
     "config": {
         "optimize-autoloader": true,

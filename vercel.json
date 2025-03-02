@@ -6,7 +6,7 @@
     }
   },
   "outputDirectory": "public",
-  "installCommand": "npm install && composer install --no-dev",
+  "installCommand": "npm install",
   "buildCommand": "npm run build",
   "routes": [
     { 

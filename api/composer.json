@@ -3,11 +3,15 @@
         "php": "^8.1",
         "ext-mbstring": "*",
         "ext-pgsql": "*",
-        "ext-json": "*"
+        "ext-json": "*",
+        "ext-openssl": "*",
+        "ext-pdo": "*",
+        "ext-tokenizer": "*"
     },
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true
-    }
+    },
+    "prefer-stable": true
 }

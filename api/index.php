@@ -1,11 +1,37 @@
 <?php
-// Just testing PHP runtime
-header('Content-Type: text/plain');
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
 
-echo "Basic PHP Test\n";
+echo <<<HTML
+<pre>
+PHP Environment Test
+-------------------
+PHP Version: " . PHP_VERSION . "
+Time: " . date('Y-m-d H:i:s') . "
+Server: " . php_uname() . "
+
+Environment Variables:
+--------------------
+VERCEL_URL: {$_ENV['VERCEL_URL']}
+APP_ENV: {$_ENV['APP_ENV']}
+
+Extensions:
+----------
+HTML;
+
+echo implode("\n", get_loaded_extensions());
+
+echo "\n\nDirectory Test:\n";
 echo "-------------\n";
-echo "Time: " . date('Y-m-d H:i:s') . "\n";
-echo "PHP Version: " . PHP_VERSION . "\n";
-echo "Server Software: " . $_SERVER['SERVER_SOFTWARE'] . "\n";
-echo "Document Root: " . $_SERVER['DOCUMENT_ROOT'] . "\n";
-echo "Script Path: " . __FILE__ . "\n";
+$testDir = '/tmp/test-' . time();
+if (mkdir($testDir, 0777, true)) {
+    echo "Successfully created test directory\n";
+    if (is_writable($testDir)) {
+        echo "Directory is writable\n";
+    }
+    rmdir($testDir);
+} else {
+    echo "Failed to create directory\n";
+}
+
+echo "</pre>";

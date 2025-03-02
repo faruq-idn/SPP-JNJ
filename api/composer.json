@@ -1,10 +1,17 @@
 {
     "require": {
         "php": "^8.0",
-        "ext-pdo": "*"
+        "ext-pdo": "*",
+        "ext-pgsql": "*"
     },
     "config": {
         "optimize-autoloader": true,
-        "preferred-install": "dist"
-    }
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "platform": {
+            "php": "8.0"
+        }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "stable"
 }

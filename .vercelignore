@@ -2,6 +2,7 @@
 composer.lock
 /vendor/
 /node_modules/
+/storage/
 /tests/
 /docs/
 /diagrams/

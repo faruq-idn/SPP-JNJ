@@ -39,90 +39,36 @@ class LaporanController extends Controller
                 ->where('status', 'success');
         })->count();
 
-        // Hitung total tunggakan dengan logika yang sama seperti di dashboard
         $totalTunggakan = 0;
         $santri = Santri::with(['kategori.tarifTerbaru', 'pembayaran' => function($query) {
-                $query->where(function($q) {
-                    $q->where('status', '!=', 'success')
-                      ->where('status', '!=', 'failed');
-                })->orWhere('status', 'success');
-            }])
-            ->get();
+            $query->whereIn('status', ['failed', 'pending', 'unpaid'])
+                ->where('nominal', '>', 0)
+                ->orderBy('tahun')
+                ->orderBy('bulan');
+        }])->get();
 
         foreach ($santri as $s) {
             if ($s->kategori && $s->kategori->tarifTerbaru) {
-                $tarifSpp = floatval($s->kategori->tarifTerbaru->nominal);
-                
-                // Hitung periode aktif
-                $bulanMasuk = Carbon::parse($s->tanggal_masuk)->startOfMonth();
-                $bulanSekarang = Carbon::now()->startOfMonth();
-                
-                // Pembayaran lunas
-                $pembayaranLunas = $s->pembayaran
-                    ->where('status', 'success')
-                    ->map(function($payment) {
-                        return $payment->bulan . '-' . $payment->tahun;
-                    })
-                    ->toArray();
-                
-                // Tunggakan dari pembayaran belum lunas
-                $totalTunggakan += $s->pembayaran
-                    ->where('status', '!=', 'success')
-                    ->where('status', '!=', 'failed')
-                    ->sum('nominal');
-                
-                // Generate periode & hitung tunggakan
-                $currentMonth = clone $bulanMasuk;
-                while ($currentMonth <= $bulanSekarang) {
-                    $key = $currentMonth->format('m') . '-' . $currentMonth->format('Y');
-                    if (!in_array($key, $pembayaranLunas)) {
-                        $totalTunggakan += $tarifSpp;
-                    }
-                    $currentMonth->addMonth();
-                }
+                $pembayaranBelumLunas = $s->pembayaran
+                    ->whereIn('status', ['failed', 'pending', 'unpaid'])
+                    ->where('nominal', '>', 0);
+                $totalTunggakan += $pembayaranBelumLunas->sum('nominal');
             }
         }
 
-        // Hanya hitung santri aktif yang nunggak untuk ditampilkan di dashboard
         $santriNunggak = $santri->where('status', 'aktif')->filter(function($santri) {
             if (!$santri->kategori || !$santri->kategori->tarifTerbaru) {
                 return false;
             }
 
-            // Periksa pembayaran belum lunas (pending/unpaid)
-            $pembayaranBelumLunas = $santri->pembayaran
-                ->where('status', '!=', 'success')
-                ->where('status', '!=', 'failed')
-                ->count();
-
-            // Hitung periode yang harus dibayar
-            $bulanMasuk = Carbon::parse($santri->tanggal_masuk)->startOfMonth();
-            $bulanSekarang = Carbon::now()->startOfMonth();
-
-            // Pembayaran yang sudah lunas
-            $pembayaranLunas = $santri->pembayaran
-                ->where('status', 'success')
-                ->map(function($payment) {
-                    return $payment->bulan . '-' . $payment->tahun;
-                })
-                ->toArray();
-
-            // Periksa semua periode dari tanggal masuk sampai sekarang
-            $currentMonth = clone $bulanMasuk;
-            while ($currentMonth <= $bulanSekarang) {
-                $key = $currentMonth->format('m') . '-' . $currentMonth->format('Y');
-                if (!in_array($key, $pembayaranLunas)) {
-                    return true; // Ada tunggakan
-                }
-                $currentMonth->addMonth();
-            }
-
-            return $pembayaranBelumLunas > 0;
+            return $santri->pembayaran
+                ->whereIn('status', ['failed', 'pending', 'unpaid'])
+                ->where('nominal', '>', 0)
+                ->count() > 0;
         })->count();
 
         $chartData = $this->getChartData();
         $chartKategori = $this->getChartKategori();
-
         $jenjang = ['SMP', 'SMA'];
         $kategori = KategoriSantri::pluck('nama', 'id');
 
@@ -184,25 +130,27 @@ class LaporanController extends Controller
 
     public function tunggakan(Request $request)
     {
-        $query = Santri::with(['kategori.tarifTerbaru', 'wali', 'pembayaran' => function($query) {
-                $query->where(function($q) {
-                    $q->where('status', '!=', 'success')
-                      ->where('status', '!=', 'failed');
-                })->orWhere('status', 'success');
+        // Load santri dengan semua pembayaran yang ada
+        $query = Santri::with(['kategori.tarifTerbaru', 'wali', 'pembayaran' => function($q) {
+                // Load all payments with status failed, pending, or unpaid
+                $q->whereIn('status', ['failed', 'pending', 'unpaid'])
+                  ->where('nominal', '>', 0)
+                  ->orderBy('tahun')
+                  ->orderBy('bulan');
             }])
+            // Filter santri that have unpaid payments
+            ->whereHas('pembayaran', function($q) {
+                $q->whereIn('status', ['failed', 'pending', 'unpaid'])
+                  ->where('nominal', '>', 0);
+            })
             ->when($request->filled('status'), function($q) use ($request) {
                 $q->where('status', $request->status);
-            }, function($q) {
-                // Default menampilkan santri aktif
-                $q->where('status', 'aktif');
             })
-            ->when($request->status != 'lulus', function($q) use ($request) {
-                $q->when($request->filled('jenjang'), function($subq) use ($request) {
-                    $subq->where('jenjang', $request->jenjang);
-                })
-                ->when($request->filled('kelas'), function($subq) use ($request) {
-                    $subq->where('kelas', $request->kelas);
-                });
+            ->when($request->filled('jenjang') && (!$request->filled('status') || $request->status == 'aktif'), function($q) use ($request) {
+                $q->where('jenjang', $request->jenjang);
+            })
+            ->when($request->filled('kelas') && (!$request->filled('status') || $request->status == 'aktif'), function($q) use ($request) {
+                $q->where('kelas', $request->kelas);
             })
             ->when($request->filled('kategori_id'), function($q) use ($request) {
                 $q->where('kategori_id', $request->kategori_id);
@@ -210,7 +158,6 @@ class LaporanController extends Controller
 
         $santri = $query->get()
             ->map(function($santri) {
-                // Inisialisasi properti tunggakan
                 $santri->total_tunggakan = 0;
                 $santri->jumlah_bulan_tunggakan = 0;
 
@@ -218,48 +165,13 @@ class LaporanController extends Controller
                     return $santri;
                 }
 
-                // Konversi nominal ke float untuk perhitungan yang akurat
-                $tarifSpp = floatval($santri->kategori->tarifTerbaru->nominal);
-                
-                // Hitung periode aktif santri
-                $bulanMasuk = Carbon::parse($santri->tanggal_masuk)->startOfMonth();
-                $bulanSekarang = Carbon::now()->startOfMonth();
-                
-                // Generate periode yang harus dibayar
-                $currentMonth = clone $bulanMasuk;
-                $periode = collect();
-                while ($currentMonth <= $bulanSekarang) {
-                    $periode->push([
-                        'bulan' => $currentMonth->format('m'),
-                        'tahun' => $currentMonth->format('Y')
-                    ]);
-                    $currentMonth->addMonth();
-                }
-                
-                // Pembayaran yang sudah lunas
-                $pembayaranLunas = $santri->pembayaran
-                    ->where('status', 'success')
-                    ->map(function($payment) {
-                        return $payment->bulan . '-' . $payment->tahun;
-                    })
-                    ->toArray();
-                
-                // Hitung tunggakan dari pembayaran yang belum lunas
-                $tunggakanDariPembayaran = $santri->pembayaran
-                    ->where('status', '!=', 'success')
-                    ->where('status', '!=', 'failed')
-                    ->sum('nominal');
-                
-                $santri->total_tunggakan = $tunggakanDariPembayaran;
-                
-                // Hitung tunggakan dari bulan yang belum ada pembayaran
-                foreach ($periode as $p) {
-                    $key = $p['bulan'] . '-' . $p['tahun'];
-                    if (!in_array($key, $pembayaranLunas)) {
-                        $santri->total_tunggakan += $tarifSpp;
-                        $santri->jumlah_bulan_tunggakan++;
-                    }
-                }
+                // Get all failed, pending, or unpaid payments
+                $pembayaranBelumLunas = $santri->pembayaran
+                    ->whereIn('status', ['failed', 'pending', 'unpaid'])
+                    ->where('nominal', '>', 0);
+
+                $santri->total_tunggakan = $pembayaranBelumLunas->sum('nominal');
+                $santri->jumlah_bulan_tunggakan = $pembayaranBelumLunas->count();
 
                 return $santri;
             })
@@ -267,7 +179,7 @@ class LaporanController extends Controller
                 if ($request->filled('min_tunggakan')) {
                     return $santri->jumlah_bulan_tunggakan >= (int)$request->min_tunggakan;
                 }
-                return $santri->total_tunggakan > 0;
+                return $santri->jumlah_bulan_tunggakan > 0;
             })
             ->values();
 
@@ -330,8 +242,7 @@ class LaporanController extends Controller
                 $q->whereHas('pembayaran', function($subq) use ($bulanIni, $tahunIni) {
                     $subq->where('bulan', $bulanIni)
                          ->where('tahun', $tahunIni)
-                         ->where('status', '!=', 'success')
-                         ->where('status', '!=', 'failed');
+                         ->whereIn('status', ['pending', 'unpaid']);
                 })
                 // Atau santri yang belum memiliki pembayaran untuk bulan ini
                 ->orWhereDoesntHave('pembayaran', function($subq) use ($bulanIni, $tahunIni) {

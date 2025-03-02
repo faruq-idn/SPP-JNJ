@@ -99,23 +99,19 @@
                 <td>Rp {{ number_format($s->total_tunggakan, 0, ',', '.') }}</td>
                 <td>
                     @php
-                        $bulanBelumLunas = collect();
-                        $bulanMasuk = Carbon\Carbon::parse($s->tanggal_masuk)->startOfMonth();
-                        $bulanSekarang = Carbon\Carbon::now()->startOfMonth();
-                        $pembayaranLunas = $s->pembayaran
-                            ->where('status', 'success')
-                            ->map(fn($p) => $p->bulan . '-' . $p->tahun)
-                            ->toArray();
-                        
-                        while ($bulanMasuk <= $bulanSekarang) {
-                            $key = $bulanMasuk->format('m-Y');
-                            if (!in_array($key, $pembayaranLunas)) {
-                                $bulanBelumLunas->push($bulanMasuk->translatedFormat('F Y'));
-                            }
-                            $bulanMasuk->addMonth();
-                        }
+                        $bulanTunggakan = $s->pembayaran
+                            ->filter(function($p) {
+                                return in_array($p->status, ['failed', 'pending', 'unpaid']) && $p->nominal > 0;
+                            })
+                            ->sortBy(function($p) {
+                                return sprintf('%04d%02d', $p->tahun, $p->bulan);
+                            })
+                            ->map(function($p) {
+                                return Carbon\Carbon::create($p->tahun, $p->bulan)
+                                    ->translatedFormat('F Y');
+                            })->values();
                     @endphp
-                    {{ $bulanBelumLunas->implode(', ') }}
+                    {{ $bulanTunggakan->implode(', ') }}
                 </td>
             </tr>
             @endforeach

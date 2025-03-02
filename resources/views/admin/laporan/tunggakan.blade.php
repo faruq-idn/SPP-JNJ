@@ -19,46 +19,45 @@
         </div>
     </div>
 
-    
-
     <!-- Table Card -->
     <div class="card shadow mb-4">
         <!-- Summary Card -->
-    <div class="row mb-4">
-        <div class="col-xl-6 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Santri Nunggak</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ count($santri) }} Santri</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-user-times fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-6 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tunggakan Tertinggi</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                               {{ $santri->max('jumlah_bulan_tunggakan') }} Bulan
+        <div class="row mb-4">
+            <div class="col-xl-6 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Santri Nunggak</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ count($santri) }} Santri</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-user-times fa-2x text-gray-300"></i>
                             </div>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-6 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tunggakan Tertinggi</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                   {{ $santri->max('jumlah_bulan_tunggakan') }} Bulan
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+        
         <!-- Info Filter Card -->
         <div>
             <div class="card-body py-3">
@@ -67,8 +66,12 @@
                         <h4 class="card-title mb-0">
                             Filter Aktif:
                             <span class="text-primary">
-                                Status: {{ ucfirst(request('status', 'aktif')) }}
-                                @if(request('status') == 'aktif')
+                                @if(request('status'))
+                                    Status: {{ ucfirst(request('status')) }}
+                                @else
+                                    Status: Semua Status
+                                @endif
+                                @if(request('status') == 'aktif' || !request('status'))
                                     {{ request('jenjang') ? ', Jenjang ' . request('jenjang') : '' }}
                                     {{ request('kelas') ? ', Kelas ' . request('kelas') : '' }}
                                 @endif
@@ -83,6 +86,7 @@
                 </div>
             </div>
         </div>
+
         {{-- Filter Form --}}
         <div>
             <div class="card-body">
@@ -90,6 +94,7 @@
                     <div class="col-md-3">
                         <label for="status" class="form-label">Status Santri</label>
                         <select class="form-select" name="status" id="status">
+                            <option value="">Semua Status</option>
                             <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
                             <option value="lulus" {{ request('status') == 'lulus' ? 'selected' : '' }}>Lulus</option>
                             <option value="keluar" {{ request('status') == 'keluar' ? 'selected' : '' }}>Keluar</option>
@@ -133,7 +138,8 @@
                 </form>
             </div>
         </div>
-        {{-- End Filter Form --}}
+
+        {{-- Data Table --}}
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
@@ -171,24 +177,20 @@
                             <td>Rp {{ number_format($s->total_tunggakan, 0, ',', '.') }}</td>
                             <td>
                                 @php
-                                    $bulanBelumLunas = collect();
-                                    $bulanMasuk = Carbon\Carbon::parse($s->tanggal_masuk)->startOfMonth();
-                                    $bulanSekarang = Carbon\Carbon::now()->startOfMonth();
-                                    $pembayaranLunas = $s->pembayaran
-                                        ->where('status', 'success')
-                                        ->map(fn($p) => $p->bulan . '-' . $p->tahun)
-                                        ->toArray();
-                                    
-                                    while ($bulanMasuk <= $bulanSekarang) {
-                                        $key = $bulanMasuk->format('m-Y');
-                                        if (!in_array($key, $pembayaranLunas)) {
-                                            $bulanBelumLunas->push($bulanMasuk->translatedFormat('F Y'));
-                                        }
-                                        $bulanMasuk->addMonth();
-                                    }
+                                    $bulanTunggakan = $s->pembayaran
+                                        ->filter(function($p) {
+                                            return in_array($p->status, ['failed', 'pending', 'unpaid']) && $p->nominal > 0;
+                                        })
+                                        ->sortBy(function($p) {
+                                            return sprintf('%04d%02d', $p->tahun, $p->bulan);
+                                        })
+                                        ->map(function($p) {
+                                            return Carbon\Carbon::create($p->tahun, $p->bulan)
+                                                ->translatedFormat('F Y');
+                                        })->values();
                                 @endphp
                                 <small class="d-block text-danger">
-                                    {{ $bulanBelumLunas->implode(', ') }}
+                                    {{ $bulanTunggakan->implode(', ') }}
                                 </small>
                             </td>
                         </tr>
@@ -217,23 +219,29 @@ $(document).ready(function() {
         order: [[8, 'desc']] // Sort by jumlah bulan descending
     });
 
-    // Handle status change
-    $('#status').on('change', function() {
-        const status = $(this).val();
+    function handleStatusChange(status) {
         const jenjangSelect = $('#jenjang');
         const kelasSelect = $('#kelas');
         const filterAktif = $('.filter-aktif');
         
-        if (status === 'lulus' || status === 'keluar') {
-            jenjangSelect.prop('disabled', true).val('');
-            kelasSelect.prop('disabled', true).val('');
-            filterAktif.addClass('opacity-50');
-        } else {
+        if (status === 'aktif' || status === '') {
             jenjangSelect.prop('disabled', false);
             kelasSelect.prop('disabled', false);
             filterAktif.removeClass('opacity-50');
+        } else {
+            jenjangSelect.prop('disabled', true).val('');
+            kelasSelect.prop('disabled', true).val('');
+            filterAktif.addClass('opacity-50');
         }
+    }
+
+    // Handle status change event
+    $('#status').on('change', function() {
+        handleStatusChange($(this).val());
     });
+
+    // Run on page load
+    handleStatusChange($('#status').val());
 
     // Handle jenjang change
     $('#jenjang').on('change', function() {
@@ -254,7 +262,6 @@ $(document).ready(function() {
         }
     });
 });
-
 </script>
 @endpush
 @endsection

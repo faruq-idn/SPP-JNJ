@@ -5,13 +5,20 @@
     "api/*.php": {
       "runtime": "vercel-php@0.7.1",
       "maxDuration": 60,
-      "memory": 1024,
-      "excludeFiles": "{.env,.env.*,composer.lock}"
+      "memory": 1024
     }
   },
-  "outputDirectory": "public",
-  "installCommand": "npm install",
-  "buildCommand": "npm run build",
+  "buildCommand": "node build.js",
+  "builds": [
+    {
+      "src": "api/index.php",
+      "use": "@vercel/php"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
   "routes": [
     {
       "src": "/build/(.*)",
@@ -38,6 +45,10 @@
       "dest": "/public/robots.txt"
     },
     {
+      "src": "/test",
+      "dest": "/api/test.php"
+    },
+    {
       "src": "/(.*)",
       "dest": "/api/index.php"
     }
@@ -53,6 +64,8 @@
     "BOOTSTRAP_CACHE_PATH": "/tmp/bootstrap/cache",
     "LOG_CHANNEL": "stderr",
     "FILESYSTEM_DRIVER": "null",
-    "VERCEL_FORCE_NO_BUILD_CACHE": "1"
+    "VERCEL_FORCE_NO_BUILD_CACHE": "1",
+    "PATH": "/usr/local/bin:/usr/bin:/bin",
+    "NODE_ENV": "production"
   }
 }

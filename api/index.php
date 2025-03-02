@@ -31,21 +31,40 @@ if (isset($_ENV['VERCEL_URL'])) {
     putenv("SESSION_DOMAIN={$_ENV['VERCEL_URL']}");
 }
 
-// Load Laravel
-require __DIR__ . '/../vendor/autoload.php';
-
-// Use Vercel bootstrap if available
-if (file_exists(__DIR__ . '/../bootstrap/vercel.php')) {
-    $app = require __DIR__ . '/../bootstrap/vercel.php';
-} else {
-    $app = require __DIR__ . '/../bootstrap/app.php';
+// Verify vendor autoload exists
+$autoloadPath = __DIR__ . '/../vendor/autoload.php';
+if (!file_exists($autoloadPath)) {
+    die("Vendor autoload.php not found. Please run 'composer install'");
 }
 
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+// Load composer autoloader
+require $autoloadPath;
 
-$response = $kernel->handle(
-    $request = Illuminate\Http\Request::capture()
-);
+// Load Laravel bootstrap file
+$bootstrapPath = __DIR__ . '/../bootstrap/app.php';
+if (!file_exists($bootstrapPath)) {
+    die("Bootstrap file not found at {$bootstrapPath}");
+}
 
-$response->send();
-$kernel->terminate($request, $response);
+// Initialize Laravel application
+try {
+    $app = require $bootstrapPath;
+    
+    if (!is_object($app)) {
+        throw new RuntimeException('Failed to initialize Laravel application');
+    }
+
+    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+    
+    $response = $kernel->handle(
+        $request = Illuminate\Http\Request::capture()
+    );
+
+    $response->send();
+    $kernel->terminate($request, $response);
+
+} catch (Exception $e) {
+    error_log($e->getMessage());
+    http_response_code(500);
+    echo "Internal Server Error: " . $e->getMessage();
+}

@@ -6,6 +6,9 @@
       "runtime": "vercel-php@0.6.0"
     }
   },
+  "outputDirectory": "public",
+  "installCommand": "npm install && composer install",
+  "buildCommand": "npm run build && php artisan config:cache && php artisan route:cache && php artisan view:cache",
   "routes": [
     { 
       "src": "/build/(.*)", 
@@ -38,9 +41,9 @@
   ],
   "env": {
     "APP_NAME": "SPP JNJ",
-    "APP_ENV": "production",
-    "APP_DEBUG": "false",
-    "APP_URL": "https://spp-jnj.vercel.app",
+    "APP_ENV": "development",
+    "APP_DEBUG": "true",
+    "APP_URL": "${VERCEL_URL}",
     "APP_CONFIG_CACHE": "/tmp/config.php",
     "APP_EVENTS_CACHE": "/tmp/events.php",
     "APP_PACKAGES_CACHE": "/tmp/packages.php",

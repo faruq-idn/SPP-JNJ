@@ -6,32 +6,31 @@ if ! command -v vercel &> /dev/null; then
     npm install -g vercel
 fi
 
-# Build assets
+echo "Preparing for development deployment to Vercel..."
+
+# Install dependencies
+echo "Installing NPM dependencies..."
+npm install
+
+echo "Building assets..."
 npm run build
 
-# Copy .env.vercel to .env
+echo "Installing Composer dependencies..."
+composer install
+
+echo "Setting up environment..."
 cp .env.vercel .env
 
-# Clear Laravel cache
+echo "Clearing Laravel cache..."
 php artisan config:clear
 php artisan cache:clear
-php artisan view:clear
 php artisan route:clear
 
-# Install dependencies for production
-composer install --optimize-autoloader --no-dev
-
-echo "Deploying to Vercel..."
-echo "Please make sure you have:"
-echo "1. Created a new project on Vercel"
-echo "2. Connected your GitHub repository"
-echo "3. Set up the following environment variables on Vercel dashboard:"
-echo "   - DATABASE_URL (PostgreSQL connection string)"
-echo "   - POSTGRES_HOST"
-echo "   - POSTGRES_DATABASE"
-echo "   - POSTGRES_USER"
-echo "   - POSTGRES_PASSWORD"
-echo "   - APP_KEY (run 'php artisan key:generate --show')"
-echo "   - Other environment variables from .env.vercel"
+echo "Ready for deployment!"
 echo ""
-echo "Then run: vercel --prod"
+echo "To deploy for testing:"
+echo "1. Run: vercel"
+echo "2. Set up database credentials in Vercel dashboard"
+echo "3. Run migrations: vercel run php artisan migrate"
+echo ""
+echo "Note: This is a development deployment with debug mode enabled"

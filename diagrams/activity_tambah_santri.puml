@@ -39,7 +39,8 @@ else (Import Excel)
         :Validasi Data Santri;
         
         if (Data Valid?) then (tidak)
-            :Tampilkan Pesan Error;
+            :Generate Error Report;
+            :Download Error Report;
             stop
         endif
     endif
@@ -49,8 +50,10 @@ endif
 :Simpan Data Santri;
 :Generate NIS/Identitas;
 :Set Status Aktif;
+:Create User Wali;
     
 if (Berhasil?) then (ya)
+    :Kirim Email ke Wali;
     :Tampilkan Success Message;
 else (tidak)
     :Rollback Transaksi;

@@ -13,10 +13,10 @@
         <h1 class="h3 mb-0 text-gray-800">Riwayat Kenaikan Kelas</h1>
     </div>
 
-    <div class="card">
-        <div class="card-body px-0">
-            <div class="table-responsive px-3">
-                <table class="table table-bordered table-striped w-100" id="dataTable">
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped" id="dataTable">
                     <thead>
                         <tr>
                             <th>Nama Santri</th>
@@ -49,6 +49,8 @@
                     </tbody>
                 </table>
             </div>
+
+            {{ $riwayat->links() }}
         </div>
     </div>
 </div>
@@ -58,5 +60,15 @@
 <!-- DataTables -->
 <script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('vendor/datatables/js/dataTables.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('js/datatable-init.js') }}"></script>
+<script>
+    $(document).ready(function() {
+        // Cek apakah ada data di tabel
+        if ($('#dataTable tbody tr').length > 1) {
+            $('#dataTable').DataTable({
+                pageLength: 25,
+                order: [[4, 'desc']]
+            });
+        }
+    });
+</script>
 @endpush

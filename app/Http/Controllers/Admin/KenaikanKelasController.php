@@ -15,7 +15,7 @@ class KenaikanKelasController extends Controller
     {
         $riwayat = KenaikanKelasHistory::with(['santri', 'creator'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(25);
 
         return view('admin.santri.riwayat', compact('riwayat'));
     }

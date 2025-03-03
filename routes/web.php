@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\KategoriSantriController;
-use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\Admin\KenaikanKelasController;
 use App\Http\Controllers\Admin\LaporanController;
 use App\Http\Controllers\Admin\PembayaranController;
@@ -19,9 +18,6 @@ use App\Http\Controllers\Wali\ProfilController;
 use App\Http\Controllers\Wali\TagihanController;
 use App\Http\Controllers\Petugas\SantriController as PetugasSantriController;
 use App\Http\Controllers\Petugas\PembayaranController as PetugasPembayaranController;
-
-// Midtrans Webhook
-Route::post('midtrans/webhook', [MidtransWebhookController::class, 'handle'])->name('midtrans.webhook');
 
 // Public Routes
 Route::get('/', function () {
@@ -71,7 +67,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
         Route::get('export', [SantriExportController::class, 'export'])->name('export');
         
         // Kenaikan Kelas Routes
-        Route::get('kenaikan-kelas/riwayat', [KenaikanKelasController::class, 'riwayat'])->name('riwayat');
+        Route::get('riwayat', [KenaikanKelasController::class, 'riwayat'])->name('riwayat');
         Route::post('kenaikan-kelas', [KenaikanKelasController::class, 'kenaikanKelas'])->name('kenaikan-kelas');
         Route::post('batal-kenaikan-kelas', [KenaikanKelasController::class, 'batalKenaikanKelas'])->name('batal-kenaikan-kelas');
         
@@ -92,8 +88,6 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     // User Management
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
     Route::get('users/{user}/get-data', [UserController::class, 'getData'])->name('users.getData');
-    Route::get('users/{user}/santri', [UserController::class, 'getSantri'])->name('users.getSantri');
-    Route::get('users/search-santri', [UserController::class, 'searchSantri'])->name('users.searchSantri');
     Route::resource('users', UserController::class);
     
     // Pembayaran
@@ -123,14 +117,7 @@ Route::prefix('petugas')->middleware(['auth', 'role:petugas'])->name('petugas.')
     Route::put('profil', [ProfilController::class, 'update'])->name('profil.update');
     
     // Santri
-    Route::get('santri', [PetugasSantriController::class, 'index'])->name('santri.index');
     Route::get('santri/{santri}', [PetugasSantriController::class, 'show'])->name('santri.show');
-    Route::get('santri/{jenjang}/{kelas}', [PetugasSantriController::class, 'kelas'])
-        ->name('santri.kelas')
-        ->where([
-            'jenjang' => 'smp|sma',
-            'kelas' => '[0-9]{1,2}[A-B]'
-        ]);
     
     // Pembayaran
     Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
@@ -138,13 +125,6 @@ Route::prefix('petugas')->middleware(['auth', 'role:petugas'])->name('petugas.')
         Route::get('/{id}/check-status', [PetugasPembayaranController::class, 'checkStatus'])->name('check-status');
         Route::get('/{pembayaran}', [PetugasPembayaranController::class, 'show'])->name('show');
         Route::post('/{id}/verifikasi', [PetugasPembayaranController::class, 'verifikasi'])->name('verifikasi');
-    });
-
-    // Laporan
-    Route::prefix('laporan')->name('laporan.')->group(function () {
-        Route::get('/', [LaporanController::class, 'index'])->name('index');
-        Route::get('/pembayaran', [LaporanController::class, 'pembayaran'])->name('pembayaran');
-        Route::get('/tunggakan', [LaporanController::class, 'tunggakan'])->name('tunggakan');
     });
 });
 

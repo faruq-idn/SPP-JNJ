@@ -66,18 +66,6 @@
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <div class="info-item p-2 bg-light rounded-3">
-                                                <div class="d-flex align-items-start gap-2">
-                                                    <div class="icon-circle bg-info bg-opacity-10 text-info">
-                                                        <i class="fas fa-graduation-cap"></i>
-                                                    </div>
-                                                    <div>
-                                                        <div class="text-muted small">Tahun Tamat</div>
-                                                        <div class="fw-semibold fs-7 fs-md-6 mt-1">{{ $santri->tahun_tamat ?: '-' }}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
                                             <div class="info-item p-2 bg-light rounded-3">
                                                 <div class="d-flex align-items-start gap-2">
                                                     <div class="icon-circle bg-primary bg-opacity-10 text-primary">

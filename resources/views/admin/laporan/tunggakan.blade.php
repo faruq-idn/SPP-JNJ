@@ -19,11 +19,7 @@
         </div>
     </div>
 
-    
-
-    <!-- Table Card -->
-    <div class="card shadow mb-4">
-        <!-- Summary Card -->
+    <!-- Summary Card -->
     <div class="row mb-4">
         <div class="col-xl-6 col-md-6 mb-4">
             <div class="card border-left-warning shadow h-100 py-2">
@@ -59,6 +55,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Table Card -->
+    <div class="card shadow mb-4">
         <!-- Info Filter Card -->
         <div>
             <div class="card-body py-3">

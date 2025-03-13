@@ -1,3 +1,7 @@
+## 4.1 Hasil Akhir dan Pembahasan
+
+Hasil akhir yang didapat dalam pembuatan sistem Pembayaran SPP di Pesantren JNJ telah berhasil mewujudkan sebuah platform pengelolaan keuangan yang efektif dan terintegrasi. Sistem ini menghadirkan antarmuka yang memudahkan pengguna dalam menjalankan fungsinya masing-masing, di mana administrator dapat mengelola keseluruhan sistem, petugas dapat memproses transaksi pembayaran, dan wali santri dapat melakukan pembayaran secara mandiri. Pengelolaan data santri dan pembayaran menjadi lebih terstruktur dengan pencatatan yang rinci, termasuk riwayat kenaikan kelas dan perubahan data penting lainnya. Fleksibilitas pembayaran ditingkatkan melalui dukungan transaksi langsung di pesantren dan integrasi pembayaran online dengan berbagai metode, disertai bukti pembayaran digital yang dapat diakses kapan saja. Sistem pelaporan yang komprehensif memungkinkan pihak pesantren memantau arus keuangan melalui laporan dalam format PDF dan Excel.
+
 ## 4.2 Implementasi Antarmuka Pengguna
 
 ### 4.2.1 Implementasi Halaman Umum

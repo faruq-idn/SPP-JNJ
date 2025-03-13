@@ -39,110 +39,28 @@ class LaporanController extends Controller
                 ->where('status', 'success');
         })->count();
 
-        $totalTunggakan = 0;
+        // Hitung total tunggakan dari semua pembayaran dengan status failed/pending/unpaid
+        $totalTunggakan = PembayaranSpp::tunggakan()
+            ->where('nominal', '>', 0)
+            ->sum('nominal');
+
+        // Ambil semua santri yang memiliki tunggakan
         $santri = Santri::with(['kategori.tarifTerbaru', 'pembayaran' => function($query) {
-<<<<<<< HEAD
-            $query->whereIn('status', ['failed', 'pending', 'unpaid'])
-                ->where('nominal', '>', 0)
-                ->orderBy('tahun')
-                ->orderBy('bulan');
-        }])->get();
+            $query->tunggakan()
+                ->where('nominal', '>', 0);
+        }])
+        ->whereHas('pembayaran', function($q) {
+            $q->tunggakan()
+              ->where('nominal', '>', 0);
+        })->get();
 
-        foreach ($santri as $s) {
-            if ($s->kategori && $s->kategori->tarifTerbaru) {
-                $pembayaranBelumLunas = $s->pembayaran
-                    ->whereIn('status', ['failed', 'pending', 'unpaid'])
-                    ->where('nominal', '>', 0);
-                $totalTunggakan += $pembayaranBelumLunas->sum('nominal');
-            }
-        }
-
-=======
-                $query->where(function($q) {
-                    $q->where('status', '!=', 'success')
-                      ->where('status', '!=', 'failed');
-                })->orWhere('status', 'success');
-            }])
-            ->get();
-
-        foreach ($santri as $s) {
-            if ($s->kategori && $s->kategori->tarifTerbaru) {
-                $tarifSpp = floatval($s->kategori->tarifTerbaru->nominal);
-                
-                // Hitung periode aktif
-                $bulanMasuk = Carbon::parse($s->tanggal_masuk)->startOfMonth();
-                $bulanSekarang = Carbon::now()->startOfMonth();
-                
-                // Pembayaran lunas
-                $pembayaranLunas = $s->pembayaran
-                    ->where('status', 'success')
-                    ->map(function($payment) {
-                        return $payment->bulan . '-' . $payment->tahun;
-                    })
-                    ->toArray();
-                
-                // Tunggakan dari pembayaran belum lunas
-                $totalTunggakan += $s->pembayaran
-                    ->where('status', '!=', 'success')
-                    ->where('status', '!=', 'failed')
-                    ->sum('nominal');
-                
-                // Generate periode & hitung tunggakan
-                $currentMonth = clone $bulanMasuk;
-                while ($currentMonth <= $bulanSekarang) {
-                    $key = $currentMonth->format('m') . '-' . $currentMonth->format('Y');
-                    if (!in_array($key, $pembayaranLunas)) {
-                        $totalTunggakan += $tarifSpp;
-                    }
-                    $currentMonth->addMonth();
-                }
-            }
-        }
-
-        // Hanya hitung santri aktif yang nunggak untuk ditampilkan di dashboard
->>>>>>> 8e35553 (fix: update HTML doctype declaration, modify Midtrans notification URL, and enhance Kenaikan Kelas history retrieval; improve DataTable initialization and dashboard display)
-        $santriNunggak = $santri->where('status', 'aktif')->filter(function($santri) {
-            if (!$santri->kategori || !$santri->kategori->tarifTerbaru) {
-                return false;
-            }
-
-<<<<<<< HEAD
-            return $santri->pembayaran
-                ->whereIn('status', ['failed', 'pending', 'unpaid'])
-                ->where('nominal', '>', 0)
-                ->count() > 0;
-=======
-            // Periksa pembayaran belum lunas (pending/unpaid)
-            $pembayaranBelumLunas = $santri->pembayaran
-                ->where('status', '!=', 'success')
-                ->where('status', '!=', 'failed')
-                ->count();
-
-            // Hitung periode yang harus dibayar
-            $bulanMasuk = Carbon::parse($santri->tanggal_masuk)->startOfMonth();
-            $bulanSekarang = Carbon::now()->startOfMonth();
-
-            // Pembayaran yang sudah lunas
-            $pembayaranLunas = $santri->pembayaran
-                ->where('status', 'success')
-                ->map(function($payment) {
-                    return $payment->bulan . '-' . $payment->tahun;
-                })
-                ->toArray();
-
-            // Periksa semua periode dari tanggal masuk sampai sekarang
-            $currentMonth = clone $bulanMasuk;
-            while ($currentMonth <= $bulanSekarang) {
-                $key = $currentMonth->format('m') . '-' . $currentMonth->format('Y');
-                if (!in_array($key, $pembayaranLunas)) {
-                    return true; // Ada tunggakan
-                }
-                $currentMonth->addMonth();
-            }
-
-            return $pembayaranBelumLunas > 0;
->>>>>>> 8e35553 (fix: update HTML doctype declaration, modify Midtrans notification URL, and enhance Kenaikan Kelas history retrieval; improve DataTable initialization and dashboard display)
-        })->count();
+        // Hitung jumlah santri dengan tunggakan (pending/unpaid)
+        $santriNunggak = Santri::where('status', 'aktif')
+            ->whereHas('pembayaran', function($q) {
+                $q->tunggakan()
+                  ->where('nominal', '>', 0);
+            })
+            ->count();
 
         $chartData = $this->getChartData();
         $chartKategori = $this->getChartKategori();
@@ -207,59 +125,64 @@ class LaporanController extends Controller
 
     public function tunggakan(Request $request)
     {
-        // Load santri dengan semua pembayaran yang ada
+        // Load semua santri yang memiliki tunggakan
         $query = Santri::with(['kategori.tarifTerbaru', 'wali', 'pembayaran' => function($q) {
-                // Load all payments with status failed, pending, or unpaid
-                $q->whereIn('status', ['failed', 'pending', 'unpaid'])
-                  ->where('nominal', '>', 0)
-                  ->orderBy('tahun')
-                  ->orderBy('bulan');
-            }])
-            // Filter santri that have unpaid payments
-            ->whereHas('pembayaran', function($q) {
-                $q->whereIn('status', ['failed', 'pending', 'unpaid'])
-                  ->where('nominal', '>', 0);
-            })
-            ->when($request->filled('status'), function($q) use ($request) {
-                $q->where('status', $request->status);
-            })
-            ->when($request->filled('jenjang') && (!$request->filled('status') || $request->status == 'aktif'), function($q) use ($request) {
-                $q->where('jenjang', $request->jenjang);
-            })
-            ->when($request->filled('kelas') && (!$request->filled('status') || $request->status == 'aktif'), function($q) use ($request) {
-                $q->where('kelas', $request->kelas);
-            })
-            ->when($request->filled('kategori_id'), function($q) use ($request) {
-                $q->where('kategori_id', $request->kategori_id);
-            });
+            $q->tunggakan()
+              ->where('nominal', '>', 0)
+              ->orderBy('tahun')
+              ->orderBy('bulan');
+        }])
+        ->whereHas('pembayaran', function($q) {
+            $q->tunggakan()
+              ->where('nominal', '>', 0);
+        })
+        ->when($request->filled('kategori_id'), function($q) use ($request) {
+            $q->where('kategori_id', $request->kategori_id);
+        });
 
-        $santri = $query->get()
-            ->map(function($santri) {
-                $santri->total_tunggakan = 0;
-                $santri->jumlah_bulan_tunggakan = 0;
+        // Ambil semua data santri
+        $santri = $query->get();
+        
+        // Filter berdasarkan request
+        if ($request->filled('status')) {
+            if ($request->status === 'keluar') {
+                $santri = $santri->where('status', 'tidak aktif');
+            } else {
+                $santri = $santri->where('status', $request->status);
+            }
+        }
 
-                if (!$santri->kategori || !$santri->kategori->tarifTerbaru) {
-                    return $santri;
-                }
+        // Filter jenjang dan kelas hanya untuk status aktif atau semua status
+        if ($request->status === 'aktif' || !$request->filled('status')) {
+            if ($request->filled('jenjang')) {
+                $santri = $santri->where('jenjang', $request->jenjang);
+            }
+            if ($request->filled('kelas')) {
+                $santri = $santri->where('kelas', $request->kelas);
+            }
+        }
 
-                // Get all failed, pending, or unpaid payments
-                $pembayaranBelumLunas = $santri->pembayaran
-                    ->whereIn('status', ['failed', 'pending', 'unpaid'])
-                    ->where('nominal', '>', 0);
+        // Hitung tunggakan setiap santri
+        $santri = $santri->map(function($s) {
+            $tunggakan = $s->pembayaran
+                ->filter(function($payment) {
+                    return $payment->isTunggakan() && $payment->nominal > 0;
+                });
+            
+            $s->total_tunggakan = $tunggakan->sum('nominal');
+            $s->jumlah_bulan_tunggakan = $tunggakan->count();
+            
+            return $s;
+        })
+        ->filter(function($s) use ($request) {
+            if ($request->filled('min_tunggakan')) {
+                return $s->jumlah_bulan_tunggakan >= (int)$request->min_tunggakan;
+            }
+            return $s->jumlah_bulan_tunggakan > 0;
+        })
+        ->values();
 
-                $santri->total_tunggakan = $pembayaranBelumLunas->sum('nominal');
-                $santri->jumlah_bulan_tunggakan = $pembayaranBelumLunas->count();
-
-                return $santri;
-            })
-            ->filter(function($santri) use ($request) {
-                if ($request->filled('min_tunggakan')) {
-                    return $santri->jumlah_bulan_tunggakan >= (int)$request->min_tunggakan;
-                }
-                return $santri->jumlah_bulan_tunggakan > 0;
-            })
-            ->values();
-
+        // Hitung total tunggakan dari santri yang sudah difilter
         $totalTunggakan = $santri->sum('total_tunggakan');
 
         if ($request->has('export')) {
@@ -319,12 +242,7 @@ class LaporanController extends Controller
                 $q->whereHas('pembayaran', function($subq) use ($bulanIni, $tahunIni) {
                     $subq->where('bulan', $bulanIni)
                          ->where('tahun', $tahunIni)
-<<<<<<< HEAD
                          ->whereIn('status', ['pending', 'unpaid']);
-=======
-                         ->where('status', '!=', 'success')
-                         ->where('status', '!=', 'failed');
->>>>>>> 8e35553 (fix: update HTML doctype declaration, modify Midtrans notification URL, and enhance Kenaikan Kelas history retrieval; improve DataTable initialization and dashboard display)
                 })
                 // Atau santri yang belum memiliki pembayaran untuk bulan ini
                 ->orWhereDoesntHave('pembayaran', function($subq) use ($bulanIni, $tahunIni) {

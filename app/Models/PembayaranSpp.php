@@ -82,12 +82,12 @@ class PembayaranSpp extends Model
 
     public function scopeTunggakan($query)
     {
-        return $query->whereIn('status', [self::STATUS_UNPAID, self::STATUS_PENDING]);
+        return $query->where('status', '!=', self::STATUS_SUCCESS);
     }
 
     public function isTunggakan(): bool
     {
-        return in_array($this->status, [self::STATUS_UNPAID, self::STATUS_PENDING]);
+        return $this->status !== self::STATUS_SUCCESS;
     }
 
     /**

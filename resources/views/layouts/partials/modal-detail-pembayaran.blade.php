@@ -48,7 +48,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 @php
                     $metode_manual = App\Models\MetodePembayaran::where('kode', 'like', 'MANUAL_%')->get();
                     $metode_online = App\Models\MetodePembayaran::where('kode', 'MIDTRANS')->first();
@@ -114,6 +114,22 @@
     function setModalInstance(instance) {
         state.modalInstance = instance;
     }
+    // Helper: blur focus jika masih berada di dalam element (untuk mencegah aria-hidden ancestor memiliki descendant berfokus)
+    function blurIfFocusedIn(rootEl) {
+        try {
+            const ae = document.activeElement;
+            if (!ae) return;
+            if (rootEl && rootEl.contains(ae)) {
+                ae.blur();
+                // fallback: fokuskan body agar tidak ada elemen tersembunyi yang tetap fokus
+                if (document.body && document.body.focus) {
+                    document.body.focus();
+                }
+            }
+        } catch (e) {
+            // abaikan
+        }
+    }
 
     // Fungsi untuk mendapatkan modal instance
     function getModalInstance() {
@@ -139,11 +155,11 @@
                 pending: { class: 'badge bg-warning', text: 'Pending' },
                 default: { class: 'badge bg-danger', text: 'Belum Lunas' }
             };
-            
+
             const statusConfig = config[status] || config.default;
             badge.className = `${statusConfig.class} fs-7 fs-md-6`;
             badge.textContent = statusConfig.text;
-            
+
             return badge;
         } catch (error) {
             console.error('Error dalam createStatusBadge:', error);
@@ -189,7 +205,7 @@ function showDetailPembayaran(id, bulan, nominal, status, tanggal, metode, tahun
 
             // Set ID pembayaran yang dipilih
             setSelectedPembayaran(id);
-            
+
             // Dapatkan semua elemen yang diperlukan
             const elements = {
                 bulan: document.getElementById('detail-bulan'),
@@ -219,7 +235,7 @@ function showDetailPembayaran(id, bulan, nominal, status, tanggal, metode, tahun
             // Update status dan badge
             elements.status.innerHTML = '';
             elements.status.appendChild(createStatusBadge(status));
-            
+
             // Update tampilan opsi pembayaran dan info pembayaran
             elements.pembayaranOptions.style.display = status === 'success' ? 'none' : 'block';
             elements.infoPembayaran.style.display = status === 'success' ? 'block' : 'none';
@@ -242,7 +258,7 @@ const modalElement = document.getElementById('modalDetailPembayaran');
             console.log('Elemen modal ditemukan:', modalElement);
 
 const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
-            
+
             // Reset state saat modal ditutup dan hapus modal instance
             modalElement.addEventListener('hidden.bs.modal', () => {
                 console.log('Modal disembunyikan, mereset state.');
@@ -250,9 +266,14 @@ const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap
                 document.getElementById('btn-print-detail-wali').style.display = 'none';
             }, { once: true });
 
+            // Pastikan tidak ada elemen di dalam modal yang tetap fokus saat proses hide (untuk mencegah warning aria-hidden)
+            modalElement.addEventListener('hide.bs.modal', () => {
+                blurIfFocusedIn(modalElement);
+            }, { once: true });
+
             // Update modal instance di state
 setModalInstance(modalInstance);
-            
+
             console.log('Memanggil modalInstance.show().');
             modalInstance.show();
             console.log('Modal seharusnya sudah ditampilkan.');
@@ -352,6 +373,9 @@ setModalInstance(modalInstance);
         if (modalInstance) {
             try {
                 console.log('Menyembunyikan modal detail sebelum membuka payment gateway.');
+                // Hindari fokus tertinggal pada elemen di dalam modal sebelum proses hide
+                const modalEl = document.getElementById('modalDetailPembayaran');
+                if (modalEl) blurIfFocusedIn(modalEl);
                 modalInstance.hide();
             } catch (error) {
                 console.error('Error saat menutup modal:', error);

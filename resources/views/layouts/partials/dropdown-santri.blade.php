@@ -39,7 +39,7 @@
 
 <!-- Tombol Pilih Santri -->
 @if($santri_list->count() > 1)
-<div class="card shadow-sm rounded-3 border-0 mb-3">
+<div class="card shadow-sm rounded-3 border-0 mb-3" data-show-after-skeleton="1" style="visibility:hidden">
     <div class="card-body p-2 p-md-3">
         <div class="vstack gap-2">
             <div class="d-flex justify-content-between align-items-center mb-2">

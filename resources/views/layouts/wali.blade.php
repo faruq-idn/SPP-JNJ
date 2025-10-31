@@ -9,6 +9,9 @@
     <meta http-equiv="Expires" content="-1">
     <title>@yield('title') - Wali Panel</title>
 
+    <!-- Performance hints -->
+    <link rel="preconnect" href="https://app.sandbox.midtrans.com" crossorigin>
+
     <!-- Bootstrap CSS (preload to reduce FOUC) -->
     <link rel="preload" href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet"></noscript>
@@ -21,11 +24,21 @@
     <!-- Custom CSS -->
     <link rel="preload" href="{{ asset('css/wali-responsive.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="{{ asset('css/wali-responsive.css') }}" rel="stylesheet"></noscript>
-    
+
 
     <style>
+        /* Critical CSS (above-the-fold) */
+        .navbar.fixed-top { background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+        .bottom-nav.fixed-bottom { background:rgba(255,255,255,0.98); border-top:1px solid #dee2e6; box-shadow:0 -2px 8px rgba(0,0,0,0.06); }
+        .content-wrapper { padding-top: 5px; padding-bottom: 40px; visibility:hidden; }
+        .card { border:0; border-radius:.5rem; box-shadow:0 0.15rem 1rem rgba(0,0,0,0.08); }
+        .table { margin-bottom:0; }
+        .table th, .table td { vertical-align:middle; }
+        .badge { font-weight:600; }
+
         /* Responsive adjustments - handled by Bootstrap grid and utilities */
         @media (max-width: 768px) {
+            .content-wrapper { padding-top: 5px; padding-bottom: 40px; }
             .container-fluid {
                 padding-left: 1rem;
                 padding-right: 1rem;
@@ -87,7 +100,7 @@
             transform: translateY(-10px);
             transition: all 0.2s ease-in-out;
         }
-        
+
         .dropdown-menu.show {
             opacity: 1;
             visibility: visible;
@@ -98,6 +111,18 @@
     @include('layouts.partials.custom-styles')
 </head>
 <body class="wali-layout bg-light">
+    <!-- Skeleton Loading Overlay -->
+    <div id="page-skeleton" style="position:fixed;inset:0;background:#ffffff;z-index:2000;display:flex;flex-direction:column">
+        <div style="height:56px;box-shadow:0 2px 8px rgba(0,0,0,0.06);background:linear-gradient(90deg,#f2f3f5 25%,#e6e7ea 37%,#f2f3f5 63%);background-size:400% 100%;animation:skeleton-shimmer 1.2s infinite ease-in-out"></div>
+        <div style="flex:1;overflow:hidden;padding:12px">
+            <div style="max-width:1100px;margin:0 auto">
+                <div style="height:140px;border-radius:8px;margin:8px 0;background:linear-gradient(90deg,#f2f3f5 25%,#e6e7ea 37%,#f2f3f5 63%);background-size:400% 100%;animation:skeleton-shimmer 1.2s infinite ease-in-out"></div>
+                <div style="height:220px;border-radius:8px;margin:8px 0;background:linear-gradient(90deg,#f2f3f5 25%,#e6e7ea 37%,#f2f3f5 63%);background-size:400% 100%;animation:skeleton-shimmer 1.2s infinite ease-in-out"></div>
+                <div style="height:220px;border-radius:8px;margin:8px 0;background:linear-gradient(90deg,#f2f3f5 25%,#e6e7ea 37%,#f2f3f5 63%);background-size:400% 100%;animation:skeleton-shimmer 1.2s infinite ease-in-out"></div>
+            </div>
+        </div>
+        <div style="height:64px;box-shadow:0 -2px 8px rgba(0,0,0,0.06);background:linear-gradient(90deg,#f2f3f5 25%,#e6e7ea 37%,#f2f3f5 63%);background-size:400% 100%;animation:skeleton-shimmer 1.2s infinite ease-in-out"></div>
+    </div>
     <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
         <div class="container-fluid">
@@ -181,6 +206,13 @@
     @include('layouts.partials.scripts')
     @stack('scripts')
     <script>
+    // Shimmer keyframes for skeleton
+    (function(){
+        const style = document.createElement('style');
+        style.textContent = '@keyframes skeleton-shimmer{0%{background-position:100% 0}100%{background-position:0 0}}';
+        document.head.appendChild(style);
+    })();
+
     // Initialize dropdowns
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
@@ -227,6 +259,22 @@
             }
         });
     });
+
+    // Hide skeleton after full load (avoid early hide that reveals unstyled HTML)
+    (function() {
+        const sk = document.getElementById('page-skeleton');
+        if (!sk) return;
+        const revealDeferred = () => {
+            document.querySelectorAll('[data-show-after-skeleton]')
+                .forEach(el => { el.style.visibility = 'visible'; });
+            const cw = document.querySelector('.content-wrapper');
+            if (cw) cw.style.visibility = 'visible';
+        };
+        const hide = () => { sk.style.display = 'none'; revealDeferred(); };
+        window.addEventListener('load', () => setTimeout(hide, 100));
+        // Safety fallback in case load is delayed (slow connections)
+        setTimeout(hide, 2500);
+    })();
     </script>
 
     <!-- Profile Modal -->
@@ -303,14 +351,14 @@
         const form = document.getElementById('profileForm');
         const noHp = form.querySelector('input[name="no_hp"]');
         const email = form.querySelector('input[name="email"]');
-        
+
         // Validasi nomor HP
         const noHpValue = noHp.value.replace(/[\s\-\(\)\+]/g, '');
         if (noHpValue.length < 10 || noHpValue.length > 15) {
             Swal.fire('Error', 'Nomor HP harus antara 10-15 digit', 'error');
             return;
         }
-        
+
         // Validasi email
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
         if (!emailRegex.test(email.value)) {
@@ -353,11 +401,11 @@
     // Variable untuk modal profil
     let profileModalElement = document.getElementById('profileModal');
     let profileModalInstance = null;
-    
+
     // Inisialisasi instance modal dan event handlers
     if (profileModalElement) {
         profileModalInstance = new bootstrap.Modal(profileModalElement);
-        
+
         // Hapus aria-hidden saat modal terbuka
         profileModalElement.addEventListener('shown.bs.modal', function () {
             profileModalElement.removeAttribute('aria-hidden');
@@ -379,6 +427,6 @@
     @endif
     </script>
 
-    
+
 </body>
 </html>

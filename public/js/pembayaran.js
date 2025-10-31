@@ -12,6 +12,7 @@ const PaymentManager = (function() {
         }
 
         constructor() {
+            console.log('PaymentManagerClass constructor dipanggil.');
             this.initializeEventListeners();
         }
 
@@ -36,6 +37,10 @@ const PaymentManager = (function() {
             id, bulan, nominal, tahun, status, tanggal, metode, paymentData
         } = data;
 
+        console.log('Extracted values for updateModal:', {
+            id, bulan, nominal, tahun, status, tanggal, metode
+        });
+
         console.log('Extracted values:', {
             id, bulan, nominal, tahun, status, tanggal, metode
         });
@@ -45,7 +50,13 @@ const PaymentManager = (function() {
             if (!id) {
                 console.warn('ID is invalid:', id);
                 this.showError('Pembayaran tidak ditemukan atau sudah dihapus');
-                $('#modalPembayaran').modal('hide');
+                (function(){
+                    const el = document.getElementById('modalPembayaran');
+                    if (el) {
+                        const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+                        modal.hide();
+                    }
+                })();
                 return;
             }
         }
@@ -239,7 +250,13 @@ const PaymentManager = (function() {
             });
 
             if (response.status === PaymentManager.PAYMENT_STATUS.SUCCESS) {
-                $('#modalPembayaran').modal('hide');
+                (function(){
+                    const el = document.getElementById('modalPembayaran');
+                    if (el) {
+                        const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+                        modal.hide();
+                    }
+                })();
                 this.showSuccess('Pembayaran berhasil diverifikasi', true);
             } else {
                 throw new Error(response.message);
@@ -266,7 +283,13 @@ const PaymentManager = (function() {
             });
 
             if (response.status === 'success') {
-                $('#modalPembayaran').modal('hide');
+                (function(){
+                    const el = document.getElementById('modalPembayaran');
+                    if (el) {
+                        const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+                        modal.hide();
+                    }
+                })();
                 this.showSuccess(response.message, true);
             } else {
                 throw new Error(response.message);
@@ -373,6 +396,8 @@ const paymentManager = new PaymentManager();
 // Expose necessary functions to window object
 Object.assign(window, {
     showDetail: function(id, bulan, nominal, tahun, status, tanggal, metode, paymentDataString) {
+        console.log('showDetail dipanggil dari pembayaran.js');
+        console.log('Parameter showDetail:', { id, bulan, nominal, tahun, status, tanggal, metode, paymentDataString });
         try {
             let paymentData = null;
             
@@ -381,15 +406,25 @@ Object.assign(window, {
                 if (typeof paymentDataString === 'string') {
                     try {
                         paymentData = JSON.parse(paymentDataString);
+                        console.log('paymentDataString berhasil di-parse:', paymentData);
                     } catch (e) {
-                        console.warn('Invalid payment data string:', paymentDataString);
+                        console.warn('Invalid payment data string:', paymentDataString, 'Error:', e);
                     }
                 } else if (typeof paymentDataString === 'object') {
                     paymentData = paymentDataString;
+                    console.log('paymentDataString sudah berupa objek:', paymentData);
                 }
             }
 
-            const modal = new bootstrap.Modal(document.getElementById('modalPembayaran'));
+            const modalElement = document.getElementById('modalPembayaran');
+            if (!modalElement) {
+                console.error('Elemen modalPembayaran tidak ditemukan di DOM.');
+                paymentManager.showError('Elemen modal tidak ditemukan');
+                return;
+            }
+            console.log('Elemen modalPembayaran ditemukan:', modalElement);
+            const modal = new bootstrap.Modal(modalElement);
+            console.log('Instance modal Bootstrap dari pembayaran.js:', modal);
             
             console.log('Sending to updateModal:', {
                 id, bulan, nominal, tahun, status, tanggal, metode, paymentData
@@ -399,7 +434,9 @@ Object.assign(window, {
                 id, bulan, nominal, tahun, status, tanggal, metode, paymentData
             });
             
+            console.log('Memanggil modal.show() dari pembayaran.js.');
             modal.show();
+            console.log('Modal seharusnya sudah ditampilkan dari pembayaran.js.');
         } catch (error) {
             console.error('Error in showDetail:', error);
             paymentManager.showError('Terjadi kesalahan saat menampilkan detail pembayaran');
@@ -492,7 +529,13 @@ Object.assign(window, {
         $('#detail-nominal').text(PaymentManager.formatCurrency(nominalValue).replace('Rp ', ''));
         $('#detail-status').html(`<span class="badge bg-warning">Pending</span>`);
         
-        $('#modalPembayaran').modal('show');
+        (function(){
+            const el = document.getElementById('modalPembayaran');
+            if (el) {
+                const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+                modal.show();
+            }
+        })();
         $('#pembayaran-info').hide();
         $form.show();
         

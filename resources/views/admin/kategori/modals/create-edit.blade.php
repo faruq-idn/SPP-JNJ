@@ -1,5 +1,5 @@
 <!-- Modal Tambah Kategori -->
-<div class="modal fade" id="createKategoriModal" tabindex="-1" aria-labelledby="createKategoriModalLabel" aria-hidden="true">
+<div class="modal fade" id="createKategoriModal">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -80,7 +80,7 @@
 </div>
 
 <!-- Modal Edit Kategori -->
-<div class="modal fade" id="editKategoriModal" tabindex="-1" aria-labelledby="editKategoriModalLabel" aria-hidden="true">
+<div class="modal fade" id="editKategoriModal">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">

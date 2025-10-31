@@ -1,7 +1,12 @@
 {{-- Modal Detail & Form Pembayaran --}}
 <div class="modal fade" id="modalPembayaran" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header">
 <h5 class="modal-title" id="modalTitle">Detail Pembayaran SPP</h5>
-<button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+<div class="d-flex align-items-center gap-2">
+    <button type="button" id="btn-print-detail" class="btn btn-sm btn-secondary" style="display: none;">
+        <i class="fas fa-print me-1"></i>Cetak
+    </button>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div></div>
 <div class="modal-body"><div><div class="mb-4">
                         <h6 class="mb-3 fw-bold text-primary">Informasi Tagihan</h6>
                         <table class="table table-sm table-borderless">
@@ -165,8 +170,10 @@ $(document).ready(function() {
                         // Tampilkan/sembunyikan tombol reset & hapus
                         if (id && status === 'success') {
                             $('#btn-reset').show();
+                            $('#btn-print-detail').show();
                         } else {
                             $('#btn-reset').hide();
+                            $('#btn-print-detail').hide();
                         }
                         
                         if (id) {
@@ -260,6 +267,31 @@ $(document).ready(function() {
                         $('#btn-reset, #btn-delete').hide();
                         $('#formPembayaran').hide();
                         $('#pembayaran-info').hide();
+                        $('#btn-print-detail').hide();
+                    });
+
+                    $('#btn-print-detail').on('click', function() {
+                        if (!currentPembayaranId) return;
+                        const base = (window.role === 'admin') ? '/admin' : '/petugas';
+                        const url = `${base}/pembayaran/${currentPembayaranId}/pdf`;
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Cetak Bukti Pembayaran?',
+                                text: 'Bukti pembayaran akan dibuka dalam bentuk PDF.',
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonText: 'Ya, Cetak',
+                                cancelButtonText: 'Batal'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.open(url, '_blank');
+                                }
+                            });
+                        } else {
+                            if (confirm('Cetak bukti pembayaran?')) {
+                                window.open(url, '_blank');
+                            }
+                        }
                     });
                 });
                 </script>

@@ -1,3 +1,25 @@
+/* Layout Styles */
+.main-content {
+    margin-left: 250px;
+    min-height: 100vh;
+    background: #fff;
+    position: relative;
+    z-index: 1;
+    padding-top: 65px;
+}
+
+/* Navbar Styles */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 250px;
+    width: calc(100% - 250px);
+    z-index: 1020;
+    background: #fff;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    padding: 0.75rem 1.5rem;
+}
+
 /* Custom Background Opacity Classes */
 .bg-opacity-10 {
     --bs-bg-opacity: 0.1;
@@ -142,22 +164,22 @@
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
 }
 
-.badge.bg-success { 
+.badge.bg-success {
     background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%) !important;
     color: #fff !important;
 }
 
-.badge.bg-warning { 
+.badge.bg-warning {
     background: linear-gradient(135deg, #f6c23e 0%, #dfa821 100%) !important;
     color: #000 !important;
 }
 
-.badge.bg-danger { 
+.badge.bg-danger {
     background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%) !important;
     color: #fff !important;
 }
 
-.badge.bg-info { 
+.badge.bg-info {
     background: linear-gradient(135deg, #36b9cc 0%, #258391 100%) !important;
     color: #fff !important;
 }
@@ -292,6 +314,25 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Navbar User Name */
+.navbar .nav-link .user-name {
+    color: #4e73df;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.navbar .nav-link:hover .user-name {
+    color: #224abe;
+}
+
+/* Sidebar Panel Title */
+.sidebar .panel-title {
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Additional Utility Classes */

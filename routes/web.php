@@ -52,13 +52,13 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 // Admin Routes
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    
+
     // Kategori Santri
     Route::get('kategori/list', [KategoriSantriController::class, 'list'])->name('kategori.list');
     Route::get('kategori/{kategori}/get-data', [KategoriSantriController::class, 'getData'])->name('kategori.getData');
     Route::post('kategori/{kategori}/update-tarif', [KategoriSantriController::class, 'updateTarif'])->name('kategori.updateTarif');
     Route::resource('kategori', KategoriSantriController::class);
-    
+
     // Base Santri Resource
     Route::resource('santri', SantriController::class);
 
@@ -69,17 +69,19 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
         Route::post('import', [SantriExportController::class, 'importExcel'])->name('import');
         Route::get('template/download', [SantriExportController::class, 'downloadTemplate'])->name('template.download');
         Route::get('export', [SantriExportController::class, 'export'])->name('export');
-        
+
         // Kenaikan Kelas Routes
         Route::get('kenaikan-kelas/riwayat', [KenaikanKelasController::class, 'riwayat'])->name('riwayat');
         Route::post('kenaikan-kelas', [KenaikanKelasController::class, 'kenaikanKelas'])->name('kenaikan-kelas');
         Route::post('batal-kenaikan-kelas', [KenaikanKelasController::class, 'batalKenaikanKelas'])->name('batal-kenaikan-kelas');
-        
+
         // Pembayaran Routes
         Route::post('pembayaran/{id}/verifikasi', [SantriController::class, 'verifikasiPembayaran'])->name('pembayaran.verifikasi');
         Route::post('pembayaran/{id}/reset', [SantriController::class, 'resetPembayaran'])->name('pembayaran.reset');
         Route::delete('pembayaran/{id}/hapus', [SantriController::class, 'hapusPembayaran'])->name('pembayaran.hapus');
-        
+        // Export PDF riwayat pembayaran santri per tahun
+        Route::get('{santri}/pembayaran/{tahun}/pdf', [LaporanController::class, 'pembayaranSantriTahunanPdf'])->name('pembayaran.tahun.pdf');
+
         // Class route (harus di akhir untuk menghindari konflik)
         Route::get('{jenjang}/{kelas}', [SantriController::class, 'kelas'])
             ->name('kelas')
@@ -88,14 +90,14 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
                 'kelas' => '[0-9]{1,2}[A-B]'
             ]);
     });
-    
+
     // User Management
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
     Route::get('users/{user}/get-data', [UserController::class, 'getData'])->name('users.getData');
     Route::get('users/{user}/santri', [UserController::class, 'getSantri'])->name('users.getSantri');
     Route::get('users/search-santri', [UserController::class, 'searchSantri'])->name('users.searchSantri');
     Route::resource('users', UserController::class);
-    
+
     // Pembayaran
     Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
         Route::get('/', [PembayaranController::class, 'index'])->name('index');
@@ -103,6 +105,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
         Route::post('/', [PembayaranController::class, 'store'])->name('store');
         Route::get('/{id}/check-status', [PembayaranController::class, 'checkStatus'])->name('check-status');
         Route::get('/{pembayaran}', [PembayaranController::class, 'show'])->name('show');
+        Route::get('/{pembayaran}/pdf', [PembayaranController::class, 'cetakPembayaran'])->name('pdf');
         Route::post('/{id}/verifikasi', [PembayaranController::class, 'verifikasi'])->name('verifikasi');
         Route::post('/generate-tagihan', [PembayaranController::class, 'generateTagihan'])->name('generate-tagihan');
         Route::delete('/hapus-tagihan', [PembayaranController::class, 'hapusTagihan'])->name('hapus-tagihan');
@@ -118,10 +121,10 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
 // Petugas Routes
 Route::prefix('petugas')->middleware(['auth', 'role:petugas'])->name('petugas.')->group(function () {
     Route::get('dashboard', [PetugasDashboardController::class, 'index'])->name('dashboard');
-    
+
     // Profil
     Route::put('profil', [ProfilController::class, 'update'])->name('profil.update');
-    
+
     // Santri
     Route::get('santri', [PetugasSantriController::class, 'index'])->name('santri.index');
     Route::get('santri/{santri}', [PetugasSantriController::class, 'show'])->name('santri.show');
@@ -131,12 +134,13 @@ Route::prefix('petugas')->middleware(['auth', 'role:petugas'])->name('petugas.')
             'jenjang' => 'smp|sma',
             'kelas' => '[0-9]{1,2}[A-B]'
         ]);
-    
+
     // Pembayaran
     Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
         Route::get('/', [PetugasPembayaranController::class, 'index'])->name('index');
         Route::get('/{id}/check-status', [PetugasPembayaranController::class, 'checkStatus'])->name('check-status');
         Route::get('/{pembayaran}', [PetugasPembayaranController::class, 'show'])->name('show');
+        Route::get('/{pembayaran}/pdf', [PetugasPembayaranController::class, 'cetakPembayaran'])->name('pdf');
         Route::post('/{id}/verifikasi', [PetugasPembayaranController::class, 'verifikasi'])->name('verifikasi');
     });
 
@@ -152,17 +156,19 @@ Route::prefix('petugas')->middleware(['auth', 'role:petugas'])->name('petugas.')
 Route::prefix('wali')->middleware(['auth', 'role:wali'])->name('wali.')->group(function () {
     Route::get('dashboard', [WaliDashboardController::class, 'index'])->name('dashboard');
     Route::post('change-santri', [WaliDashboardController::class, 'changeSantri'])->name('change-santri');
-    
+
     // Profil
     Route::put('profil', [ProfilController::class, 'update'])->name('profil.update');
-    
+
     // Tagihan & Pembayaran
     Route::get('tagihan', [TagihanController::class, 'index'])->name('tagihan');
     Route::post('pembayaran', [WaliPembayaranController::class, 'store'])->name('pembayaran.store');
+    Route::get('pembayaran/{pembayaran}/pdf', [WaliPembayaranController::class, 'cetakPembayaran'])->name('pembayaran.pdf');
+    Route::get('santri/{santri}/pembayaran/{tahun}/pdf', [WaliPembayaranController::class, 'cetakTahunan'])->name('pembayaran.tahun.pdf');
     Route::get('pembayaran/success', [WaliPembayaranController::class, 'success'])->name('pembayaran.success');
     Route::get('pembayaran/error', [WaliPembayaranController::class, 'error'])->name('pembayaran.error');
     Route::get('pembayaran/{pembayaran}', [WaliPembayaranController::class, 'show'])->name('pembayaran.show');
-    
+
     // Hubungkan Santri
     Route::get('hubungkan', [WaliDashboardController::class, 'hubungkan'])->name('hubungkan');
 });

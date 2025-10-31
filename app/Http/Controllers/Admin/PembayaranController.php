@@ -8,6 +8,8 @@ use App\Models\Santri;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Admin\Exports\PdfExportController;
 
 class PembayaranController extends Controller
 {
@@ -172,6 +174,7 @@ class PembayaranController extends Controller
 
     public function generateTagihan(Request $request)
     {
+        Log::info('Memulai proses generate tagihan', ['tahun' => $request->tahun, 'bulan' => $request->bulan]);
         $request->validate([
             'tahun' => 'required|digits:4',
             'bulan' => 'required|numeric|min:1|max:12',
@@ -184,6 +187,8 @@ class PembayaranController extends Controller
             $santriList = Santri::with('kategori.tarifTerbaru')
                 ->where('status', 'aktif')
                 ->get();
+            
+            Log::info('Jumlah santri aktif ditemukan', ['count' => $santriList->count()]);
 
             $generated = 0;
             $errors = 0;
@@ -192,6 +197,7 @@ class PembayaranController extends Controller
                 // Skip if no tarif set
                 if (!$santri->kategori->tarifTerbaru) {
                     $errors++;
+                    Log::warning('Santri dilewati karena tidak memiliki tarif terbaru', ['santri_id' => $santri->id]);
                     continue;
                 }
 
@@ -211,6 +217,7 @@ class PembayaranController extends Controller
                         'status' => 'unpaid'
                     ]);
                     $generated++;
+                    Log::info('Tagihan berhasil dibuat', ['santri_id' => $santri->id, 'tahun' => $request->tahun, 'bulan' => $request->bulan]);
                 }
             }
 
@@ -227,6 +234,8 @@ class PembayaranController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::info('Proses generate tagihan selesai', ['generated' => $generated, 'errors' => $errors]);
+            
             return redirect()
                 ->back()
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -302,5 +311,12 @@ class PembayaranController extends Controller
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function cetakPembayaran(PembayaranSpp $pembayaran)
+    {
+        $pembayaran->load(['santri', 'metode_pembayaran']);
+        $exporter = app(PdfExportController::class);
+        return $exporter->exportPembayaranDetail($pembayaran);
     }
 }

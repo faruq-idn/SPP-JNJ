@@ -4,7 +4,12 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalDetailPembayaranTitle">Detail Pembayaran SPP</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup modal"></button>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" id="btn-print-detail-wali" class="btn btn-sm btn-secondary" style="display:none;">
+                        <i class="fas fa-print me-1"></i> Cetak
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup modal"></button>
+                </div>
             </div>
             <div class="modal-body p-2 p-md-3">
                 <div class="mb-3 mb-md-4">
@@ -79,102 +84,211 @@
 <script>
 // IIFE untuk menghindari polusi global scope
 (function() {
-    // State management
+    // State management dengan error handling
     const state = {
-        selectedPembayaranId: null
+        selectedPembayaranId: null,
+        modalInstance: null
     };
 
     // Fungsi untuk menyimpan ID pembayaran
     function setSelectedPembayaran(id) {
+        // Hanya validasi saat setting ID baru, bukan saat reset
+        if (id !== null && (id === undefined || !id)) {
+            console.warn('ID pembayaran tidak valid');
+            return;
+        }
         state.selectedPembayaranId = id;
     }
 
     // Fungsi untuk mendapatkan ID pembayaran
     function getSelectedPembayaran() {
-        return state.selectedPembayaranId;
+        try {
+            return state.selectedPembayaranId;
+        } catch (error) {
+            console.error('Error dalam getSelectedPembayaran:', error);
+            return null;
+        }
+    }
+
+    // Fungsi untuk set modal instance
+    function setModalInstance(instance) {
+        state.modalInstance = instance;
+    }
+
+    // Fungsi untuk mendapatkan modal instance
+    function getModalInstance() {
+        return state.modalInstance;
+    }
+
+    // Fungsi untuk reset state (tanpa dispose untuk menghindari race saat hide)
+    function resetState() {
+        state.selectedPembayaranId = null;
+        state.modalInstance = null;
     }
 
     // Fungsi untuk membuat badge status
     function createStatusBadge(status) {
-        const badge = document.createElement('span');
-        const config = {
-            success: { class: 'badge bg-success', text: 'Lunas' },
-            pending: { class: 'badge bg-warning', text: 'Pending' },
-            default: { class: 'badge bg-danger', text: 'Belum Lunas' }
-        };
-        
-        const statusConfig = config[status] || config.default;
-        badge.className = statusConfig.class;
-        badge.textContent = statusConfig.text;
-        
-        return badge;
+        try {
+            const badge = document.createElement('span');
+            if (!badge) {
+                throw new Error('Gagal membuat elemen badge');
+            }
+
+            const config = {
+                success: { class: 'badge bg-success', text: 'Lunas' },
+                pending: { class: 'badge bg-warning', text: 'Pending' },
+                default: { class: 'badge bg-danger', text: 'Belum Lunas' }
+            };
+            
+            const statusConfig = config[status] || config.default;
+            badge.className = `${statusConfig.class} fs-7 fs-md-6`;
+            badge.textContent = statusConfig.text;
+            
+            return badge;
+        } catch (error) {
+            console.error('Error dalam createStatusBadge:', error);
+            // Return fallback badge jika terjadi error
+            const fallbackBadge = document.createElement('span');
+            fallbackBadge.className = 'badge bg-secondary fs-7 fs-md-6';
+            fallbackBadge.textContent = 'Status Tidak Diketahui';
+            return fallbackBadge;
+        }
     }
 
     // Fungsi untuk menampilkan modal detail pembayaran
-    function showDetailPembayaran(id, bulan, nominal, status, tanggal, metode, tahun) {
-        // Cek nomor HP terlebih dahulu
-        @if(!auth()->user()->no_hp)
+function showDetailPembayaran(id, bulan, nominal, status, tanggal, metode, tahun) {
+        console.log('showDetailPembayaran dipanggil dari modal-detail-pembayaran.blade.php');
+        console.log('Parameter:', { id, bulan, nominal, status, tanggal, metode, tahun });
+        try {
+            // Cek nomor HP terlebih dahulu
+            @if(!auth()->user()->no_hp)
+                console.log('Nomor HP belum terdaftar, menampilkan peringatan.');
+                Swal.fire({
+                    title: 'Nomor HP Belum Terdaftar',
+                    text: 'Anda harus menambahkan nomor HP terlebih dahulu',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Tambahkan Sekarang',
+                    cancelButtonText: 'Nanti Saja',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#6c757d'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const profileModal = document.getElementById('profileModal');
+                        if (profileModal) {
+                            console.log('Menampilkan modal profil.');
+                            const modalInstance = new bootstrap.Modal(profileModal);
+                            modalInstance.show();
+                        } else {
+                            console.warn('Elemen modal profil tidak ditemukan.');
+                        }
+                    }
+                });
+                return;
+            @endif
+
+            // Set ID pembayaran yang dipilih
+            setSelectedPembayaran(id);
+            
+            // Dapatkan semua elemen yang diperlukan
+            const elements = {
+                bulan: document.getElementById('detail-bulan'),
+                nominal: document.getElementById('detail-nominal'),
+                tahun: document.getElementById('detail-tahun'),
+                status: document.getElementById('detail-status'),
+                pembayaranOptions: document.getElementById('pembayaran-options'),
+                infoPembayaran: document.getElementById('detail-pembayaran-info'),
+                tanggal: document.getElementById('detail-tanggal'),
+                metode: document.getElementById('detail-metode')
+            };
+
+            // Periksa apakah semua elemen yang diperlukan ada
+            const missingElements = Object.entries(elements)
+                .filter(([key, element]) => !element)
+                .map(([key]) => key);
+
+            if (missingElements.length > 0) {
+                throw new Error(`Elemen tidak ditemukan: ${missingElements.join(', ')}`);
+            }
+
+            // Update informasi dasar
+            elements.bulan.textContent = bulan;
+            elements.nominal.textContent = nominal.toLocaleString('id-ID');
+            elements.tahun.textContent = tahun;
+
+            // Update status dan badge
+            elements.status.innerHTML = '';
+            elements.status.appendChild(createStatusBadge(status));
+            
+            // Update tampilan opsi pembayaran dan info pembayaran
+            elements.pembayaranOptions.style.display = status === 'success' ? 'none' : 'block';
+            elements.infoPembayaran.style.display = status === 'success' ? 'block' : 'none';
+
+            if (status === 'success') {
+                elements.tanggal.textContent = tanggal;
+                elements.metode.textContent = metode;
+                document.getElementById('btn-print-detail-wali').style.display = 'inline-block';
+            }
+            else {
+                document.getElementById('btn-print-detail-wali').style.display = 'none';
+            }
+
+            // Tampilkan modal
+const modalElement = document.getElementById('modalDetailPembayaran');
+            if (!modalElement) {
+                console.error('Elemen modalDetailPembayaran tidak ditemukan di DOM.');
+                throw new Error('Modal element tidak ditemukan');
+            }
+            console.log('Elemen modal ditemukan:', modalElement);
+
+const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+            
+            // Reset state saat modal ditutup dan hapus modal instance
+            modalElement.addEventListener('hidden.bs.modal', () => {
+                console.log('Modal disembunyikan, mereset state.');
+                resetState();
+                document.getElementById('btn-print-detail-wali').style.display = 'none';
+            }, { once: true });
+
+            // Update modal instance di state
+setModalInstance(modalInstance);
+            
+            console.log('Memanggil modalInstance.show().');
+            modalInstance.show();
+            console.log('Modal seharusnya sudah ditampilkan.');
+        } catch (error) {
+            console.error('Error dalam showDetailPembayaran:', error);
             Swal.fire({
-                title: 'Nomor HP Belum Terdaftar',
-                text: 'Anda harus menambahkan nomor HP terlebih dahulu',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Tambahkan Sekarang',
-                cancelButtonText: 'Nanti Saja',
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
-                    profileModal.show();
-                }
+                icon: 'error',
+                title: 'Error',
+                text: 'Terjadi kesalahan saat menampilkan detail pembayaran'
             });
-            return;
-        @endif
-
-        // Set ID pembayaran yang dipilih
-        setSelectedPembayaran(id);
-        const elements = {
-            bulan: document.getElementById('detail-bulan'),
-            nominal: document.getElementById('detail-nominal'),
-            tahun: document.getElementById('detail-tahun'),
-            status: document.getElementById('detail-status'),
-            pembayaranOptions: document.getElementById('pembayaran-options'),
-            infoPembayaran: document.getElementById('detail-pembayaran-info'),
-            tanggal: document.getElementById('detail-tanggal'),
-            metode: document.getElementById('detail-metode')
-        };
-
-        // Update informasi dasar
-        elements.bulan.textContent = bulan;
-        elements.nominal.textContent = nominal.toLocaleString('id-ID');
-        elements.tahun.textContent = tahun;
-
-        // Update status dan badge
-        elements.status.innerHTML = '';
-        elements.status.appendChild(createStatusBadge(status));
-        
-        // Update tampilan opsi pembayaran dan info pembayaran
-        elements.pembayaranOptions.style.display = status === 'success' ? 'none' : 'block';
-        elements.infoPembayaran.style.display = status === 'success' ? 'block' : 'none';
-
-        if (status === 'success') {
-            elements.tanggal.textContent = tanggal;
-            elements.metode.textContent = metode;
         }
-
-        // Tampilkan modal
-        const modalElement = document.getElementById('modalDetailPembayaran');
-        const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
-        
-        // Reset state saat modal ditutup dan hapus modal instance
-        modalElement.addEventListener('hidden.bs.modal', () => {
-            setSelectedPembayaran(null);
-            modalInstance.dispose();
-        }, { once: true });
-        
-        modalInstance.show();
     }
+
+    // Cetak detail pembayaran
+    document.getElementById('btn-print-detail-wali').addEventListener('click', function() {
+        const id = getSelectedPembayaran();
+        if (!id) return;
+        const url = `{{ url('wali/pembayaran') }}/${id}/pdf`;
+        const bulan = (document.getElementById('detail-bulan')?.textContent || '-');
+        const tahun = (document.getElementById('detail-tahun')?.textContent || '-');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Cetak Bukti Pembayaran',
+                html: `Periode: <b>${bulan} ${tahun}</b><br>Buka bukti dalam format PDF?`,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Cetak PDF',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) window.open(url, '_blank');
+            });
+        } else {
+            window.open(url, '_blank');
+        }
+    });
 
     // Fungsi pembayaran manual
     function bayarManual(kode, nama) {
@@ -197,53 +311,100 @@
         });
     }
 
-    // Fungsi pembayaran online
+    // Helper: muat Snap.js hanya saat diperlukan
+    function loadSnapScriptIfNeeded(callback) {
+        if (typeof snap !== 'undefined') {
+            callback();
+            return;
+        }
+        const existing = document.querySelector('script[data-midtrans-snap]');
+        if (existing) {
+            existing.addEventListener('load', () => callback());
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+        script.type = 'text/javascript';
+        script.setAttribute('data-midtrans-snap', '1');
+        script.setAttribute('data-client-key', '{{ config('midtrans.client_key') }}');
+        script.onload = () => callback();
+        script.onerror = () => {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal memuat Midtrans. Coba lagi.' });
+        };
+        document.body.appendChild(script);
+    }
+
+    // Fungsi pembayaran online dengan error handling
     function bayarOnline() {
         const id = getSelectedPembayaran();
-        if (id) {
-            bayarSPP(id);
-        } else {
+        const modalInstance = getModalInstance();
+
+        if (!id) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
                 text: 'Data pembayaran tidak ditemukan'
             });
+            return;
         }
+
+        // Sembunyikan modal detail sebelum membuka payment gateway
+        if (modalInstance) {
+            try {
+                console.log('Menyembunyikan modal detail sebelum membuka payment gateway.');
+                modalInstance.hide();
+            } catch (error) {
+                console.error('Error saat menutup modal:', error);
+            }
+        }
+
+        // Proses pembayaran (Snap akan dimuat on-demand)
+        bayarSPP(id);
     }
 
-    // Fungsi untuk memproses pembayaran SPP
-    function bayarSPP(id) {
-    // Cek nomor HP wali terlebih dahulu
-    @if(!auth()->user()->no_hp)
-        Swal.fire({
-            title: 'Nomor HP Belum Terdaftar',
-            text: 'Anda harus menambahkan nomor HP terlebih dahulu untuk melakukan pembayaran online',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Tambahkan Sekarang',
-            cancelButtonText: 'Nanti Saja',
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#6c757d'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Tampilkan modal profil
-                let profileModalElement = document.getElementById('profileModal');
-                let profileModalInstance = new bootstrap.Modal(profileModalElement);
-                profileModalInstance.show();
-            }
-        });
-        return;
-    @endif
+    // Fungsi untuk memproses pembayaran SPP dengan error handling
+function bayarSPP(id) {
+        console.log('bayarSPP dipanggil dengan ID:', id);
+        // Cek nomor HP wali terlebih dahulu
+        @if(!auth()->user()->no_hp)
+            console.log('Nomor HP belum terdaftar untuk pembayaran online, menampilkan peringatan.');
+            Swal.fire({
+                title: 'Nomor HP Belum Terdaftar',
+                text: 'Anda harus menambahkan nomor HP terlebih dahulu untuk melakukan pembayaran online',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Tambahkan Sekarang',
+                cancelButtonText: 'Nanti Saja',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const profileModal = document.getElementById('profileModal');
+                    if (!profileModal) {
+                        console.error('Modal profil tidak ditemukan');
+                        return;
+                    }
+                    console.log('Menampilkan modal profil dari bayarSPP.');
+                    const profileModalInstance = new bootstrap.Modal(profileModal);
+                    profileModalInstance.show();
+                }
+            });
+            return;
+        @endif
 
-    Swal.fire({
-        title: 'Konfirmasi Pembayaran',
-        text: 'Anda akan melanjutkan ke halaman pembayaran online?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Ya, Lanjutkan',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
+        // Konfirmasi pembayaran
+        Swal.fire({
+            title: 'Konfirmasi Pembayaran',
+            text: 'Anda akan melanjutkan ke halaman pembayaran online?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Lanjutkan',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+// Tampilkan loading
+            console.log('Menampilkan loading SweetAlert.');
             Swal.fire({
                 title: 'Memproses Pembayaran',
                 text: 'Mohon tunggu...',
@@ -253,6 +414,7 @@
                 }
             });
 
+            // Proses pembayaran
             fetch('{{ route("wali.pembayaran.store") }}', {
                 method: 'POST',
                 headers: {
@@ -264,13 +426,15 @@
                     tagihan_id: id
                 })
             })
-            .then(async response => {
-                const data = await response.json();
+            .then(response => response.json().then(data => ({ response, data })))
+.then(({ response, data }) => {
+                console.log('Respon pembayaran diterima:', data);
+                Swal.close();
 
+                // Handle status 400
                 if (response.status === 400) {
-                    Swal.close();
                     if (data.redirect_url) {
-                        Swal.fire({
+                        return Swal.fire({
                             icon: 'warning',
                             title: 'Peringatan',
                             text: data.message,
@@ -278,58 +442,71 @@
                         }).then(() => {
                             window.location.href = data.redirect_url;
                         });
-                    } else {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Peringatan',
-                            text: data.message,
-                            confirmButtonText: 'OK'
-                        });
                     }
-                    return;
-                }
 
-                if (!response.ok) {
-                    throw new Error(data.message || 'Terjadi kesalahan');
-                }
-
-                Swal.close();
-                if (data.snap_token) {
-                    snap.pay(data.snap_token, {
-                        onSuccess: function(result) {
-                            Swal.fire({
-                                title: 'Pembayaran Berhasil',
-                                text: 'Halaman akan diperbarui',
-                                icon: 'success',
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                window.location.reload();
-                            });
-                        },
-                        onPending: function(result) {
-                            Swal.fire({
-                                title: 'Pembayaran Pending',
-                                text: 'Silakan selesaikan pembayaran Anda',
-                                icon: 'info'
-                            });
-                        },
-                        onError: function(result) {
-                            console.error('Payment Error:', result);
-                            let errorMessage = 'Pembayaran gagal';
-                            if (result.status_message) {
-                                errorMessage += ': ' + result.status_message;
-                            }
-                            Swal.fire('Error', errorMessage, 'error');
-                        },
-                        onClose: function() {
-                            Swal.fire('Info', 'Pembayaran dibatalkan', 'info');
-                        }
+                    return Swal.fire({
+                        icon: 'warning',
+                        title: 'Peringatan',
+                        text: data.message,
+                        confirmButtonText: 'OK'
                     });
                 }
+
+                // Handle error response
+                if (!response.ok) {
+                    throw new Error(data.message || 'Terjadi kesalahan saat memproses pembayaran');
+                }
+
+                // Handle successful response
+                if (!data.snap_token) {
+                    throw new Error('Tidak dapat memulai pembayaran: Token tidak valid');
+                }
+
+                // Muat Snap on-demand, lalu jalankan pembayaran
+                loadSnapScriptIfNeeded(function() {
+                    console.log('Memulai pembayaran Midtrans dengan snap token:', data.snap_token);
+                    snap.pay(data.snap_token, {
+                    onSuccess: function(result) {
+                        console.log('Pembayaran Midtrans Berhasil:', result);
+                        Swal.fire({
+                            title: 'Pembayaran Berhasil',
+                            text: 'Halaman akan diperbarui',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    },
+                    onPending: function(result) {
+                        console.log('Pembayaran Midtrans Pending:', result);
+                        Swal.fire({
+                            title: 'Pembayaran Pending',
+                            text: 'Silakan selesaikan pembayaran Anda',
+                            icon: 'info'
+                        });
+                    },
+                    onError: function(result) {
+                        console.error('Payment Error:', result);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Pembayaran Gagal',
+                            text: result.status_message || 'Terjadi kesalahan saat memproses pembayaran'
+                        });
+                    },
+                    onClose: function() {
+                        console.log('Pembayaran Midtrans Dibatalkan oleh pengguna.');
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Pembayaran Dibatalkan',
+                            text: 'Anda telah menutup halaman pembayaran'
+                        });
+                    }
+                    });
+                });
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error dalam bayarSPP:', error);
                 Swal.close();
                 Swal.fire({
                     icon: 'error',
@@ -337,8 +514,7 @@
                     text: error.message || 'Gagal terhubung ke server. Silakan coba lagi.'
                 });
             });
-        }
-    });
+        });
     }
 
     // Expose functions to window object

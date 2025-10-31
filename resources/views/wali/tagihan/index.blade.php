@@ -25,8 +25,14 @@
             <!-- Riwayat Pembayaran per Tahun -->
             @foreach($pembayaranPerTahun as $tahun => $pembayaranBulanan)
             <div class="card shadow-sm rounded-3 border-0 mb-4">
-                <div class="card-header bg-transparent">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Tahun {{ $tahun }}</h5>
+                    <button type="button"
+                            class="btn btn-sm btn-secondary btn-print-year"
+                            data-url="{{ route('wali.pembayaran.tahun.pdf', ['santri' => $santri->id, 'tahun' => $tahun]) }}"
+                            data-year="{{ $tahun }}">
+                        <i class="fas fa-print me-1"></i> Cetak Tahun
+                    </button>
                 </div>
                 <!-- Mobile View -->
                 <div class="d-block d-md-none">
@@ -107,3 +113,31 @@
 
 @include('layouts.partials.modal-detail-pembayaran')
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-print-year').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const url = this.getAttribute('data-url');
+            const tahun = this.getAttribute('data-year');
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Cetak Riwayat Tahunan',
+                    html: `Anda akan mencetak riwayat pembayaran tahun <b>${tahun}</b>. Lanjutkan?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Cetak PDF',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#6c757d'
+                }).then((result) => {
+                    if (result.isConfirmed) window.open(url, '_blank');
+                });
+            } else {
+                window.open(url, '_blank');
+            }
+        });
+    });
+});
+</script>
+@endpush

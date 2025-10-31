@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Midtrans\Config;
 use Midtrans\Snap;
+use App\Http\Controllers\Admin\Exports\PdfExportController;
+use App\Models\Santri;
 
 class PembayaranController extends Controller
 {
@@ -185,5 +187,28 @@ class PembayaranController extends Controller
     {
         return redirect()->route('wali.tagihan')
             ->with('error', 'Terjadi kesalahan dalam memproses pembayaran');
+    }
+
+    public function cetakPembayaran(PembayaranSpp $pembayaran)
+    {
+        // TODO: Otorisasi: pastikan pembayaran milik salah satu santri wali yang login
+        $pembayaran->load(['santri', 'metode_pembayaran']);
+        $exporter = app(PdfExportController::class);
+        return $exporter->exportPembayaranDetail($pembayaran);
+    }
+
+    public function cetakTahunan(Santri $santri, $tahun)
+    {
+        // TODO: Otorisasi: pastikan santri milik wali yang login
+        $pembayaran = PembayaranSpp::with(['metode_pembayaran'])
+            ->where('santri_id', $santri->id)
+            ->where('tahun', $tahun)
+            ->orderBy('bulan')
+            ->get();
+
+        $totalPembayaran = $pembayaran->where('status', 'success')->sum('nominal');
+
+        $exporter = app(PdfExportController::class);
+        return $exporter->exportPembayaranSantriTahunan($santri, $tahun, $pembayaran, $totalPembayaran);
     }
 }

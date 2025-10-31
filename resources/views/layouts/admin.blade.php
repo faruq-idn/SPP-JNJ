@@ -47,7 +47,6 @@
 </div>
 
     @yield('modals')
-
     @include('layouts.partials.scripts')
     @stack('scripts')
 </body>

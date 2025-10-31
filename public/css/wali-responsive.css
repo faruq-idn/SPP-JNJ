@@ -7,12 +7,26 @@
 
 /* Body Layout */
 .wali-layout {
-    padding-top: 3.5rem; /* Space for fixed top navbar */
+    padding-top: 4rem; /* Space for fixed top navbar */
+    min-height: 100vh;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+    padding-top: 1rem;
+    padding-bottom: 5rem; /* Space for bottom nav */
 }
 
 /* Navbar & Navigation */
 .navbar {
     height: 3.5rem;
+}
+
+/* Override admin navbar layout rules on wali pages */
+.wali-layout .navbar {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
 }
 
 .navbar-brand {

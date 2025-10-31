@@ -90,7 +90,7 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <button type="button" 
+                                        <button type="button"
                                             class="btn btn-sm btn-warning"
                                             onclick="editUser({{ $user->id }})">
                                             <i class="fas fa-edit"></i>
@@ -115,110 +115,113 @@
         </div>
     </div>
 
-    <!-- Modal Form -->
-    <div class="modal fade" id="userFormModal" tabindex="-1" aria-labelledby="userFormModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="userFormModalLabel">Tambah Pengguna</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="userForm" onsubmit="submitForm(event)">
-                    <div class="modal-body">
-                        @csrf
-                        <input type="hidden" id="user_id">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Nama</label>
-                                    <input type="text" class="form-control" id="name" name="name" required>
-                                    <div class="invalid-feedback"></div>
-                                </div>
+    <!-- Modal dipindahkan ke section('modals') agar di luar stacking context -->
+    </div>
 
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email" required>
-                                    <div class="invalid-feedback"></div>
-                                </div>
+@section('modals')
+<div class="modal fade" id="userFormModal" tabindex="-1" aria-labelledby="userFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userFormModalLabel">Tambah Pengguna</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="userForm" onsubmit="submitForm(event)">
+                <div class="modal-body">
+                    @csrf
+                    <input type="hidden" id="user_id">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nama</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
 
-                                <div class="mb-3">
-                                    <label for="no_hp" class="form-label">No HP</label>
-                                    <input type="text" class="form-control" id="no_hp" name="no_hp" required>
-                                    <div class="invalid-feedback"></div>
-                                </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
 
+                            <div class="mb-3">
+                                <label for="no_hp" class="form-label">No HP</label>
+                                <input type="text" class="form-control" id="no_hp" name="no_hp" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="role" class="form-label">Role</label>
+                                <select class="form-select" id="role" name="role" required>
+                                    <option value="">Pilih Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="petugas">Petugas</option>
+                                    <option value="wali">Wali Santri</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="password">
+                                    <span class="input-group-text password-toggle" onclick="togglePassword('password')">
+                                        <i class="fas fa-eye"></i>
+                                    </span>
+                                </div>
+                                <small class="form-text text-muted" id="passwordHelpText">
+                                    Minimal 8 karakter. Kosongkan jika tidak ingin mengubah password.
+                                </small>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password_confirmation" class="form-label">Konfirmasi Password</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                                    <span class="input-group-text password-toggle" onclick="togglePassword('password_confirmation')">
+                                        <i class="fas fa-eye"></i>
+                                    </span>
+                                </div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div id="santriField" style="display: none;">
                                 <div class="mb-3">
-                                    <label for="role" class="form-label">Role</label>
-                                    <select class="form-select" id="role" name="role" required>
-                                        <option value="">Pilih Role</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="petugas">Petugas</option>
-                                        <option value="wali">Wali Santri</option>
+                                    <label for="santri_ids" class="form-label">Cari & Pilih Santri</label>
+                                    <select class="form-select" id="santri_ids" name="santri_ids[]" multiple>
                                     </select>
                                     <div class="invalid-feedback"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Password</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control" id="password" name="password">
-                                        <span class="input-group-text password-toggle" onclick="togglePassword('password')">
-                                            <i class="fas fa-eye"></i>
-                                        </span>
-                                    </div>
-                                    <small class="form-text text-muted" id="passwordHelpText">
-                                        Minimal 8 karakter. Kosongkan jika tidak ingin mengubah password.
+                                    <small class="form-text text-muted">
+                                        Cari nama atau NISN santri yang akan dihubungkan
                                     </small>
-                                    <div class="invalid-feedback"></div>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="password_confirmation" class="form-label">Konfirmasi Password</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
-                                        <span class="input-group-text password-toggle" onclick="togglePassword('password_confirmation')">
-                                            <i class="fas fa-eye"></i>
-                                        </span>
+                                    <label class="form-label">Santri Yang Terhubung</label>
+                                    <div id="linkedSantriList" class="list-group">
+                                        <!-- Santri yang sudah terhubung akan ditampilkan di sini -->
                                     </div>
-                                    <div class="invalid-feedback"></div>
-                                </div>
-
-                                <div id="santriField" style="display: none;">
-                                    <div class="mb-3">
-                                        <label for="santri_ids" class="form-label">Cari & Pilih Santri</label>
-                                        <select class="form-select" id="santri_ids" name="santri_ids[]" multiple>
-                                        </select>
-                                        <div class="invalid-feedback"></div>
-                                        <small class="form-text text-muted">
-                                            Cari nama atau NISN santri yang akan dihubungkan
-                                        </small>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label">Santri Yang Terhubung</label>
-                                        <div id="linkedSantriList" class="list-group">
-                                            <!-- Santri yang sudah terhubung akan ditampilkan di sini -->
-                                        </div>
-                                        <small class="form-text text-muted">
-                                            Santri yang sudah terhubung dengan wali ini
-                                        </small>
-                                    </div>
+                                    <small class="form-text text-muted">
+                                        Santri yang sudah terhubung dengan wali ini
+                                    </small>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Simpan
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Simpan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+@endsection
 
 @push('scripts')
 <!-- DataTables & Select2 -->
@@ -347,7 +350,7 @@ $(document).ready(function() {
         }
         console.log('#santriField visibility:', $('#santriField').is(':visible'));
     });
-    
+
     // Trigger saat modal dibuka
     $('#userFormModal').on('shown.bs.modal', function() {
         console.log('userFormModal shown.bs.modal event triggered');
@@ -385,7 +388,7 @@ function removeSantri(id) {
 function togglePassword(fieldId) {
     const field = document.getElementById(fieldId);
     const icon = field.nextElementSibling.querySelector('i');
-    
+
     if (field.type === 'password') {
         field.type = 'text';
         icon.classList.remove('fa-eye');
@@ -405,7 +408,7 @@ function resetForm() {
     document.getElementById('password').required = true;
     document.getElementById('password_confirmation').required = true;
     document.getElementById('passwordHelpText').textContent = 'Minimal 8 karakter';
-    
+
     // Set form URL for add mode
     url = "{{ route('admin.users.store') }}"; // Assign to global url variable
 
@@ -413,10 +416,10 @@ function resetForm() {
     $('#santri_ids').val(null).trigger('change');
     $('#santriField').hide();
     $('#linkedSantriList').empty();
-    
+
     // Reset semua invalid feedback
-    document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
-    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    document.querySelectorAll('#userForm .invalid-feedback').forEach(el => el.textContent = '');
+    document.querySelectorAll('#userForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
     console.log('resetForm() finished');
 }
 
@@ -442,7 +445,7 @@ function editUser(id) {
                 document.getElementById('email').value = user.email;
                 document.getElementById('no_hp').value = user.no_hp;
                 document.getElementById('role').value = user.role;
-                
+
                 // Show modal first
                 const modal = new bootstrap.Modal(document.getElementById('userFormModal'));
                 modal.show();

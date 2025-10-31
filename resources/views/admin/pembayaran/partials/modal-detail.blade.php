@@ -78,7 +78,11 @@ function showDetail(id) {
     $('#detailModal .modal-body span[id^="detail-"]').text('-');
 
     // Show modal with loading state
-    $('#detailModal').modal('show');
+    (function(){
+        const el = document.getElementById('detailModal');
+        const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+        modal.show();
+    })();
 
     // Fetch detail data
     $.get(`{{ url('admin/pembayaran') }}/${id}`)
@@ -99,7 +103,9 @@ function showDetail(id) {
         })
         .fail(function() {
             Swal.fire('Error', 'Gagal memuat detail pembayaran', 'error');
-            $('#detailModal').modal('hide');
+            const el = document.getElementById('detailModal');
+            const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+            modal.hide();
         });
 }
 </script>

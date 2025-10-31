@@ -142,7 +142,7 @@ class LaporanController extends Controller
 
         // Ambil semua data santri
         $santri = $query->get();
-        
+
         // Filter berdasarkan request
         if ($request->filled('status')) {
             if ($request->status === 'keluar') {
@@ -168,10 +168,10 @@ class LaporanController extends Controller
                 ->filter(function($payment) {
                     return $payment->isTunggakan() && $payment->nominal > 0;
                 });
-            
+
             $s->total_tunggakan = $tunggakan->sum('nominal');
             $s->jumlah_bulan_tunggakan = $tunggakan->count();
-            
+
             return $s;
         })
         ->filter(function($s) use ($request) {
@@ -261,5 +261,19 @@ class LaporanController extends Controller
                 'belum_lunas' => $data->pluck('belum_lunas')
             ]
         ];
+    }
+
+    public function pembayaranSantriTahunanPdf(Request $request, Santri $santri, $tahun)
+    {
+        // Ambil pembayaran santri per tahun (hanya yang ada), urutkan per bulan
+        $pembayaran = PembayaranSpp::with(['metode_pembayaran'])
+            ->where('santri_id', $santri->id)
+            ->where('tahun', $tahun)
+            ->orderBy('bulan')
+            ->get();
+
+        $totalPembayaran = $pembayaran->where('status', 'success')->sum('nominal');
+
+        return $this->pdfExport->exportPembayaranSantriTahunan($santri, $tahun, $pembayaran, $totalPembayaran);
     }
 }

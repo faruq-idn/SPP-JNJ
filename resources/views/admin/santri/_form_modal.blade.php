@@ -123,13 +123,17 @@
 
 @push('scripts')
 <script>
+let santriFormSetupDone = false;
 const kelasOptions = {
     'SMP': ['7A', '7B', '8A', '8B', '9A', '9B'],
     'SMA': ['10A', '10B', '11A', '11B', '12A', '12B']
 };
 
 function initializeForm() {
-    // Initialize Select2
+    if (santriFormSetupDone) return;
+    santriFormSetupDone = true;
+
+    // Initialize Select2 (once)
     $('#wali_id').select2({
         theme: 'bootstrap-5',
         dropdownParent: $('#santriFormModal'),
@@ -146,31 +150,19 @@ function initializeForm() {
                 };
             },
             processResults: function(data) {
-                return {
-                    results: data
-                };
+                return { results: data };
             },
             cache: true
         },
         minimumInputLength: 2
     });
 
-    // Load Kategori options
-            $.get('{{ route("admin.kategori.list") }}', function(data) {
-        const options = data.map(item => 
-            `<option value="${item.id}">${item.nama}</option>`
-        ).join('');
-        $('#kategori_id').html('<option value="">Pilih Kategori</option>' + options);
-    });
-
-    // Handle jenjang change
-    $('#jenjang').change(function() {
+    // Handle jenjang change (once)
+    $('#jenjang').on('change.santriJenjang', function() {
         const jenjang = $(this).val();
         const kelasSelect = $('#kelas');
-        
         kelasSelect.html('<option value="">Pilih Kelas</option>');
         kelasSelect.prop('disabled', !jenjang);
-        
         if (jenjang && kelasOptions[jenjang]) {
             kelasOptions[jenjang].forEach(kelas => {
                 kelasSelect.append(`<option value="${kelas}">${kelas}</option>`);
@@ -178,11 +170,13 @@ function initializeForm() {
         }
     });
 
-    // Reset validation on input
-    $('#santriForm input, #santriForm select, #santriForm textarea').on('input change', function() {
-        $(this).removeClass('is-invalid');
-        $(`#${this.id}-error`).text('');
-    });
+    // Reset validation on input (once, namespaced)
+    $('#santriForm input, #santriForm select, #santriForm textarea')
+        .off('.santriValidation')
+        .on('input.santriValidation change.santriValidation', function() {
+            $(this).removeClass('is-invalid');
+            $(`#${this.id}-error`).text('');
+        });
 }
 
 // Handle form submission
@@ -199,7 +193,9 @@ $('#submitForm').click(function() {
         processData: false,
         contentType: false,
         success: function(response) {
-            $('#santriFormModal').modal('hide');
+            const modalEl = document.getElementById('santriFormModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modalInstance.hide();
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil',
@@ -238,7 +234,10 @@ $('#santriFormModal').on('show.bs.modal', function(event) {
     // Reset form
     $('#santriForm')[0].reset();
     $('#santriForm .is-invalid').removeClass('is-invalid');
-    $('.invalid-feedback').text('');
+    $('#santriForm .invalid-feedback').text('');
+    // Reset select2 value and kelas state
+    $('#wali_id').val(null).trigger('change');
+    $('#kelas').prop('disabled', true).html('<option value="">Pilih Kelas</option>');
     
     if (mode === 'edit') {
         const id = button.data('id');
@@ -272,7 +271,16 @@ $('#santriFormModal').on('show.bs.modal', function(event) {
         $('#santriForm').attr('action', '{{ route("admin.santri.store") }}');
         $('input[name="_method"]').val('POST');
     }
-    
+
+    // Refresh kategori options setiap modal dibuka
+    $.get('{{ route("admin.kategori.list") }}', function(data) {
+        const options = data.map(item => 
+            `<option value="${item.id}">${item.nama}</option>`
+        ).join('');
+        $('#kategori_id').html('<option value="">Pilih Kategori</option>' + options);
+    });
+
+    // Pastikan inisialisasi hanya sekali
     initializeForm();
 });
 </script>

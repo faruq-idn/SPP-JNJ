@@ -23,8 +23,12 @@ return [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
         'https://faruq.whoami.my.id',
-        '*.ngrok-free.app', // Domain Ngrok terbaru
-        '*.ngrok.io',       // Domain Ngrok lama (jaga-jaga)
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+        'http://'.parse_url(env('APP_URL'), PHP_URL_HOST),
+        'https://'.parse_url(env('APP_URL'), PHP_URL_HOST),
+        'https://app.sandbox.midtrans.com',
+        'https://app.midtrans.com'
     ],
 
     'allowed_origins_patterns' => [],

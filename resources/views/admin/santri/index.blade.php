@@ -47,6 +47,9 @@
     @include('admin.santri.partials._table')
 </div>
 
+@endsection
+
+@section('modals')
 @include('admin.santri.partials.modal-import')
 @include('admin.santri.partials.modal-kenaikan-kelas')
 @include('admin.santri._form_modal')

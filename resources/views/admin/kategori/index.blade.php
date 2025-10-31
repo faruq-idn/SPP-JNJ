@@ -92,10 +92,12 @@
     </div>
 </div>
 
-@include('admin.kategori.modals.create-edit')
-@include('admin.kategori.modals.tarif')
-
 @push('scripts')
 <script src="{{ asset('js/kategori.js') }}"></script>
 @endpush
+@endsection
+
+@section('modals')
+@include('admin.kategori.modals.create-edit')
+@include('admin.kategori.modals.tarif')
 @endsection

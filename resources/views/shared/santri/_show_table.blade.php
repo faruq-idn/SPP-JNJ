@@ -89,20 +89,7 @@
                                     <i class="fas fa-eye"></i>
                                 </button>
 
-                                <!-- Verify/Create Button -->
-                                @if(!$isLunas)
-                                    <button type="button"
-                                            class="btn {{ $buttonSize }} btn-success d-flex align-items-center px-2"
-                                            @if(isset($p->exists) && $p->exists)
-                                                onclick="verifikasiPembayaran('{{ $p->id }}', '{{ $monthName }}', {{ $p->nominal }})"
-                                                title="Verifikasi Pembayaran"
-                                            @else
-                                                onclick="tambahPembayaran('{{ $tahun }}', '{{ $month }}', {{ $p->nominal }}, {{ $santri->id }})"
-                                                title="Tambah Pembayaran"
-                                            @endif>
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                @endif
+
 
                             </div>
                         </td>

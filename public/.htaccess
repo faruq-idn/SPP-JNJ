@@ -21,7 +21,25 @@
 </IfModule>
 
 <IfModule mod_headers.c>
+    # CORS Headers for Development
+    SetEnvIf Origin "http(s)?://(localhost|127\.0\.0\.1|faruq\.whoami\.my\.id).*" AccessControlAllowOrigin=$0
+    Header add Access-Control-Allow-Origin %{AccessControlAllowOrigin}e env=AccessControlAllowOrigin
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "X-Requested-With, Content-Type, X-CSRF-TOKEN, Authorization"
+    Header set Access-Control-Allow-Credentials "true"
+    
+    # Content Security Policy based on environment
+    SetEnvIf Host "localhost|127\.0\.0\.1" IS_DEVELOPMENT=1
+    
+    # Relaxed CSP for development
+    Header set Content-Security-Policy "default-src 'self' localhost:* 127.0.0.1:* https://*.midtrans.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' localhost:* 127.0.0.1:* https://*.jsdelivr.net https://*.midtrans.com; script-src-elem 'self' 'unsafe-inline' http://localhost:* http://127.0.0.1:* https://*.jsdelivr.net https://*.midtrans.com; style-src 'self' 'unsafe-inline' localhost:* 127.0.0.1:* https://*.jsdelivr.net https://*.cloudflare.com; style-src-elem 'self' 'unsafe-inline' http://localhost:* http://127.0.0.1:* https://*.jsdelivr.net https://*.cloudflare.com; img-src 'self' data: blob:; font-src 'self' data: https://*.cloudflare.com https://*.jsdelivr.net; connect-src 'self' localhost:* 127.0.0.1:* ws://localhost:* wss://localhost:* https://*.datatables.net https://*.midtrans.com; frame-src 'self' https://*.midtrans.com;" env=IS_DEVELOPMENT
+    
+    # Stricter CSP for production
+    Header set Content-Security-Policy "default-src 'self' https://*.midtrans.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.jsdelivr.net https://*.midtrans.com; style-src 'self' 'unsafe-inline' https://*.jsdelivr.net https://*.cloudflare.com; img-src 'self' data: blob:; font-src 'self' data: https://*.cloudflare.com https://*.jsdelivr.net; connect-src 'self' https://*.datatables.net https://*.midtrans.com; frame-src 'self' https://*.midtrans.com;" env=!IS_DEVELOPMENT
+</IfModule>
 
-    Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* http://127.0.0.1:*; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* http://127.0.0.1:* *.jsdelivr.net *.google-analytics.com; script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* http://127.0.0.1:* *.jsdelivr.net; style-src 'self' 'unsafe-inline' *.jsdelivr.net *.cloudflare.com fonts.bunny.net http://localhost:* http://127.0.0.1:*; style-src-elem 'self' 'unsafe-inline' *.jsdelivr.net *.cloudflare.com fonts.bunny.net http://localhost:* http://127.0.0.1:*; img-src 'self' data: blob:; font-src 'self' data: *.cloudflare.com *.jsdelivr.net fonts.bunny.net; connect-src 'self' http://localhost:* http://127.0.0.1:* *.datatables.net *.google-analytics.com fonts.bunny.net; worker-src 'self' blob:;"
-
+# Force HTTPS
+<IfModule mod_rewrite.c>
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>

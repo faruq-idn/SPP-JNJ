@@ -1,4 +1,4 @@
-<div class="modal fade" id="modalGenerateTagihan" tabindex="-1">
+<div class="modal fade" id="modalGenerateTagihanBaru" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -54,10 +54,15 @@
 @push('scripts')
 <script>
 function generateTagihan() {
-    $('#modalGenerateTagihan').modal('show');
+    console.log('Fungsi generateTagihan() dipanggil.');
+    const el = document.getElementById('modalGenerateTagihanBaru');
+    const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+    modal.show();
+    console.log('Mencoba menampilkan modalGenerateTagihan.');
 }
 
 function prosesGenerateTagihan() {
+    console.log('Fungsi prosesGenerateTagihan() dipanggil.');
     const bulan = $('#bulanGenerate').val();
     const tahun = $('#tahunGenerate').val();
     const periode = `${tahun}-${bulan}`;
@@ -89,7 +94,9 @@ function prosesGenerateTagihan() {
                 period: periode
             })
             .done(response => {
-                $('#modalGenerateTagihan').modal('hide');
+                const el = document.getElementById('modalGenerateTagihanBaru');
+                const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+                modal.hide();
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil',

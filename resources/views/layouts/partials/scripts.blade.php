@@ -14,19 +14,26 @@
 <script>
 // Pastikan jQuery loaded sebelum menjalankan script
 function initializeComponents() {
+    console.log('initializeComponents dipanggil.');
     if (typeof jQuery === 'undefined') {
+        console.warn('jQuery belum dimuat, mencoba lagi...');
         setTimeout(initializeComponents, 100);
         return;
     }
+    console.log('jQuery sudah dimuat.');
 
     // Select2 default config
     if ($.fn.select2) {
+        console.log('Select2 terdeteksi, menginisialisasi konfigurasi default.');
         $.fn.select2.defaults.set("theme", "bootstrap-5");
         $.fn.select2.defaults.set("language", "id");
+    } else {
+        console.warn('Select2 tidak terdeteksi.');
     }
 
     // SweetAlert2 toast config
     if (typeof Swal !== 'undefined') {
+        console.log('SweetAlert2 terdeteksi, menginisialisasi konfigurasi toast.');
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
@@ -47,6 +54,7 @@ function initializeComponents() {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded event fired in scripts.blade.php');
     initializeComponents();
 });
 
@@ -99,21 +107,23 @@ function padZero(num) {
     return num < 10 ? '0' + num : num;
 }
 
-// Toggle sidebar
-document.getElementById('sidebarToggle').addEventListener('click', function() {
-    document.querySelector('.sidebar').classList.toggle('show');
-});
+// Toggle sidebar (only for admin/petugas layout)
+if (document.getElementById('sidebarToggle')) {
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.querySelector('.sidebar').classList.toggle('show');
+    });
 
-// Hide sidebar when clicking outside on mobile
-document.addEventListener('click', function(e) {
-    if (window.innerWidth <= 768) {
-        const sidebar = document.querySelector('.sidebar');
-        const toggle = document.getElementById('sidebarToggle');
-        if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
-            sidebar.classList.remove('show');
+    // Hide sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+            const sidebar = document.querySelector('.sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            if (sidebar && toggle && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
+                sidebar.classList.remove('show');
+            }
         }
-    }
-});
+    });
+}
 
 // Logout confirmation
 function confirmLogout() {
@@ -132,6 +142,7 @@ function confirmLogout() {
         }
     });
 }
+
 </script>
 
 @if(Auth::user()->role === 'admin' || Auth::user()->role === 'petugas')
@@ -139,9 +150,50 @@ function confirmLogout() {
 <script>
     window.role = '{{ Auth::user()->role }}';
     window.isAdmin = {{ Auth::user()->role === 'admin' ? 'true' : 'false' }};
+    console.log('Global variables set: role=', window.role, 'isAdmin=', window.isAdmin);
 </script>
 <script src="{{ asset('js/pembayaran.js') }}"></script>
 @endif
+<script>
+(function() {
+    if (window.__modalGlobalHandlerAttached) return;
+    window.__modalGlobalHandlerAttached = true;
+
+    function cleanupIfNoModal() {
+        const visibleCount = document.querySelectorAll('.modal.show').length;
+        if (visibleCount === 0) {
+            document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('padding-right');
+        }
+    }
+
+    document.addEventListener('show.bs.modal', function(event) {
+        const modalElement = event.target;
+        const openCount = document.querySelectorAll('.modal.show').length;
+        const baseBackdrop = 1050; // Bootstrap 5 default
+        const baseModal = 1055;    // Bootstrap 5 default
+        const modalZ = baseModal + (10 * openCount);
+        const backdropZ = baseBackdrop + (10 * openCount);
+        modalElement.style.zIndex = modalZ;
+        setTimeout(function() {
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            const backdrop = backdrops[backdrops.length - 1];
+            if (backdrop) {
+                backdrop.style.zIndex = backdropZ;
+            }
+        }, 0);
+    });
+
+    document.addEventListener('hidden.bs.modal', function() {
+        setTimeout(cleanupIfNoModal, 0);
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cleanupIfNoModal();
+    });
+})();
+</script>
 
 @if(Auth::user()->role === 'admin')
 {{-- Admin specific scripts --}}

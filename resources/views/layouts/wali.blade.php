@@ -9,19 +9,19 @@
     <meta http-equiv="Expires" content="-1">
     <title>@yield('title') - Wali Panel</title>
 
-    <!-- Bootstrap CSS -->
-    <link href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Bootstrap CSS (preload to reduce FOUC) -->
+    <link rel="preload" href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet"></noscript>
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="{{ asset('vendor/fontawesome/css/all.min.css') }}">
+    <link rel="preload" href="{{ asset('vendor/fontawesome/css/all.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ asset('vendor/fontawesome/css/all.min.css') }}"></noscript>
     <!-- SweetAlert2 -->
-    <link href="{{ asset('vendor/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet">
+    <link rel="preload" href="{{ asset('vendor/sweetalert2/sweetalert2.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="{{ asset('vendor/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet"></noscript>
     <!-- Custom CSS -->
-    <link href="{{ asset('css/wali-responsive.css') }}" rel="stylesheet">
-    <!-- Midtrans -->
-        <script type="text/javascript"
-                src="https://app.sandbox.midtrans.com/snap/snap.js"
-                data-client-key="{{ config('midtrans.client_key') }}">
-        </script>
+    <link rel="preload" href="{{ asset('css/wali-responsive.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="{{ asset('css/wali-responsive.css') }}" rel="stylesheet"></noscript>
+    
 
     <style>
         /* Responsive adjustments - handled by Bootstrap grid and utilities */
@@ -95,8 +95,7 @@
         }
     </style>
     @stack('styles')
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('layouts.partials.custom-styles')
 </head>
 <body class="wali-layout bg-light">
     <!-- Top Navbar -->
@@ -179,9 +178,7 @@
     </nav>
 
     <!-- Scripts -->
-    <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
-    <script src="{{ asset('vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('vendor/sweetalert2/sweetalert2.min.js') }}"></script>
+    @include('layouts.partials.scripts')
     @stack('scripts')
     <script>
     // Initialize dropdowns

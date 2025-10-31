@@ -51,6 +51,10 @@ TABLE(kategori_santri) {
     --
     nama
     keterangan
+    biaya_makan
+    biaya_asrama
+    biaya_kesehatan
+    biaya_listrik
     created_at
     updated_at
 }

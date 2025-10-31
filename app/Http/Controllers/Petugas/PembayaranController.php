@@ -7,6 +7,7 @@ use App\Models\PembayaranSpp;
 use App\Models\MetodePembayaran;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Admin\Exports\PdfExportController;
 
 class PembayaranController extends Controller
 {
@@ -103,5 +104,12 @@ class PembayaranController extends Controller
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function cetakPembayaran(PembayaranSpp $pembayaran)
+    {
+        $pembayaran->load(['santri', 'metode_pembayaran']);
+        $exporter = app(PdfExportController::class);
+        return $exporter->exportPembayaranDetail($pembayaran);
     }
 }

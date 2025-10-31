@@ -4,9 +4,6 @@
 <!-- Custom CSS -->
 <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
 
-<!-- Vite CSS -->
-@vite(['resources/sass/app.scss'])
-
 <!-- Essential Datatable Styles -->
 <style>
     .dataTables_wrapper .btn-group {

@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name', 'SPP JNJ') }}</title>
     <!-- Assets -->
-    <link href="{{ asset('build/assets/app.css') }}" rel="stylesheet">
-    <script src="{{ asset('build/assets/app.js') }}" defer></script>
+    <link href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('css/sidebar.css') }}" rel="stylesheet">
 </head>
 <body>
